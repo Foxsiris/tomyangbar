@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Clock, Truck, Utensils } from 'lucide-react';
@@ -37,13 +38,50 @@ const Home = () => {
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/50 z-10"></div>
         
-        {/* Background Image */}
+        {/* Background Image with Watermarks */}
         <div 
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center relative"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')"
+            backgroundImage: "url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')",
+            backgroundColor: '#1f2937'
           }}
-        ></div>
+        >
+          {/* Watermark Overlay with Japanese Characters */}
+          <div className="absolute inset-0 pointer-events-none">
+            {/* Large watermark in center */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-red-500/10 text-8xl font-bold rotate-12 select-none">
+              和食
+            </div>
+            
+            {/* Small watermarks scattered around */}
+            <div className="absolute top-1/4 left-1/4 text-red-500/8 text-2xl font-bold rotate-45 select-none">
+              寿司
+            </div>
+            <div className="absolute top-3/4 right-1/4 text-red-500/8 text-2xl font-bold -rotate-30 select-none">
+              ラーメン
+            </div>
+            <div className="absolute bottom-1/4 left-1/3 text-red-500/8 text-xl font-bold rotate-15 select-none">
+              餃子
+            </div>
+            <div className="absolute top-1/3 right-1/3 text-red-500/8 text-xl font-bold -rotate-20 select-none">
+              天ぷら
+            </div>
+            
+            {/* Additional decorative elements */}
+            <div className="absolute top-1/6 right-1/6 text-red-500/6 text-lg font-bold rotate-90 select-none">
+              丼
+            </div>
+            <div className="absolute bottom-1/6 left-1/6 text-red-500/6 text-lg font-bold -rotate-90 select-none">
+              刺身
+            </div>
+            <div className="absolute top-2/3 left-1/6 text-red-500/6 text-lg font-bold rotate-60 select-none">
+              焼き鳥
+            </div>
+            <div className="absolute bottom-1/3 right-1/6 text-red-500/6 text-lg font-bold -rotate-60 select-none">
+              味噌
+            </div>
+          </div>
+        </div>
         
         <div className="relative z-20 text-center text-white max-w-4xl mx-auto px-4">
           <motion.div
