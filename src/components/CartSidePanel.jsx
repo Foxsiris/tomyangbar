@@ -1,9 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, Plus, Minus, Phone } from 'lucide-react';
 import { useCartContext } from '../context/CartContext';
+import { useNavigate } from 'react-router-dom';
 import MinimumOrderAlert from './MinimumOrderAlert';
 
 const CartSidePanel = () => {
+  const navigate = useNavigate();
   const { 
     cart, 
     isOpen, 
@@ -19,8 +21,8 @@ const CartSidePanel = () => {
       alert('Минимальная сумма заказа 1000 рублей');
       return;
     }
-    // Здесь можно добавить логику оформления заказа
-    alert('Для оформления заказа позвоните нам: +7 (927) 112-65-00');
+    closeCart();
+    navigate('/checkout');
   };
 
   return (
