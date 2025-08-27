@@ -37,30 +37,13 @@ const Home = () => {
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/50 z-10"></div>
         
-        {/* Video Background */}
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-          poster="https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
-        >
-          {/* Primary video - Asian cooking process */}
-          <source src="https://player.vimeo.com/external/434045526.sd.mp4?s=c27eecc69a27dbc4ff2b87d38afc35f1a9e7c02d&profile_id=164&oauth2_token_id=57447761" type="video/mp4" />
-          <source src="https://player.vimeo.com/external/434045526.hd.mp4?s=c27eecc69a27dbc4ff2b87d38afc35f1a9e7c02d&profile_id=175&oauth2_token_id=57447761" type="video/mp4" />
-          
-          {/* Alternative video - Sushi preparation */}
-          <source src="https://player.vimeo.com/external/371433807.sd.mp4?s=236da2f3c0fd273d2c6d9a064d3ab3352b724a92&profile_id=164&oauth2_token_id=57447761" type="video/mp4" />
-          <source src="https://player.vimeo.com/external/371433807.hd.mp4?s=236da2f3c0fd273d2c6d9a064d3ab3352b724a92&profile_id=175&oauth2_token_id=57447761" type="video/mp4" />
-          
-          {/* Fallback image if video doesn't load */}
-          <img 
-            src="https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
-            alt="Asian cuisine background"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        </video>
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: "url('https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')"
+          }}
+        ></div>
         
         <div className="relative z-20 text-center text-white max-w-4xl mx-auto px-4">
           <motion.div
