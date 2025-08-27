@@ -36,9 +36,6 @@ export const useCart = () => {
       }
     });
 
-    // Убираем автоматическое открытие корзины
-    // setIsOpen(true);
-
     // Показываем уведомление
     setNotification({
       isVisible: true,
