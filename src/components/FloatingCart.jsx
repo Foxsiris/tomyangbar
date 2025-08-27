@@ -36,7 +36,7 @@ const FloatingCart = () => {
           className="fixed bottom-6 right-6 z-40 bg-primary-600 text-white rounded-full p-4 shadow-lg hover:bg-primary-700 transition-colors group"
         >
           <div className="relative">
-            <div className="text-2xl">🦆</div>
+            <ShoppingCart className="w-6 h-6" />
             <motion.span
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
