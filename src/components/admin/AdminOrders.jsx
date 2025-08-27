@@ -11,7 +11,7 @@ import {
   Phone,
   MapPin
 } from 'lucide-react';
-import { ordersData } from '../../data/ordersData';
+import { ordersData, updateOrderStatus } from '../../data/ordersData';
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState(ordersData);
@@ -37,12 +37,18 @@ const AdminOrders = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const updateOrderStatus = (orderId, newStatus) => {
-    setOrders(orders.map(order => 
-      order.id === orderId 
-        ? { ...order, status: newStatus, updatedAt: new Date().toISOString() }
-        : order
-    ));
+  const handleStatusChange = (orderId, newStatus) => {
+    // Обновляем статус в системе данных
+    const updatedOrder = updateOrderStatus(orderId, newStatus);
+    
+    if (updatedOrder) {
+      // Обновляем локальное состояние
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId ? updatedOrder : order
+        )
+      );
+    }
   };
 
   const getStatusColor = (status) => {
@@ -198,14 +204,14 @@ const AdminOrders = () => {
               {order.status === 'pending' && (
                 <>
                   <button
-                    onClick={() => updateOrderStatus(order.id, 'preparing')}
+                    onClick={() => handleStatusChange(order.id, 'preparing')}
                     className="bg-blue-100 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-200 transition-colors flex items-center"
                   >
                     <Clock className="w-4 h-4 mr-1" />
                     Начать готовить
                   </button>
                   <button
-                    onClick={() => updateOrderStatus(order.id, 'cancelled')}
+                    onClick={() => handleStatusChange(order.id, 'cancelled')}
                     className="bg-red-100 text-red-700 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors flex items-center"
                   >
                     <XCircle className="w-4 h-4 mr-1" />
@@ -217,7 +223,7 @@ const AdminOrders = () => {
               {order.status === 'preparing' && (
                 <>
                   <button
-                    onClick={() => updateOrderStatus(order.id, 'delivering')}
+                    onClick={() => handleStatusChange(order.id, 'delivering')}
                     className="bg-purple-100 text-purple-700 px-3 py-2 rounded-lg hover:bg-purple-200 transition-colors flex items-center"
                   >
                     <Truck className="w-4 h-4 mr-1" />
@@ -225,7 +231,7 @@ const AdminOrders = () => {
                   </button>
                   {order.deliveryType === 'pickup' && (
                     <button
-                      onClick={() => updateOrderStatus(order.id, 'completed')}
+                      onClick={() => handleStatusChange(order.id, 'completed')}
                       className="bg-green-100 text-green-700 px-3 py-2 rounded-lg hover:bg-green-200 transition-colors flex items-center"
                     >
                       <CheckCircle className="w-4 h-4 mr-1" />
@@ -237,7 +243,7 @@ const AdminOrders = () => {
               
               {order.status === 'delivering' && (
                 <button
-                  onClick={() => updateOrderStatus(order.id, 'completed')}
+                  onClick={() => handleStatusChange(order.id, 'completed')}
                   className="bg-green-100 text-green-700 px-3 py-2 rounded-lg hover:bg-green-200 transition-colors flex items-center"
                 >
                   <CheckCircle className="w-4 h-4 mr-1" />

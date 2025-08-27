@@ -365,3 +365,48 @@ export const getOverallStats = () => {
     repeatCustomers
   };
 };
+
+// Функция для добавления нового заказа
+export const addNewOrder = (orderData) => {
+  const newOrder = {
+    id: ordersData.length + 1,
+    customer: orderData.customerName,
+    phone: orderData.phone,
+    email: orderData.email,
+    address: orderData.address,
+    items: orderData.items.map(item => ({
+      id: item.id,
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price
+    })),
+    total: orderData.total,
+    deliveryFee: orderData.deliveryType === 'delivery' ? 200 : 0,
+    finalTotal: orderData.total + (orderData.deliveryType === 'delivery' ? 200 : 0),
+    status: 'pending',
+    deliveryType: orderData.deliveryType,
+    deliveryTime: orderData.deliveryTime,
+    paymentMethod: orderData.paymentMethod,
+    notes: orderData.notes || '',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    completedAt: null
+  };
+  
+  ordersData.unshift(newOrder); // Добавляем в начало массива
+  return newOrder;
+};
+
+// Функция для обновления статуса заказа
+export const updateOrderStatus = (orderId, newStatus) => {
+  const order = ordersData.find(o => o.id === orderId);
+  if (order) {
+    order.status = newStatus;
+    order.updatedAt = new Date().toISOString();
+    if (newStatus === 'completed') {
+      order.completedAt = new Date().toISOString();
+    }
+    return order;
+  }
+  return null;
+};

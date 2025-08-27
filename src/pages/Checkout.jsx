@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { MapPin, Phone, Clock, Truck, Store, CreditCard, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCartContext } from '../context/CartContext';
+import { addNewOrder } from '../data/ordersData';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -62,8 +63,27 @@ const Checkout = () => {
     e.preventDefault();
     
     if (validateForm()) {
-      // Здесь можно добавить логику отправки заказа
-      alert('Заказ успешно оформлен! Мы свяжемся с вами в ближайшее время.');
+      // Создаем объект заказа
+      const orderData = {
+        customerName: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        address: formData.address,
+        deliveryType: formData.deliveryType,
+        deliveryTime: formData.deliveryTime,
+        paymentMethod: formData.paymentMethod,
+        notes: formData.notes,
+        items: cart,
+        total: getTotalPrice()
+      };
+      
+      // Добавляем заказ в систему
+      const newOrder = addNewOrder(orderData);
+      
+      // Показываем уведомление об успешном заказе
+      alert(`Заказ #${newOrder.id} успешно оформлен! Мы свяжемся с вами в ближайшее время.`);
+      
+      // Очищаем корзину и переходим на главную
       clearCart();
       navigate('/');
     }
