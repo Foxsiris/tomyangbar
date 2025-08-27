@@ -7,22 +7,26 @@ import {
   Clock,
   Users,
   Star,
-  AlertCircle
+  AlertCircle,
+  Eye
 } from 'lucide-react';
-import { getOverallStats, getPopularDishes } from '../../data/ordersData';
+import { getOverallStats, getPopularDishes, getOrdersData } from '../../data/ordersData';
+import OrderDetailsModal from './OrderDetailsModal';
+import { useState } from 'react';
 
 const AdminDashboard = () => {
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  
   // Реальные данные из JSON файла
   const stats = getOverallStats();
   const popularDishes = getPopularDishes();
   
-  // Получаем последние заказы (первые 4)
-  const recentOrders = [
-    { id: 1, customer: 'Анна К.', amount: 1870, status: 'pending', time: '2 мин назад' },
-    { id: 2, customer: 'Михаил С.', amount: 830, status: 'preparing', time: '5 мин назад' },
-    { id: 3, customer: 'Елена В.', amount: 1080, status: 'delivering', time: '12 мин назад' },
-    { id: 4, customer: 'Дмитрий П.', amount: 950, status: 'completed', time: '25 мин назад' }
-  ];
+  // Получаем реальные последние заказы (первые 6)
+  const allOrders = getOrdersData();
+  const recentOrders = allOrders.slice(0, 6).map(order => ({
+    ...order,
+    time: getTimeAgo(order.createdAt)
+  }));
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -42,6 +46,22 @@ const AdminDashboard = () => {
       case 'completed': return 'Завершен';
       default: return 'Неизвестно';
     }
+  };
+
+  // Функция для форматирования времени "назад"
+  const getTimeAgo = (dateString) => {
+    const now = new Date();
+    const orderDate = new Date(dateString);
+    const diffInMinutes = Math.floor((now - orderDate) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'Только что';
+    if (diffInMinutes < 60) return `${diffInMinutes} мин назад`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours} ч назад`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays} дн назад`;
   };
 
   return (
@@ -160,21 +180,21 @@ const AdminDashboard = () => {
                 <Package className="w-5 h-5 text-blue-500 mr-2" />
                 <span className="text-gray-700">Популярное блюдо</span>
               </div>
-              <span className="font-semibold text-gray-900">{stats.popularDish}</span>
+              <span className="font-semibold text-gray-900">{popularDishes[0]?.name || 'Нет данных'}</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <Clock className="w-5 h-5 text-green-500 mr-2" />
                 <span className="text-gray-700">Пиковое время</span>
               </div>
-              <span className="font-semibold text-gray-900">{stats.peakHour}</span>
+              <span className="font-semibold text-gray-900">19:00</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <Users className="w-5 h-5 text-purple-500 mr-2" />
-                <span className="text-gray-700">Блюд в меню</span>
+                <span className="text-gray-700">Завершенных заказов</span>
               </div>
-              <span className="font-semibold text-gray-900">{stats.totalDishes}</span>
+              <span className="font-semibold text-gray-900">{stats.completedOrders}</span>
             </div>
           </div>
         </motion.div>
@@ -188,18 +208,30 @@ const AdminDashboard = () => {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Последние заказы</h3>
           <div className="space-y-3">
             {recentOrders.map((order) => (
-              <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <motion.div
+                key={order.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 + order.id * 0.1 }}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer group"
+                onClick={() => setSelectedOrder(order)}
+              >
                 <div className="flex-1">
                   <div className="font-medium text-gray-900">{order.customer}</div>
                   <div className="text-sm text-gray-500">{order.time}</div>
                 </div>
-                <div className="text-right">
-                  <div className="font-semibold text-gray-900">{order.amount} ₽</div>
-                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
-                    {getStatusText(order.status)}
-                  </span>
+                <div className="text-right flex items-center space-x-3">
+                  <div>
+                    <div className="font-semibold text-gray-900">{order.finalTotal} ₽</div>
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
+                      {getStatusText(order.status)}
+                    </span>
+                  </div>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Eye className="w-4 h-4 text-primary-600" />
+                  </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
           <div className="mt-4 text-center">
@@ -238,6 +270,13 @@ const AdminDashboard = () => {
           </div>
         </div>
       </motion.div>
+
+      {/* Order Details Modal */}
+      <OrderDetailsModal
+        order={selectedOrder}
+        isOpen={!!selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+      />
     </div>
   );
 };
