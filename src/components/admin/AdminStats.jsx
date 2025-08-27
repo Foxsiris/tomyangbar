@@ -9,59 +9,21 @@ import {
   BarChart3,
   PieChart
 } from 'lucide-react';
+import { 
+  getOverallStats, 
+  getPopularDishes, 
+  getHourlyStats, 
+  getCategoryStats, 
+  getWeeklyStats 
+} from '../../data/ordersData';
 
 const AdminStats = () => {
-  // Моковые данные для демонстрации
-  const stats = {
-    totalRevenue: 234500,
-    totalOrders: 156,
-    avgOrderValue: 1503,
-    customerRating: 4.8,
-    deliveryTime: 45,
-    repeatCustomers: 68
-  };
-
-  const popularDishes = [
-    { name: 'Том Ям', orders: 45, revenue: 20250 },
-    { name: 'Ролл Филадельфия', orders: 38, revenue: 15960 },
-    { name: 'Пад Тай', orders: 32, revenue: 12160 },
-    { name: 'Суп Том Кха', orders: 28, revenue: 8960 },
-    { name: 'Ролл Калифорния', orders: 25, revenue: 8750 }
-  ];
-
-  const hourlyStats = [
-    { hour: '10:00', orders: 5, revenue: 3500 },
-    { hour: '11:00', orders: 8, revenue: 5600 },
-    { hour: '12:00', orders: 15, revenue: 10500 },
-    { hour: '13:00', orders: 18, revenue: 12600 },
-    { hour: '14:00', orders: 12, revenue: 8400 },
-    { hour: '15:00', orders: 10, revenue: 7000 },
-    { hour: '16:00', orders: 8, revenue: 5600 },
-    { hour: '17:00', orders: 12, revenue: 8400 },
-    { hour: '18:00', orders: 20, revenue: 14000 },
-    { hour: '19:00', orders: 25, revenue: 17500 },
-    { hour: '20:00', orders: 22, revenue: 15400 },
-    { hour: '21:00', orders: 15, revenue: 10500 },
-    { hour: '22:00', orders: 8, revenue: 5600 }
-  ];
-
-  const categoryStats = [
-    { name: 'Супы', orders: 45, revenue: 16200, percentage: 28 },
-    { name: 'Роллы', orders: 38, revenue: 15960, percentage: 24 },
-    { name: 'Горячие блюда', orders: 32, revenue: 12160, percentage: 20 },
-    { name: 'Салаты', orders: 25, revenue: 7000, percentage: 16 },
-    { name: 'Напитки', orders: 16, revenue: 3200, percentage: 12 }
-  ];
-
-  const weeklyTrends = [
-    { day: 'Пн', orders: 18, revenue: 12600 },
-    { day: 'Вт', orders: 22, revenue: 15400 },
-    { day: 'Ср', orders: 25, revenue: 17500 },
-    { day: 'Чт', orders: 28, revenue: 19600 },
-    { day: 'Пт', orders: 32, revenue: 22400 },
-    { day: 'Сб', orders: 35, revenue: 24500 },
-    { day: 'Вс', orders: 30, revenue: 21000 }
-  ];
+  // Реальные данные из JSON файла
+  const stats = getOverallStats();
+  const popularDishes = getPopularDishes();
+  const hourlyStats = getHourlyStats();
+  const categoryStats = getCategoryStats();
+  const weeklyTrends = getWeeklyStats();
 
   const maxRevenue = Math.max(...hourlyStats.map(stat => stat.revenue));
   const maxOrders = Math.max(...hourlyStats.map(stat => stat.orders));
@@ -182,7 +144,7 @@ const AdminStats = () => {
               <div key={index} className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="font-medium text-gray-900">{dish.name}</div>
-                  <div className="text-sm text-gray-500">{dish.orders} заказов</div>
+                  <div className="text-sm text-gray-500">{dish.count} заказов</div>
                 </div>
                 <div className="text-right">
                   <div className="font-semibold text-primary-600">{dish.revenue.toLocaleString()} ₽</div>

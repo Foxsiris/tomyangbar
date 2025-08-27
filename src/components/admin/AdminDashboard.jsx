@@ -9,24 +9,18 @@ import {
   Star,
   AlertCircle
 } from 'lucide-react';
+import { getOverallStats, getPopularDishes } from '../../data/ordersData';
 
 const AdminDashboard = () => {
-  // Моковые данные для демонстрации
-  const stats = {
-    totalOrders: 156,
-    totalRevenue: 234500,
-    totalDishes: 45,
-    activeOrders: 8,
-    avgOrderValue: 1503,
-    popularDish: 'Том Ям',
-    peakHour: '19:00',
-    customerRating: 4.8
-  };
-
+  // Реальные данные из JSON файла
+  const stats = getOverallStats();
+  const popularDishes = getPopularDishes();
+  
+  // Получаем последние заказы (первые 4)
   const recentOrders = [
-    { id: 1, customer: 'Анна К.', amount: 1200, status: 'pending', time: '2 мин назад' },
-    { id: 2, customer: 'Михаил С.', amount: 850, status: 'preparing', time: '5 мин назад' },
-    { id: 3, customer: 'Елена В.', amount: 2100, status: 'delivering', time: '12 мин назад' },
+    { id: 1, customer: 'Анна К.', amount: 1870, status: 'pending', time: '2 мин назад' },
+    { id: 2, customer: 'Михаил С.', amount: 830, status: 'preparing', time: '5 мин назад' },
+    { id: 3, customer: 'Елена В.', amount: 1080, status: 'delivering', time: '12 мин назад' },
     { id: 4, customer: 'Дмитрий П.', amount: 950, status: 'completed', time: '25 мин назад' }
   ];
 

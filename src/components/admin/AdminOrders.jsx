@@ -11,65 +11,10 @@ import {
   Phone,
   MapPin
 } from 'lucide-react';
+import { ordersData } from '../../data/ordersData';
 
 const AdminOrders = () => {
-  const [orders, setOrders] = useState([
-    {
-      id: 1,
-      customer: 'Анна К.',
-      phone: '+7 (999) 123-45-67',
-      address: 'ул. Ленина, 15, кв. 23',
-      items: [
-        { name: 'Том Ям', quantity: 1, price: 450 },
-        { name: 'Ролл Калифорния', quantity: 2, price: 350 }
-      ],
-      total: 1150,
-      status: 'pending',
-      deliveryType: 'delivery',
-      deliveryTime: 'asap',
-      paymentMethod: 'cash',
-      notes: 'Позвонить перед доставкой',
-      createdAt: '2024-01-15T14:30:00',
-      updatedAt: '2024-01-15T14:30:00'
-    },
-    {
-      id: 2,
-      customer: 'Михаил С.',
-      phone: '+7 (999) 234-56-78',
-      address: 'ул. Пушкина, 8',
-      items: [
-        { name: 'Пад Тай', quantity: 1, price: 380 },
-        { name: 'Суп Том Кха', quantity: 1, price: 320 }
-      ],
-      total: 700,
-      status: 'preparing',
-      deliveryType: 'pickup',
-      deliveryTime: 'specific',
-      paymentMethod: 'card',
-      notes: '',
-      createdAt: '2024-01-15T14:25:00',
-      updatedAt: '2024-01-15T14:28:00'
-    },
-    {
-      id: 3,
-      customer: 'Елена В.',
-      phone: '+7 (999) 345-67-89',
-      address: 'пр. Мира, 45, кв. 12',
-      items: [
-        { name: 'Ролл Филадельфия', quantity: 1, price: 420 },
-        { name: 'Салат Цезарь', quantity: 1, price: 280 },
-        { name: 'Мисо суп', quantity: 1, price: 180 }
-      ],
-      total: 880,
-      status: 'delivering',
-      deliveryType: 'delivery',
-      deliveryTime: 'asap',
-      paymentMethod: 'cash',
-      notes: 'Код домофона: 1234',
-      createdAt: '2024-01-15T14:15:00',
-      updatedAt: '2024-01-15T14:20:00'
-    }
-  ]);
+  const [orders, setOrders] = useState(ordersData);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -207,10 +152,10 @@ const AdminOrders = () => {
                 </div>
               </div>
               
-              <div className="text-right">
-                <div className="text-2xl font-bold text-primary-600">{order.total} ₽</div>
-                <div className="text-sm text-gray-500">{order.items.length} позиций</div>
-              </div>
+                             <div className="text-right">
+                 <div className="text-2xl font-bold text-primary-600">{order.finalTotal} ₽</div>
+                 <div className="text-sm text-gray-500">{order.items.length} позиций</div>
+               </div>
             </div>
 
             {/* Order Items */}
