@@ -1,13 +1,15 @@
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Search } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Filter, X } from 'lucide-react';
 import { menuData } from '../data/menuData';
 import DishCard from '../components/DishCard';
+import MenuFilters from '../components/MenuFilters';
 
 const Menu = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const filteredDishes = useMemo(() => {
     let filtered = menuData.dishes;
@@ -70,86 +72,122 @@ const Menu = () => {
         </div>
       </section>
 
-      {/* Filters */}
-      <section className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-            {/* Search */}
-            <div className="relative w-full lg:w-96">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Поиск блюд..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+      {/* Mobile Filter Toggle */}
+      <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
+        <button
+          onClick={() => setShowMobileFilters(!showMobileFilters)}
+          className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+        >
+          <Filter className="w-4 h-4" />
+          <span>Фильтры</span>
+        </button>
+      </div>
+
+      {/* Mobile Filters Overlay */}
+      <AnimatePresence>
+        {showMobileFilters && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            onClick={() => setShowMobileFilters(false)}
+          >
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="absolute left-0 top-0 h-full w-80 bg-white shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">Фильтры</h3>
+                  <button
+                    onClick={() => setShowMobileFilters(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-4">
+                <MenuFilters
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  selectedCategory={selectedCategory}
+                  setSelectedCategory={setSelectedCategory}
+                  sortBy={sortBy}
+                  setSortBy={setSortBy}
+                  categories={menuData.categories}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Content */}
+      <section className="section-padding">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Filters Sidebar - Desktop */}
+            <div className="hidden lg:block lg:w-80 flex-shrink-0">
+              <MenuFilters
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                categories={menuData.categories}
               />
             </div>
 
-            {/* Sort */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="name">По названию</option>
-              <option value="price-low">По цене (возрастание)</option>
-              <option value="price-high">По цене (убывание)</option>
-              <option value="popular">Популярные</option>
-            </select>
-          </div>
+            {/* Menu Grid */}
+            <div className="flex-1">
+              {/* Results Info */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    {getCategoryName(selectedCategory)}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    Найдено {filteredDishes.length} блюд
+                  </p>
+                </div>
+                {searchQuery && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    Поиск: "{searchQuery}"
+                  </p>
+                )}
+              </div>
 
-          {/* Categories */}
-          <div className="mt-6">
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedCategory('all')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  selectedCategory === 'all'
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Все блюда
-              </button>
-              {menuData.categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                    selectedCategory === category.id
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+              {/* Dishes Grid */}
+              {filteredDishes.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-12 bg-white rounded-lg"
                 >
-                  {category.name}
-                </button>
-              ))}
+                  <div className="text-6xl mb-4">🍽️</div>
+                  <p className="text-lg text-gray-600 mb-2">
+                    По вашему запросу ничего не найдено
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Попробуйте изменить фильтры или поисковый запрос
+                  </p>
+                </motion.div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {filteredDishes.map((dish, index) => (
+                    <DishCard key={dish.id} dish={dish} index={index} />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Menu Grid */}
-      <section className="section-padding">
-        <div className="max-w-7xl mx-auto">
-          {filteredDishes.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-12"
-            >
-              <p className="text-lg text-gray-600">
-                По вашему запросу ничего не найдено
-              </p>
-            </motion.div>
-          ) : (
-                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-               {filteredDishes.map((dish, index) => (
-                 <DishCard key={dish.id} dish={dish} index={index} />
-               ))}
-             </div>
-          )}
         </div>
       </section>
     </div>
