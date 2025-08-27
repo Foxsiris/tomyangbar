@@ -13,11 +13,11 @@ import {
 
 const AdminSettings = () => {
   const [settings, setSettings] = useState({
-    restaurant: {
-      name: 'Tom Yang Bar',
-      phone: '+7 (927) 112-65-00',
-      email: 'info@tomyangbar.ru',
-      address: 'г. Москва, ул. Примерная, 123',
+          restaurant: {
+        name: 'Tom Yang Bar',
+        phone: '+7 (927) 112-65-00',
+        email: 'info@tomyangbar.ru',
+        address: 'ул. Чапаева, 89, Саратов, Саратовская обл., Россия, 410012',
       workingHours: {
         monday: { open: '11:00', close: '23:00', closed: false },
         tuesday: { open: '11:00', close: '23:00', closed: false },

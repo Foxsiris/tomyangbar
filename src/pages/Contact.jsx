@@ -41,7 +41,7 @@ const Contact = () => {
     {
       icon: <MapPin className="w-6 h-6" />,
       title: 'Адрес',
-      value: 'г. Москва, ул. Примерная, 123',
+      value: 'ул. Чапаева, 89, Саратов',
       link: null
     },
     {
@@ -213,7 +213,7 @@ const Contact = () => {
                     Карта будет добавлена позже
                   </p>
                   <p className="text-sm text-gray-500 mt-2">
-                    г. Москва, ул. Примерная, 123
+                    ул. Чапаева, 89, Саратов
                   </p>
                 </div>
               </div>
