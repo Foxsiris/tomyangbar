@@ -17,16 +17,21 @@ import { useState } from 'react';
 const AdminDashboard = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   
-  // Реальные данные из JSON файла
-  const stats = getOverallStats();
-  const popularDishes = getPopularDishes();
-  
-  // Получаем реальные последние заказы (первые 6)
-  const allOrders = getOrdersData();
-  const recentOrders = allOrders.slice(0, 6).map(order => ({
-    ...order,
-    time: getTimeAgo(order.createdAt)
-  }));
+  // Функция для форматирования времени "назад"
+  const getTimeAgo = (dateString) => {
+    const now = new Date();
+    const orderDate = new Date(dateString);
+    const diffInMinutes = Math.floor((now - orderDate) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'Только что';
+    if (diffInMinutes < 60) return `${diffInMinutes} мин назад`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours} ч назад`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays} дн назад`;
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -47,22 +52,17 @@ const AdminDashboard = () => {
       default: return 'Неизвестно';
     }
   };
-
-  // Функция для форматирования времени "назад"
-  const getTimeAgo = (dateString) => {
-    const now = new Date();
-    const orderDate = new Date(dateString);
-    const diffInMinutes = Math.floor((now - orderDate) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'Только что';
-    if (diffInMinutes < 60) return `${diffInMinutes} мин назад`;
-    
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours} ч назад`;
-    
-    const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays} дн назад`;
-  };
+  
+  // Реальные данные из JSON файла
+  const stats = getOverallStats();
+  const popularDishes = getPopularDishes();
+  
+  // Получаем реальные последние заказы (первые 6)
+  const allOrders = getOrdersData();
+  const recentOrders = allOrders.slice(0, 6).map(order => ({
+    ...order,
+    time: getTimeAgo(order.createdAt)
+  }));
 
   return (
     <div className="space-y-6">
