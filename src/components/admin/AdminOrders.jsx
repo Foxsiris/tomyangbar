@@ -12,6 +12,7 @@ import {
   MapPin
 } from 'lucide-react';
 import { getOrdersData, updateOrderStatus } from '../../data/ordersData';
+import OrderDetailsModal from './OrderDetailsModal';
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState(getOrdersData());
@@ -264,80 +265,11 @@ const AdminOrders = () => {
       </div>
 
       {/* Order Details Modal */}
-      {selectedOrder && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedOrder(null)}
-        >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Детали заказа #{selectedOrder.id}
-              </h3>
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XCircle className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-medium text-gray-900 mb-2">Информация о клиенте</h4>
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p><strong>Имя:</strong> {selectedOrder.customer}</p>
-                  <p><strong>Телефон:</strong> {selectedOrder.phone}</p>
-                  <p><strong>Адрес:</strong> {selectedOrder.address}</p>
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="font-medium text-gray-900 mb-2">Позиции заказа</h4>
-                <div className="space-y-2">
-                  {selectedOrder.items.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                      <div>
-                        <span className="font-medium">{item.name}</span>
-                        <span className="text-gray-500 ml-2">x{item.quantity}</span>
-                      </div>
-                      <span className="font-semibold">{item.price * item.quantity} ₽</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="font-medium text-gray-900 mb-2">Дополнительная информация</h4>
-                <div className="bg-gray-50 p-3 rounded-lg space-y-2">
-                  <p><strong>Способ получения:</strong> {selectedOrder.deliveryType === 'delivery' ? 'Доставка' : 'Самовывоз'}</p>
-                  <p><strong>Способ оплаты:</strong> {selectedOrder.paymentMethod === 'cash' ? 'Наличные' : 'Карта'}</p>
-                  <p><strong>Время заказа:</strong> {formatTime(selectedOrder.createdAt)}</p>
-                  <p><strong>Последнее обновление:</strong> {formatTime(selectedOrder.updatedAt)}</p>
-                  {selectedOrder.notes && (
-                    <p><strong>Комментарий:</strong> {selectedOrder.notes}</p>
-                  )}
-                </div>
-              </div>
-              
-              <div className="text-center pt-4 border-t">
-                <div className="text-2xl font-bold text-primary-600">
-                  Итого: {selectedOrder.total} ₽
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
+      <OrderDetailsModal
+        order={selectedOrder}
+        isOpen={!!selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+      />
     </div>
   );
 };
