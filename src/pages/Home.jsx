@@ -42,7 +42,7 @@ const Home = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center relative"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')",
+            backgroundImage: "url('https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')",
             backgroundColor: '#1f2937'
           }}
         >
