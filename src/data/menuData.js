@@ -71,7 +71,7 @@ export const menuData = {
       price: 450,
       weight: '220 г',
       category: 'starters',
-      image: '/images/bao-duck.jpg',
+      image: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
       popular: true,
       spicy: false,
       vegetarian: false
@@ -83,7 +83,7 @@ export const menuData = {
       price: 2030,
       weight: '350/90/500/8 шт/130 г',
       category: 'starters',
-      image: '/images/duck-asian.jpg',
+      image: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
       popular: true,
       spicy: false,
       vegetarian: false
@@ -97,7 +97,7 @@ export const menuData = {
       price: 580,
       weight: '220 г',
       category: 'rolls',
-      image: '/images/italian-roll.jpg',
+      image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
       popular: false,
       spicy: false,
       vegetarian: false
@@ -109,7 +109,7 @@ export const menuData = {
       price: 580,
       weight: '270 г',
       category: 'rolls',
-      image: '/images/boston-roll.jpg',
+      image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
       popular: false,
       spicy: false,
       vegetarian: false
@@ -121,7 +121,7 @@ export const menuData = {
       price: 710,
       weight: '310 г',
       category: 'rolls',
-      image: '/images/american-roll.jpg',
+      image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
       popular: true,
       spicy: false,
       vegetarian: false
@@ -133,7 +133,7 @@ export const menuData = {
       price: 580,
       weight: '250 г',
       category: 'rolls',
-      image: '/images/taiga-roll.jpg',
+      image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
       popular: false,
       spicy: true,
       vegetarian: false
@@ -147,7 +147,7 @@ export const menuData = {
       price: 410,
       weight: '90 г',
       category: 'dumplings',
-      image: '/images/dimsum-eel.jpg',
+      image: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
       popular: false,
       spicy: false,
       vegetarian: false
@@ -161,7 +161,7 @@ export const menuData = {
       price: 70,
       weight: '70 г',
       category: 'bao',
-      image: '/images/bao-buns.jpg',
+      image: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
       popular: false,
       spicy: false,
       vegetarian: true
@@ -175,7 +175,7 @@ export const menuData = {
       price: 410,
       weight: '90 г',
       category: 'desserts',
-      image: '/images/mango-dessert.jpg',
+      image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
       popular: true,
       spicy: false,
       vegetarian: true
@@ -187,7 +187,7 @@ export const menuData = {
       price: 330,
       weight: '80 г',
       category: 'desserts',
-      image: '/images/banana-nama.jpg',
+      image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
       popular: false,
       spicy: false,
       vegetarian: true
@@ -201,7 +201,7 @@ export const menuData = {
       price: 380,
       weight: '330 мл',
       category: 'drinks',
-      image: '/images/strawberry-lemonade.jpg',
+      image: 'https://images.unsplash.com/photo-1621263764928-df1444c5e859?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
       popular: false,
       spicy: false,
       vegetarian: true
@@ -215,7 +215,7 @@ export const menuData = {
       price: 30,
       weight: '5 г',
       category: 'starters',
-      image: '/images/wasabi.jpg',
+      image: 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
       popular: false,
       spicy: true,
       vegetarian: true
@@ -227,7 +227,201 @@ export const menuData = {
       price: 40,
       weight: '15 г',
       category: 'starters',
-      image: '/images/ginger.jpg',
+      image: 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      popular: false,
+      spicy: false,
+      vegetarian: true
+    },
+    
+    // Супы
+    {
+      id: 14,
+      name: 'Том Ям',
+      description: 'Острый суп с креветками, грибами и кокосовым молоком',
+      price: 450,
+      weight: '350 мл',
+      category: 'soups',
+      image: 'https://images.unsplash.com/photo-1563379091339-03246963d4a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      popular: true,
+      spicy: true,
+      vegetarian: false
+    },
+    {
+      id: 15,
+      name: 'Суп Том Кха',
+      description: 'Кокосовый суп с курицей и грибами',
+      price: 380,
+      weight: '350 мл',
+      category: 'soups',
+      image: 'https://images.unsplash.com/photo-1563379091339-03246963d4a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      popular: false,
+      spicy: false,
+      vegetarian: false
+    },
+    {
+      id: 16,
+      name: 'Мисо суп',
+      description: 'Традиционный японский суп с тофу и водорослями',
+      price: 180,
+      weight: '250 мл',
+      category: 'soups',
+      image: 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      popular: false,
+      spicy: false,
+      vegetarian: true
+    },
+    
+    // Горячие блюда
+    {
+      id: 17,
+      name: 'Пад Тай',
+      description: 'Жареная рисовая лапша с курицей, яйцом и овощами',
+      price: 380,
+      weight: '300 г',
+      category: 'hot',
+      image: 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      popular: true,
+      spicy: false,
+      vegetarian: false
+    },
+    {
+      id: 18,
+      name: 'Курица в кисло-сладком соусе',
+      description: 'Курица в традиционном кисло-сладком соусе с овощами',
+      price: 420,
+      weight: '280 г',
+      category: 'hot',
+      image: 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      popular: false,
+      spicy: false,
+      vegetarian: false
+    },
+    
+    // Салаты
+    {
+      id: 19,
+      name: 'Салат Цезарь',
+      description: 'Классический салат с курицей, сыром и соусом',
+      price: 280,
+      weight: '200 г',
+      category: 'salads',
+      image: 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      popular: false,
+      spicy: false,
+      vegetarian: false
+    },
+    {
+      id: 20,
+      name: 'Салат с авокадо',
+      description: 'Свежий салат с авокадо, томатами и зеленью',
+      price: 320,
+      weight: '180 г',
+      category: 'salads',
+      image: 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      popular: false,
+      spicy: false,
+      vegetarian: true
+    },
+    
+    // Вок блюда
+    {
+      id: 21,
+      name: 'Вок с говядиной',
+      description: 'Жареная лапша с говядиной и овощами в воке',
+      price: 450,
+      weight: '320 г',
+      category: 'wok',
+      image: 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      popular: true,
+      spicy: false,
+      vegetarian: false
+    },
+    {
+      id: 22,
+      name: 'Вок с морепродуктами',
+      description: 'Лапша с креветками, кальмарами и овощами',
+      price: 520,
+      weight: '300 г',
+      category: 'wok',
+      image: 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      popular: false,
+      spicy: false,
+      vegetarian: false
+    },
+    
+    // Закуски фрай
+    {
+      id: 23,
+      name: 'Креветки в кляре',
+      description: 'Хрустящие креветки в пивном кляре',
+      price: 380,
+      weight: '150 г',
+      category: 'fried',
+      image: 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      popular: false,
+      spicy: false,
+      vegetarian: false
+    },
+    {
+      id: 24,
+      name: 'Спринг роллы',
+      description: 'Хрустящие роллы с овощами и курицей',
+      price: 280,
+      weight: '120 г',
+      category: 'fried',
+      image: 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      popular: false,
+      spicy: false,
+      vegetarian: false
+    },
+    
+    // Дополнительные роллы
+    {
+      id: 25,
+      name: 'Ролл Филадельфия',
+      description: 'Лосось, сливочный сыр, огурец, рис, нори',
+      price: 420,
+      weight: '240 г',
+      category: 'rolls',
+      image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      popular: true,
+      spicy: false,
+      vegetarian: false
+    },
+    {
+      id: 26,
+      name: 'Ролл Калифорния',
+      description: 'Краб, авокадо, огурец, рис, нори',
+      price: 350,
+      weight: '220 г',
+      category: 'rolls',
+      image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      popular: false,
+      spicy: false,
+      vegetarian: false
+    },
+    
+    // Дополнительные напитки
+    {
+      id: 27,
+      name: 'Зеленый чай',
+      description: 'Традиционный японский зеленый чай',
+      price: 120,
+      weight: '250 мл',
+      category: 'drinks',
+      image: 'https://images.unsplash.com/photo-1621263764928-df1444c5e859?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      popular: false,
+      spicy: false,
+      vegetarian: true
+    },
+    {
+      id: 28,
+      name: 'Мохито',
+      description: 'Освежающий коктейль с мятой и лаймом',
+      price: 450,
+      weight: '300 мл',
+      category: 'drinks',
+      image: 'https://images.unsplash.com/photo-1621263764928-df1444c5e859?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
       popular: false,
       spicy: false,
       vegetarian: true
