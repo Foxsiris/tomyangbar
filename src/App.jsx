@@ -5,6 +5,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import CartSidePanel from './components/CartSidePanel';
 import CartNotification from './components/CartNotification';
+import FloatingCart from './components/FloatingCart';
 import Home from './pages/Home';
 import Menu from './pages/Menu';
 import About from './pages/About';
@@ -33,6 +34,7 @@ function App() {
           <Footer />
           <CartSidePanel />
           <CartNotification />
+          <FloatingCart />
         </div>
       </Router>
     </CartProvider>

@@ -23,6 +23,9 @@ const AddToCartNotification = ({ isVisible, onClose, dishName }) => {
               <p className="text-sm text-green-700 mt-1">
                 {dishName}
               </p>
+              <p className="text-xs text-green-600 mt-1">
+                Нажмите на утку в правом углу, чтобы открыть корзину
+              </p>
             </div>
             <div className="ml-4 flex-shrink-0">
               <button
