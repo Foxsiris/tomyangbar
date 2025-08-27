@@ -16,6 +16,8 @@ import {
   getCategoryStats, 
   getWeeklyStats 
 } from '../../data/ordersData';
+import PopularDishesChart from './PopularDishesChart';
+import HourlyActivityChart from './HourlyActivityChart';
 
 const AdminStats = () => {
   // Реальные данные из JSON файла
@@ -105,57 +107,10 @@ const AdminStats = () => {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Hourly Activity Chart */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white rounded-lg shadow-lg p-6"
-        >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Активность по часам</h3>
-          <div className="space-y-3">
-            {hourlyStats.map((stat, index) => (
-              <div key={index} className="flex items-center space-x-3">
-                <div className="w-12 text-sm text-gray-600">{stat.hour}</div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <div 
-                      className="h-6 bg-primary-600 rounded"
-                      style={{ width: `${(stat.revenue / maxRevenue) * 100}%` }}
-                    ></div>
-                    <span className="text-sm font-medium">{stat.revenue} ₽</span>
-                  </div>
-                  <div className="text-xs text-gray-500">{stat.orders} заказов</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
+        <HourlyActivityChart hourlyStats={hourlyStats} />
 
-        {/* Popular Dishes */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.5 }}
-          className="bg-white rounded-lg shadow-lg p-6"
-        >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Популярные блюда</h3>
-          <div className="space-y-4">
-            {popularDishes.map((dish, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900">{dish.name}</div>
-                  <div className="text-sm text-gray-500">{dish.count} заказов</div>
-                </div>
-                <div className="text-right">
-                  <div className="font-semibold text-primary-600">{dish.revenue.toLocaleString()} ₽</div>
-                  <div className="text-sm text-gray-500">
-                    {((dish.revenue / stats.totalRevenue) * 100).toFixed(1)}%
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
+        {/* Popular Dishes Chart */}
+        <PopularDishesChart popularDishes={popularDishes} totalRevenue={stats.totalRevenue} />
       </div>
 
       {/* Category Breakdown */}
