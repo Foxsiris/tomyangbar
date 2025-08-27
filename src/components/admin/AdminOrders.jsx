@@ -11,10 +11,10 @@ import {
   Phone,
   MapPin
 } from 'lucide-react';
-import { ordersData, updateOrderStatus } from '../../data/ordersData';
+import { getOrdersData, updateOrderStatus } from '../../data/ordersData';
 
 const AdminOrders = () => {
-  const [orders, setOrders] = useState(ordersData);
+  const [orders, setOrders] = useState(getOrdersData());
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
