@@ -4,6 +4,7 @@ import { MapPin, Phone, Clock, Truck, Store, CreditCard, ArrowLeft } from 'lucid
 import { Link, useNavigate } from 'react-router-dom';
 import { useCartContext } from '../context/CartContext';
 import { addNewOrder } from '../data/ordersData';
+import OrderSuccessModal from '../components/OrderSuccessModal';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -22,6 +23,8 @@ const Checkout = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [orderNumber, setOrderNumber] = useState(null);
 
   const deliveryFee = formData.deliveryType === 'delivery' ? 200 : 0;
   const totalPrice = getTotalPrice() + deliveryFee;
@@ -80,13 +83,16 @@ const Checkout = () => {
       // Добавляем заказ в систему
       const newOrder = addNewOrder(orderData);
       
-      // Показываем уведомление об успешном заказе
-      alert(`Заказ #${newOrder.id} успешно оформлен! Мы свяжемся с вами в ближайшее время.`);
-      
-      // Очищаем корзину и переходим на главную
-      clearCart();
-      navigate('/');
+      // Показываем красивое окно успеха
+      setOrderNumber(newOrder.id);
+      setShowSuccessModal(true);
     }
+  };
+
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    clearCart();
+    navigate('/');
   };
 
   if (cart.length === 0) {
@@ -422,6 +428,13 @@ const Checkout = () => {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      <OrderSuccessModal
+        isOpen={showSuccessModal}
+        orderNumber={orderNumber}
+        onClose={handleSuccessModalClose}
+      />
     </div>
   );
 };
