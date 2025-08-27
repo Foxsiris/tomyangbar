@@ -19,6 +19,15 @@ const DishCard = ({ dish, index = 0 }) => {
       className="card overflow-hidden group"
     >
       <div className="h-48 bg-gray-200 relative overflow-hidden">
+        <img
+          src={dish.image}
+          alt={dish.name}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.target.style.display = 'none';
+            e.target.nextSibling.style.display = 'block';
+          }}
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
         <div className="absolute top-3 left-3 flex gap-2">
           {dish.popular && (

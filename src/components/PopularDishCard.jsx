@@ -14,6 +14,15 @@ const PopularDishCard = ({ dish, index = 0 }) => {
       className="card overflow-hidden"
     >
       <div className="h-48 bg-gray-200 relative">
+        <img
+          src={dish.image}
+          alt={dish.name}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.target.style.display = 'none';
+            e.target.nextSibling.style.display = 'block';
+          }}
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
         {dish.popular && (
           <div className="absolute top-3 left-3 bg-primary-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
