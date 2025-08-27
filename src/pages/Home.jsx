@@ -45,8 +45,8 @@ const Home = () => {
             backgroundImage: "url('https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')"
           }}
         >
-          {/* Light overlay for better text readability */}
-          <div className="absolute inset-0 bg-black/30"></div>
+          {/* Gradient mask with blur effect */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-transparent backdrop-blur-sm"></div>
 
         </div>
         
