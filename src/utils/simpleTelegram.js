@@ -63,7 +63,7 @@ export const sendViaWebhook = async (message) => {
 export const sendViaBotAPI = async (message, type = 'notification') => {
   try {
     // Отправляем через наш серверный API endpoint
-    const response = await fetch('/api/telegram/send', {
+    const response = await fetch('/api/telegram-send', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
