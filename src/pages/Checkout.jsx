@@ -110,7 +110,7 @@ const Checkout = () => {
       }
       
       // Если выбран онлайн-платеж, показываем модальное окно платежа
-      if (formData.paymentMethod === 'card' || formData.paymentMethod === 'sbp') {
+      if (formData.paymentMethod === 'card') {
         setCurrentOrderData({
           ...orderData,
           orderId: newOrder.id
@@ -431,20 +431,9 @@ const Checkout = () => {
                         onChange={handleInputChange}
                         className="mr-3"
                       />
-                      <span>Банковской картой онлайн</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="sbp"
-                        checked={formData.paymentMethod === 'sbp'}
-                        onChange={handleInputChange}
-                        className="mr-3"
-                      />
-                      <span>СБП (Система быстрых платежей)</span>
-                      <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                        Быстро
+                      <span>Онлайн-платеж</span>
+                      <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                        Карта, СБП, ЮMoney
                       </span>
                     </label>
                   </div>

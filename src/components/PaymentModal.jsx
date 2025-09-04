@@ -163,11 +163,7 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className={`p-6 text-white relative ${
-            orderData.paymentMethod === 'sbp' 
-              ? 'bg-gradient-to-r from-green-600 to-blue-600' 
-              : 'bg-gradient-to-r from-blue-600 to-purple-600'
-          }`}>
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white relative">
             <button
               onClick={onClose}
               className="absolute top-4 right-4 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-2 transition-colors"
@@ -178,9 +174,7 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
             <div className="flex items-center space-x-3">
               {getStatusIcon()}
               <div>
-                <h2 className="text-xl font-bold">
-                  {orderData.paymentMethod === 'sbp' ? 'Оплата через СБП' : 'Оплата заказа'}
-                </h2>
+                <h2 className="text-xl font-bold">Онлайн-платеж</h2>
                 <p className="text-blue-100 text-sm">#{orderData.orderId}</p>
               </div>
             </div>
@@ -206,13 +200,17 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
                 </div>
                 <div className="flex justify-between">
                   <span>Способ оплаты:</span>
-                  <span className="font-semibold">
-                    {orderData.paymentMethod === 'sbp' ? 'СБП (через YooKassa)' : 
-                     orderData.paymentMethod === 'card' ? 'Банковская карта' : 
-                     'Наличные'}
-                  </span>
+                  <span className="font-semibold">Умный платеж YooKassa</span>
                 </div>
               </div>
+            </div>
+
+            {/* Информация о Smart Payment */}
+            <div className="bg-blue-50 rounded-lg p-4 mb-6">
+              <h4 className="font-semibold text-blue-900 mb-2">Умный платеж YooKassa</h4>
+              <p className="text-sm text-blue-800">
+                На странице оплаты вы сможете выбрать удобный способ: банковскую карту, СБП, ЮMoney или другие доступные варианты.
+              </p>
             </div>
 
             {/* Статус платежа */}
@@ -239,16 +237,10 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
               {paymentStatus === 'idle' && (
                 <button
                   onClick={handleCreatePayment}
-                  className={`w-full text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center space-x-2 ${
-                    orderData.paymentMethod === 'sbp'
-                      ? 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700'
-                      : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
-                  }`}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2"
                 >
                   <CreditCard className="w-5 h-5" />
-                  <span>
-                    {orderData.paymentMethod === 'sbp' ? 'Оплатить через СБП' : 'Перейти к оплате'}
-                  </span>
+                  <span>Перейти к оплате</span>
                 </button>
               )}
               

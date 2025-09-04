@@ -73,28 +73,21 @@ export default async function handler(req, res) {
       }
     };
 
-    // Если выбран СБП, добавляем специальные настройки для YooKassa
-    if (isSBP) {
-      // Проверяем, доступен ли СБП в тестовом режиме
-      if (PAYMENT_CONFIG.isTestMode) {
-        // В тестовом режиме СБП может быть недоступен, используем обычную карту
-        console.log('SBP not available in test mode, using card payment');
-        paymentData.payment_method_data = {
-          type: 'bank_card'
-        };
-      } else {
-        paymentData.payment_method_data = {
-          type: 'sbp'
-        };
-      }
+    // Для всех онлайн-платежей используем Smart Payment (Умный платеж)
+    // Это позволяет пользователю выбрать способ оплаты на странице YooKassa
+    if (isSBP || paymentMethod === 'card') {
+      // Убираем payment_method_data, чтобы YooKassa показал все доступные способы оплаты
+      // YooKassa автоматически покажет: карты, СБП, ЮMoney и другие доступные способы
       
       paymentData.confirmation = {
         type: 'redirect',
         return_url: PAYMENT_CONFIG.returnUrl
       };
       
-      // Для СБП в YooKassa можно указать дополнительные параметры
+      // Дополнительные настройки для Smart Payment
       paymentData.save_payment_method = false;
+      
+      console.log('Using YooKassa Smart Payment - user will choose payment method');
     }
 
     // Создание платежа в YooKassa
