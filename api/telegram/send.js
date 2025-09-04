@@ -2,6 +2,10 @@
 // Токен бота хранится только на сервере
 
 export default async function handler(req, res) {
+  console.log('📡 API endpoint /api/telegram/send вызван');
+  console.log('Method:', req.method);
+  console.log('Body:', req.body);
+  
   // Настройка CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -30,6 +34,12 @@ export default async function handler(req, res) {
       chatId: process.env.TELEGRAM_CHAT_ID || '594704789',
       isTestMode: process.env.NODE_ENV !== 'production'
     };
+    
+    console.log('🔧 Конфигурация Telegram:');
+    console.log('Bot Token:', TELEGRAM_CONFIG.botToken ? 'Настроен' : 'Не настроен');
+    console.log('Chat ID:', TELEGRAM_CONFIG.chatId);
+    console.log('Test Mode:', TELEGRAM_CONFIG.isTestMode);
+    console.log('NODE_ENV:', process.env.NODE_ENV);
 
     // В тестовом режиме логируем
     if (TELEGRAM_CONFIG.isTestMode) {
