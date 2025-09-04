@@ -198,6 +198,14 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
                   <span>Телефон:</span>
                   <span>{orderData.customerPhone}</span>
                 </div>
+                <div className="flex justify-between">
+                  <span>Способ оплаты:</span>
+                  <span className="font-semibold">
+                    {orderData.paymentMethod === 'sbp' ? 'СБП' : 
+                     orderData.paymentMethod === 'card' ? 'Банковская карта' : 
+                     'Наличные'}
+                  </span>
+                </div>
               </div>
             </div>
 

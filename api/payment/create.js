@@ -33,6 +33,10 @@ export default async function handler(req, res) {
       isTestMode: true
     };
 
+    // Определяем тип платежа (СБП или обычная карта)
+    const paymentMethod = orderData.paymentMethod || 'card';
+    const isSBP = paymentMethod === 'sbp';
+
     // Подготовка данных для YooKassa
     const paymentData = {
       amount: {
@@ -49,7 +53,8 @@ export default async function handler(req, res) {
         orderId: orderData.orderId,
         customerName: orderData.customerName,
         customerPhone: orderData.customerPhone,
-        customerEmail: orderData.customerEmail
+        customerEmail: orderData.customerEmail,
+        paymentMethod: paymentMethod
       },
       receipt: {
         customer: {
@@ -67,6 +72,17 @@ export default async function handler(req, res) {
         }))
       }
     };
+
+    // Если выбран СБП, добавляем специальные настройки
+    if (isSBP) {
+      paymentData.payment_method_data = {
+        type: 'sbp'
+      };
+      paymentData.confirmation = {
+        type: 'redirect',
+        return_url: PAYMENT_CONFIG.returnUrl
+      };
+    }
 
     // Создание платежа в YooKassa
     const response = await fetch('https://api.yookassa.ru/v3/payments', {

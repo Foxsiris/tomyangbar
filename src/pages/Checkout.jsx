@@ -8,6 +8,7 @@ import { addNewOrder } from '../data/ordersData';
 import OrderSuccessModal from '../components/OrderSuccessModal';
 import AuthModal from '../components/AuthModal';
 import PaymentModal from '../components/PaymentModal';
+import SBPModal from '../components/SBPModal';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ const Checkout = () => {
     deliveryType: 'delivery', // 'delivery' или 'pickup'
     deliveryTime: 'asap', // 'asap', 'specific'
     specificTime: '',
-    paymentMethod: 'cash', // 'cash', 'card'
+    paymentMethod: 'cash', // 'cash', 'card', 'sbp'
     notes: ''
   });
 
@@ -31,6 +32,7 @@ const Checkout = () => {
   const [orderNumber, setOrderNumber] = useState(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isSBPModalOpen, setIsSBPModalOpen] = useState(false);
   const [currentOrderData, setCurrentOrderData] = useState(null);
 
   // Заполняем форму данными пользователя, если он авторизован
@@ -109,13 +111,19 @@ const Checkout = () => {
         newOrder = addNewOrder(orderData);
       }
       
-      // Если выбран онлайн-платеж, показываем модальное окно платежа
+      // Если выбран онлайн-платеж, показываем соответствующее модальное окно
       if (formData.paymentMethod === 'card') {
         setCurrentOrderData({
           ...orderData,
           orderId: newOrder.id
         });
         setIsPaymentModalOpen(true);
+      } else if (formData.paymentMethod === 'sbp') {
+        setCurrentOrderData({
+          ...orderData,
+          orderId: newOrder.id
+        });
+        setIsSBPModalOpen(true);
       } else {
         // Для наличных показываем обычное окно успеха
         setOrderNumber(newOrder.id);
@@ -149,6 +157,24 @@ const Checkout = () => {
 
   const handlePaymentModalClose = () => {
     setIsPaymentModalOpen(false);
+    setCurrentOrderData(null);
+  };
+
+  const handleSBPSuccess = (paymentId) => {
+    console.log('SBP Payment Success:', paymentId);
+    setIsSBPModalOpen(false);
+    setCurrentOrderData(null);
+    setOrderNumber(currentOrderData?.orderId);
+    setShowSuccessModal(true);
+  };
+
+  const handleSBPError = (error) => {
+    console.error('SBP Payment Error:', error);
+    // Можно показать уведомление об ошибке
+  };
+
+  const handleSBPModalClose = () => {
+    setIsSBPModalOpen(false);
     setCurrentOrderData(null);
   };
 
@@ -432,6 +458,20 @@ const Checkout = () => {
                       />
                       <span>Банковской картой онлайн</span>
                     </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="sbp"
+                        checked={formData.paymentMethod === 'sbp'}
+                        onChange={handleInputChange}
+                        className="mr-3"
+                      />
+                      <span>СБП (Система быстрых платежей)</span>
+                      <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                        Быстро
+                      </span>
+                    </label>
                   </div>
                 </div>
 
@@ -534,6 +574,17 @@ const Checkout = () => {
           orderData={currentOrderData}
           onPaymentSuccess={handlePaymentSuccess}
           onPaymentError={handlePaymentError}
+        />
+      )}
+
+      {/* SBP Modal */}
+      {currentOrderData && (
+        <SBPModal
+          isOpen={isSBPModalOpen}
+          onClose={handleSBPModalClose}
+          orderData={currentOrderData}
+          onPaymentSuccess={handleSBPSuccess}
+          onPaymentError={handleSBPError}
         />
       )}
     </div>

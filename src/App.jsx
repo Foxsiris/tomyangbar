@@ -18,6 +18,8 @@ import Profile from './pages/Profile';
 import Admin from './pages/Admin';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentCancel from './pages/PaymentCancel';
+import SBPSuccess from './pages/SBPSuccess';
+import SBPCancel from './pages/SBPCancel';
 
 function App() {
   // Инициализируем тестовых пользователей при первом запуске
@@ -45,6 +47,8 @@ function App() {
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/payment/success" element={<PaymentSuccess />} />
                 <Route path="/payment/cancel" element={<PaymentCancel />} />
+                <Route path="/payment/sbp/success" element={<SBPSuccess />} />
+                <Route path="/payment/sbp/cancel" element={<SBPCancel />} />
               </Routes>
             </motion.main>
             <Footer />
