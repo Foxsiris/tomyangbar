@@ -109,6 +109,12 @@ export const createPayment = async (orderData) => {
     if (!response.ok) {
       const errorData = await response.json();
       console.error('Payment API Error:', errorData);
+      
+      // Специальная обработка для недоступного СБП
+      if (errorData.code === 'SBP_NOT_AVAILABLE') {
+        throw new Error(`СБП недоступен: ${errorData.details}`);
+      }
+      
       throw new Error(`Ошибка создания платежа: ${errorData.details || errorData.error || 'Неизвестная ошибка'}`);
     }
 

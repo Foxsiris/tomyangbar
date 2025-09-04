@@ -75,9 +75,19 @@ export default async function handler(req, res) {
 
     // Если выбран СБП, добавляем специальные настройки для YooKassa
     if (isSBP) {
-      paymentData.payment_method_data = {
-        type: 'sbp'
-      };
+      // Проверяем, доступен ли СБП в тестовом режиме
+      if (PAYMENT_CONFIG.isTestMode) {
+        // В тестовом режиме СБП может быть недоступен, используем обычную карту
+        console.log('SBP not available in test mode, using card payment');
+        paymentData.payment_method_data = {
+          type: 'bank_card'
+        };
+      } else {
+        paymentData.payment_method_data = {
+          type: 'sbp'
+        };
+      }
+      
       paymentData.confirmation = {
         type: 'redirect',
         return_url: PAYMENT_CONFIG.returnUrl
@@ -101,6 +111,17 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const errorData = await response.json();
       console.error('YooKassa API Error:', errorData);
+      
+      // Специальная обработка для недоступного способа оплаты
+      if (errorData.code === 'payment_method_not_available' || 
+          errorData.description?.includes('Payment method is not available')) {
+        return res.status(400).json({ 
+          error: 'Payment method not available',
+          details: 'СБП не включен в настройках магазина YooKassa. Пожалуйста, включите СБП в личном кабинете YooKassa или выберите другой способ оплаты.',
+          code: 'SBP_NOT_AVAILABLE'
+        });
+      }
+      
       return res.status(400).json({ 
         error: 'Payment creation failed',
         details: errorData.description || 'Unknown error'
