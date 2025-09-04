@@ -97,44 +97,24 @@ export const createPayment = async (orderData) => {
       }
     };
 
-    // Реальный запрос к YooKassa API
-    if (PAYMENT_CONFIG.isTestMode) {
-      // В тестовом режиме используем реальный API YooKassa
-      const response = await fetch('https://api.yookassa.ru/v3/payments', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${btoa(`${PAYMENT_CONFIG.shopId}:${PAYMENT_CONFIG.secretKey}`)}`,
-          'Content-Type': 'application/json',
-          'Idempotence-Key': `order_${orderData.orderId}_${Date.now()}`
-        },
-        body: JSON.stringify(paymentData)
-      });
+    // Запрос к нашему API endpoint
+    const response = await fetch('/api/payment/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ orderData })
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('YooKassa API Error:', errorData);
-        throw new Error(`Ошибка YooKassa: ${errorData.description || 'Неизвестная ошибка'}`);
-      }
-
-      const payment = await response.json();
-      console.log('YooKassa Payment Created:', payment);
-      return payment;
-    } else {
-      // Симуляция для демонстрации
-      const mockPayment = {
-        id: `payment_${Date.now()}`,
-        status: 'pending',
-        paid: false,
-        amount: paymentData.amount,
-        created_at: new Date().toISOString(),
-        confirmation: {
-          type: 'redirect',
-          confirmation_url: `${PAYMENT_CONFIG.returnUrl}?payment_id=payment_${Date.now()}`
-        }
-      };
-
-      return mockPayment;
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Payment API Error:', errorData);
+      throw new Error(`Ошибка создания платежа: ${errorData.details || errorData.error || 'Неизвестная ошибка'}`);
     }
+
+    const result = await response.json();
+    console.log('Payment Created:', result.payment);
+    return result.payment;
     
   } catch (error) {
     console.error('Ошибка при создании платежа:', error);
@@ -145,36 +125,23 @@ export const createPayment = async (orderData) => {
 // Функция для проверки статуса платежа
 export const checkPaymentStatus = async (paymentId) => {
   try {
-    if (PAYMENT_CONFIG.isTestMode) {
-      // Реальный запрос к YooKassa API
-      const response = await fetch(`https://api.yookassa.ru/v3/payments/${paymentId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Basic ${btoa(`${PAYMENT_CONFIG.shopId}:${PAYMENT_CONFIG.secretKey}`)}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('YooKassa API Error:', errorData);
-        throw new Error(`Ошибка YooKassa: ${errorData.description || 'Неизвестная ошибка'}`);
+    // Запрос к нашему API endpoint
+    const response = await fetch(`/api/payment/status?paymentId=${paymentId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
       }
+    });
 
-      const payment = await response.json();
-      console.log('YooKassa Payment Status:', payment);
-      return payment;
-    } else {
-      // Симуляция для демонстрации
-      const statuses = ['pending', 'succeeded', 'canceled'];
-      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-      
-      return {
-        id: paymentId,
-        status: randomStatus,
-        paid: randomStatus === 'succeeded'
-      };
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Payment Status API Error:', errorData);
+      throw new Error(`Ошибка проверки статуса: ${errorData.details || errorData.error || 'Неизвестная ошибка'}`);
     }
+
+    const result = await response.json();
+    console.log('Payment Status:', result.payment);
+    return result.payment;
     
   } catch (error) {
     console.error('Ошибка при проверке статуса платежа:', error);
