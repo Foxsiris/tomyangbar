@@ -28,14 +28,16 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
       const payment = await createPayment(orderData);
       setPaymentId(payment.id);
 
-      // Симулируем переход на страницу оплаты
-      setTimeout(() => {
-        // В реальном проекте здесь должен быть редирект на confirmation_url
-        // window.location.href = payment.confirmation.confirmation_url;
-        
-        // Для демонстрации симулируем успешную оплату
-        simulatePaymentProcess(payment.id);
-      }, 2000);
+      // Проверяем, есть ли URL для редиректа
+      if (payment.confirmation && payment.confirmation.confirmation_url) {
+        // Реальный редирект на страницу оплаты YooKassa
+        window.location.href = payment.confirmation.confirmation_url;
+      } else {
+        // Если нет URL, симулируем процесс (для демонстрации)
+        setTimeout(() => {
+          simulatePaymentProcess(payment.id);
+        }, 2000);
+      }
 
     } catch (error) {
       setPaymentStatus('error');
