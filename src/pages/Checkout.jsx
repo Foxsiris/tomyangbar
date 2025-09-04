@@ -8,6 +8,7 @@ import { addNewOrder } from '../data/ordersData';
 import OrderSuccessModal from '../components/OrderSuccessModal';
 import AuthModal from '../components/AuthModal';
 import PaymentModal from '../components/PaymentModal';
+import AddressChecker from '../components/AddressChecker';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -32,6 +33,8 @@ const Checkout = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [currentOrderData, setCurrentOrderData] = useState(null);
+  const [deliveryZone, setDeliveryZone] = useState(null);
+  const [isAddressValid, setIsAddressValid] = useState(false);
 
   // Заполняем форму данными пользователя, если он авторизован
   useEffect(() => {
@@ -47,6 +50,17 @@ const Checkout = () => {
 
   const deliveryFee = formData.deliveryType === 'delivery' ? 200 : 0;
   const totalPrice = getTotalPrice() + deliveryFee;
+
+  // Обработчики для проверки адреса
+  const handleZoneFound = (zone) => {
+    setDeliveryZone(zone);
+    setIsAddressValid(true);
+  };
+
+  const handleZoneNotFound = () => {
+    setDeliveryZone(null);
+    setIsAddressValid(false);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -75,6 +89,15 @@ const Checkout = () => {
     }
     if (formData.deliveryTime === 'specific' && !formData.specificTime) {
       newErrors.specificTime = 'Выберите время доставки';
+    }
+
+    // Проверяем соответствие суммы заказа зоне доставки
+    if (formData.deliveryType === 'delivery' && formData.address.trim()) {
+      if (!isAddressValid) {
+        newErrors.address = 'Адрес не входит в зону доставки';
+      } else if (deliveryZone && getTotalPrice() < deliveryZone.minOrder) {
+        newErrors.delivery = `Минимальная сумма заказа для ${deliveryZone.name.toLowerCase()}: ${deliveryZone.minOrder}₽`;
+      }
     }
 
     setErrors(newErrors);
@@ -353,6 +376,13 @@ const Checkout = () => {
                       placeholder="Улица, дом, квартира"
                     />
                     {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+                    
+                    {/* Проверка адреса */}
+                    <AddressChecker 
+                      address={formData.address}
+                      onZoneFound={handleZoneFound}
+                      onZoneNotFound={handleZoneNotFound}
+                    />
                   </div>
                 )}
 
@@ -457,12 +487,70 @@ const Checkout = () => {
                   />
                 </div>
 
+                {/* Предупреждение о недостаточной сумме заказа */}
+                {formData.deliveryType === 'delivery' && deliveryZone && getTotalPrice() < deliveryZone.minOrder && (
+                  <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-orange-800">
+                          Недостаточная сумма заказа
+                        </h3>
+                        <div className="mt-2 text-sm text-orange-700">
+                          <p>Для {deliveryZone.name.toLowerCase()} минимальная сумма заказа составляет <strong>{deliveryZone.minOrder}₽</strong></p>
+                          <p className="mt-1">Текущая сумма: <strong>{getTotalPrice()}₽</strong></p>
+                          <p className="mt-1">Нужно добавить еще: <strong className="text-orange-900">{deliveryZone.minOrder - getTotalPrice()}₽</strong></p>
+                        </div>
+                        <div className="mt-3">
+                          <div className="flex space-x-3">
+                            <Link 
+                              to="/menu" 
+                              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-orange-700 bg-orange-100 hover:bg-orange-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                            >
+                              Добавить блюда
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => setFormData(prev => ({ ...prev, deliveryType: 'pickup' }))}
+                              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-orange-700 bg-orange-100 hover:bg-orange-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                            >
+                              Выбрать самовывоз
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Ошибка валидации доставки */}
+                {errors.delivery && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-800 font-medium">{errors.delivery}</p>
+                    <p className="text-red-600 text-sm mt-1">
+                      Добавьте блюда на сумму {deliveryZone ? deliveryZone.minOrder - getTotalPrice() : 0}₽ или выберите самовывоз
+                    </p>
+                  </div>
+                )}
+
                 {/* Кнопка оформления */}
                 <button
                   type="submit"
-                  className="w-full bg-primary-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-primary-700 transition-colors"
+                  className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
+                    formData.deliveryType === 'delivery' && deliveryZone && getTotalPrice() < deliveryZone.minOrder
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                      : 'bg-primary-600 text-white hover:bg-primary-700'
+                  }`}
+                  disabled={formData.deliveryType === 'delivery' && (!isAddressValid || (deliveryZone && getTotalPrice() < deliveryZone.minOrder))}
                 >
-                  Оформить заказ за {totalPrice} ₽
+                  {formData.deliveryType === 'delivery' && deliveryZone && getTotalPrice() < deliveryZone.minOrder
+                    ? `Минимум ${deliveryZone.minOrder}₽ для доставки`
+                    : `Оформить заказ за ${totalPrice} ₽`
+                  }
                 </button>
               </form>
             </motion.div>
@@ -506,12 +594,44 @@ const Checkout = () => {
                 </div>
               </div>
 
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <div className="text-sm text-gray-600">
+              <div className={`mt-6 p-4 rounded-lg ${
+                formData.deliveryType === 'delivery' && deliveryZone && getTotalPrice() < deliveryZone.minOrder
+                  ? 'bg-orange-50 border border-orange-200'
+                  : 'bg-gray-50'
+              }`}>
+                <div className={`text-sm ${
+                  formData.deliveryType === 'delivery' && deliveryZone && getTotalPrice() < deliveryZone.minOrder
+                    ? 'text-orange-700'
+                    : 'text-gray-600'
+                }`}>
                   <div className="font-medium mb-2">Информация о доставке:</div>
-                  <div>• Минимальная сумма заказа: 1000 ₽</div>
-                  <div>• Время доставки: 45-60 минут</div>
-                  <div>• Бесплатная доставка от 1000 ₽</div>
+                  {formData.deliveryType === 'delivery' ? (
+                    deliveryZone ? (
+                      <>
+                        <div>• Зона: {deliveryZone.name}</div>
+                        <div className={`${getTotalPrice() < deliveryZone.minOrder ? 'text-orange-800 font-semibold' : ''}`}>
+                          • Минимальная сумма: {deliveryZone.minOrder} ₽
+                          {getTotalPrice() < deliveryZone.minOrder && (
+                            <span className="ml-1 text-orange-600">(не хватает {deliveryZone.minOrder - getTotalPrice()}₽)</span>
+                          )}
+                        </div>
+                        <div>• Время доставки: {deliveryZone.deliveryTime}</div>
+                        <div>• Стоимость доставки: {deliveryFee} ₽</div>
+                      </>
+                    ) : (
+                      <>
+                        <div>• Введите адрес для проверки зоны</div>
+                        <div>• Минимальная сумма: от 1000 ₽</div>
+                        <div>• Время доставки: 45-120 минут</div>
+                      </>
+                    )
+                  ) : (
+                    <>
+                      <div>• Самовывоз из ресторана</div>
+                      <div>• Минимальная сумма: 500 ₽</div>
+                      <div>• Время приготовления: 20-30 минут</div>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.div>

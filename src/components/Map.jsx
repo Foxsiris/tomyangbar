@@ -1,13 +1,29 @@
-import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Phone, Clock, Mail } from 'lucide-react';
+import YandexMap from './YandexMap';
 
 const Map = () => {
-  const mapRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-
-  // Простая версия без API ключа
-  const mapUrl = "https://yandex.ru/maps/47/saratov/?ll=46.0347%2C51.5927&mode=search&sll=46.0347%2C51.5927&text=Tom%20Yang%20Bar%2C%20%D1%83%D0%BB.%20%D0%A7%D0%B0%D0%BF%D0%B0%D0%B5%D0%B2%D0%B0%2C%2089%2C%20%D0%A1%D0%B0%D1%80%D0%B0%D1%82%D0%BE%D0%B2&z=16";
+  // Зоны доставки для отображения в левой части
+  const deliveryZones = [
+    {
+      name: 'Центральная зона',
+      color: '#4CAF50',
+      minOrder: 1000,
+      deliveryTime: '45-60 мин'
+    },
+    {
+      name: 'Расширенная зона',
+      color: '#2196F3', 
+      minOrder: 1500,
+      deliveryTime: '60-90 мин'
+    },
+    {
+      name: 'Дальняя зона',
+      color: '#FF9800',
+      minOrder: 2000,
+      deliveryTime: '90-120 мин'
+    }
+  ];
 
   return (
     <section className="py-16 bg-gray-50">
@@ -20,10 +36,10 @@ const Map = () => {
         >
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             Как нас найти
-            <span className="text-xs text-gray-400 ml-2">アクセス</span>
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Приходите к нам в гости и насладитесь лучшими блюдами азиатской кухни
+            Приходите к нам в гости и насладитесь лучшими блюдами азиатской кухни. 
+            Или закажите доставку - мы работаем по всему Саратову!
           </p>
         </motion.div>
 
@@ -81,31 +97,17 @@ const Map = () => {
               </div>
             </div>
 
-            <div className="mt-8 p-4 bg-primary-50 rounded-lg">
-              <h4 className="font-semibold text-primary-900 mb-2">Как добраться</h4>
-              <p className="text-sm text-primary-700">
-                Мы находимся в центре города на улице Чапаева. 
-                Удобная парковка и доступность на общественном транспорте.
-              </p>
-            </div>
           </motion.div>
 
-          {/* Карта */}
+          {/* Интерактивная карта с зонами доставки */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="bg-white rounded-lg shadow-lg overflow-hidden"
           >
-                         <iframe
-               src={mapUrl}
-               className="w-full h-96"
-               style={{ minHeight: '400px' }}
-               title="Tom Yang Bar на Яндекс Картах"
-               frameBorder="0"
-               allowFullScreen
-             />
+            <YandexMap />
           </motion.div>
+
         </div>
 
         {/* Дополнительная информация */}
@@ -113,7 +115,7 @@ const Map = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.6 }}
-          className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6"
+          className="mt-12 grid grid-cols-1 md:grid-cols-4 gap-6"
         >
           <div className="bg-white rounded-lg shadow-lg p-6 text-center">
             <div className="text-3xl mb-3">🚗</div>
@@ -125,6 +127,12 @@ const Map = () => {
             <div className="text-3xl mb-3">🚌</div>
             <h4 className="font-semibold text-gray-900 mb-2">Общественный транспорт</h4>
             <p className="text-gray-600">Остановки автобусов и троллейбусов рядом</p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg p-6 text-center">
+            <div className="text-3xl mb-3">🚚</div>
+            <h4 className="font-semibold text-gray-900 mb-2">Доставка</h4>
+            <p className="text-gray-600">Доставляем по всему Саратову от 45 минут</p>
           </div>
 
           <div className="bg-white rounded-lg shadow-lg p-6 text-center">
