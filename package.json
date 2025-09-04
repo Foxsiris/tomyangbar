@@ -10,7 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@a2seven/yoo-checkout": "^1.1.4",
+    "@google-cloud/local-auth": "^3.0.1",
     "framer-motion": "^12.23.12",
+    "googleapis": "^159.0.0",
     "lucide-react": "^0.542.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

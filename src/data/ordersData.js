@@ -393,7 +393,7 @@ export const getOverallStats = () => {
 };
 
 // Функция для добавления нового заказа
-export const addNewOrder = (orderData) => {
+export const addNewOrder = (orderData, userId = null) => {
   const ordersData = getOrdersData();
   const newOrder = {
     id: ordersData.length + 1,
@@ -415,6 +415,7 @@ export const addNewOrder = (orderData) => {
     deliveryTime: orderData.deliveryTime,
     paymentMethod: orderData.paymentMethod,
     notes: orderData.notes || '',
+    userId: userId, // Добавляем ID пользователя
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     completedAt: null
@@ -444,6 +445,43 @@ export const updateOrderStatus = (orderId, newStatus) => {
     const updatedOrders = [...ordersData];
     updatedOrders[orderIndex] = updatedOrder;
     saveOrdersData(updatedOrders);
+    
+    // Обновляем статус в системе пользователей, если заказ принадлежит пользователю
+    if (updatedOrder.userId) {
+      // Импортируем функцию динамически, чтобы избежать циклических зависимостей
+      import('./usersData').then(({ updateUserOrderStatus }) => {
+        updateUserOrderStatus(updatedOrder.userId, orderId, newStatus);
+        
+        // Отправляем кастомное событие для обновления UI в той же вкладке
+        window.dispatchEvent(new CustomEvent('customStorageChange', {
+          detail: { 
+            type: 'orderStatusUpdated',
+            orderId: orderId,
+            newStatus: newStatus,
+            userId: updatedOrder.userId
+          }
+        }));
+      }).catch(error => {
+        console.error('Ошибка при обновлении статуса в системе пользователей:', error);
+      });
+    }
+    
+    // Уведомляем пользователя об изменении статуса (если он авторизован)
+    const user = JSON.parse(localStorage.getItem('tomyangbar_user') || 'null');
+    if (user) {
+      // Обновляем заказ в профиле пользователя
+      const userOrders = user.orders || [];
+      const userOrderIndex = userOrders.findIndex(o => o.id === orderId);
+      if (userOrderIndex !== -1) {
+        userOrders[userOrderIndex] = {
+          ...userOrders[userOrderIndex],
+          status: newStatus,
+          updatedAt: new Date().toISOString()
+        };
+        user.orders = userOrders;
+        localStorage.setItem('tomyangbar_user', JSON.stringify(user));
+      }
+    }
     
     return updatedOrder;
   }

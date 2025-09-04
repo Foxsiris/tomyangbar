@@ -1,14 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Phone, Clock, Truck, Store, CreditCard, ArrowLeft } from 'lucide-react';
+import { MapPin, Phone, Clock, Truck, Store, CreditCard, ArrowLeft, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCartContext } from '../context/CartContext';
+import { useUser } from '../context/UserContext';
 import { addNewOrder } from '../data/ordersData';
 import OrderSuccessModal from '../components/OrderSuccessModal';
+import AuthModal from '../components/AuthModal';
+import PaymentModal from '../components/PaymentModal';
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { cart, getTotalPrice, clearCart } = useCartContext();
+  const { user, login, addOrder } = useUser();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -25,6 +29,21 @@ const Checkout = () => {
   const [errors, setErrors] = useState({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [orderNumber, setOrderNumber] = useState(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [currentOrderData, setCurrentOrderData] = useState(null);
+
+  // Заполняем форму данными пользователя, если он авторизован
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || ''
+      }));
+    }
+  }, [user]);
 
   const deliveryFee = formData.deliveryType === 'delivery' ? 200 : 0;
   const totalPrice = getTotalPrice() + deliveryFee;
@@ -77,22 +96,60 @@ const Checkout = () => {
         paymentMethod: formData.paymentMethod,
         notes: formData.notes,
         items: cart,
-        total: getTotalPrice()
+        total: totalPrice
       };
       
       // Добавляем заказ в систему
-      const newOrder = addNewOrder(orderData);
+      let newOrder;
+      if (user) {
+        // Если пользователь авторизован, используем addOrder (он сам вызовет addNewOrder)
+        newOrder = addOrder(orderData);
+      } else {
+        // Если пользователь не авторизован, создаем заказ напрямую
+        newOrder = addNewOrder(orderData);
+      }
       
-      // Показываем красивое окно успеха
-      setOrderNumber(newOrder.id);
-      setShowSuccessModal(true);
+      // Если выбран онлайн-платеж, показываем модальное окно платежа
+      if (formData.paymentMethod === 'card') {
+        setCurrentOrderData({
+          ...orderData,
+          orderId: newOrder.id
+        });
+        setIsPaymentModalOpen(true);
+      } else {
+        // Для наличных показываем обычное окно успеха
+        setOrderNumber(newOrder.id);
+        setShowSuccessModal(true);
+      }
     }
+  };
+
+  const handleAuthSuccess = (userData) => {
+    login(userData);
+    setIsAuthModalOpen(false);
   };
 
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
     clearCart();
     navigate('/');
+  };
+
+  const handlePaymentSuccess = (paymentId) => {
+    setIsPaymentModalOpen(false);
+    setOrderNumber(currentOrderData.orderId);
+    setShowSuccessModal(true);
+    clearCart();
+  };
+
+  const handlePaymentError = (error) => {
+    console.error('Ошибка платежа:', error);
+    // Можно показать уведомление об ошибке
+  };
+
+  const handlePaymentModalClose = () => {
+    setIsPaymentModalOpen(false);
+    setCurrentOrderData(null);
   };
 
   if (cart.length === 0) {
@@ -139,6 +196,32 @@ const Checkout = () => {
               className="bg-white rounded-lg shadow-lg p-6"
             >
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Auth Section */}
+                {!user && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <User className="w-5 h-5 text-blue-600 mr-2" />
+                        <div>
+                          <h4 className="text-sm font-medium text-blue-900">
+                            У вас есть аккаунт?
+                          </h4>
+                          <p className="text-xs text-blue-700">
+                            Войдите, чтобы сохранить заказ в личном кабинете
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsAuthModalOpen(true)}
+                        className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Войти
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Контактная информация */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -435,6 +518,24 @@ const Checkout = () => {
         orderNumber={orderNumber}
         onClose={handleSuccessModalClose}
       />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
+
+      {/* Payment Modal */}
+      {currentOrderData && (
+        <PaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={handlePaymentModalClose}
+          orderData={currentOrderData}
+          onPaymentSuccess={handlePaymentSuccess}
+          onPaymentError={handlePaymentError}
+        />
+      )}
     </div>
   );
 };
