@@ -54,13 +54,24 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
           clearInterval(interval);
           // Симулируем успешную оплату
           setPaymentStatus('success');
-          onPaymentSuccess?.(paymentId);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
   };
+
+  // Отслеживаем изменения статуса платежа
+  useEffect(() => {
+    if (paymentStatus === 'success' && paymentId) {
+      // Используем setTimeout для вызова callback'а после завершения рендеринга
+      const timer = setTimeout(() => {
+        onPaymentSuccess?.(paymentId);
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [paymentStatus, paymentId, onPaymentSuccess]);
 
   // Обработка отмены платежа
   const handleCancelPayment = async () => {
@@ -73,10 +84,18 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
     }
     
     setPaymentStatus('canceled');
-    setTimeout(() => {
-      onClose();
-    }, 2000);
   };
+
+  // Отслеживаем отмену платежа
+  useEffect(() => {
+    if (paymentStatus === 'canceled') {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [paymentStatus, onClose]);
 
   const getStatusIcon = () => {
     switch (paymentStatus) {
