@@ -1,4 +1,4 @@
-// API endpoint для отправки уведомлений в Telegram (альтернативный путь)
+// API endpoint для отправки уведомлений в Telegram
 export default async function handler(req, res) {
   console.log('📡 API endpoint /api/telegram-send вызван');
   console.log('Method:', req.method);
