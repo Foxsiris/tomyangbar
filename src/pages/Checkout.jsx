@@ -81,7 +81,7 @@ const Checkout = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (validateForm()) {
@@ -103,10 +103,10 @@ const Checkout = () => {
       let newOrder;
       if (user) {
         // Если пользователь авторизован, используем addOrder (он сам вызовет addNewOrder)
-        newOrder = addOrder(orderData);
+        newOrder = await addOrder(orderData);
       } else {
         // Если пользователь не авторизован, создаем заказ напрямую
-        newOrder = addNewOrder(orderData);
+        newOrder = await addNewOrder(orderData);
       }
       
       // Если выбран онлайн-платеж, показываем модальное окно платежа
@@ -433,7 +433,10 @@ const Checkout = () => {
                       />
                       <span>Онлайн-платеж</span>
                       <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                        Карта, СБП, ЮMoney
+                        Карта, ЮMoney
+                      </span>
+                      <span className="ml-1 text-xs text-gray-500">
+                        (СБП в продакшене)
                       </span>
                     </label>
                   </div>

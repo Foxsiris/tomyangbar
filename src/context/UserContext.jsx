@@ -99,11 +99,11 @@ export const UserProvider = ({ children }) => {
     }));
   };
 
-  const addOrder = (orderData) => {
+  const addOrder = async (orderData) => {
     if (!user) return;
 
     // Добавляем заказ в общую систему заказов
-    const newOrder = addNewOrder({
+    const newOrder = await addNewOrder({
       ...orderData,
       customerName: user.name,
       email: user.email,

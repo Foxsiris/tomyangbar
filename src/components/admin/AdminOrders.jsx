@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Clock, 
@@ -9,17 +9,37 @@ import {
   Filter,
   Eye,
   Phone,
-  MapPin
+  MapPin,
+  Bell,
+  BellRing
 } from 'lucide-react';
 import { getOrdersData, updateOrderStatus } from '../../data/ordersData';
 import OrderDetailsModal from './OrderDetailsModal';
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState(getOrdersData());
+  const [newOrdersCount, setNewOrdersCount] = useState(0);
+  const [lastOrderCount, setLastOrderCount] = useState(0);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState(null);
+
+  // Отслеживаем новые заказы
+  useEffect(() => {
+    const currentOrderCount = orders.length;
+    if (currentOrderCount > lastOrderCount) {
+      setNewOrdersCount(currentOrderCount - lastOrderCount);
+    }
+    setLastOrderCount(currentOrderCount);
+  }, [orders, lastOrderCount]);
+
+  // Сбрасываем счетчик новых заказов при изменении фильтров
+  useEffect(() => {
+    if (statusFilter === 'all' || statusFilter === 'pending') {
+      setNewOrdersCount(0);
+    }
+  }, [statusFilter]);
 
   const statusOptions = [
     { value: 'all', label: 'Все заказы', color: 'gray' },
@@ -38,9 +58,9 @@ const AdminOrders = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleStatusChange = (orderId, newStatus) => {
+  const handleStatusChange = async (orderId, newStatus) => {
     // Обновляем статус в системе данных
-    const updatedOrder = updateOrderStatus(orderId, newStatus);
+    const updatedOrder = await updateOrderStatus(orderId, newStatus);
     
     if (updatedOrder) {
       // Обновляем локальное состояние
@@ -87,7 +107,19 @@ const AdminOrders = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Управление заказами</h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-2xl font-bold text-gray-900">Управление заказами</h2>
+          {newOrdersCount > 0 && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="flex items-center bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium"
+            >
+              <BellRing className="w-4 h-4 mr-1" />
+              {newOrdersCount} новый заказ
+            </motion.div>
+          )}
+        </div>
         <p className="text-gray-600">Просматривайте и обновляйте статусы заказов</p>
       </div>
 
@@ -124,14 +156,20 @@ const AdminOrders = () => {
 
       {/* Orders List */}
       <div className="space-y-4">
-        {filteredOrders.map((order) => (
-          <motion.div
-            key={order.id}
-            layout
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-lg shadow-lg p-6"
-          >
+        {filteredOrders.map((order, index) => {
+          // Определяем, является ли заказ новым (первые 3 заказа считаются новыми)
+          const isNewOrder = index < 3 && order.status === 'pending';
+          
+          return (
+            <motion.div
+              key={order.id}
+              layout
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`bg-white rounded-lg shadow-lg p-6 ${
+                isNewOrder ? 'ring-2 ring-red-200 bg-red-50' : ''
+              }`}
+            >
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <div className="flex items-center space-x-4 mb-2">
@@ -141,6 +179,15 @@ const AdminOrders = () => {
                   <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
                     {getStatusText(order.status)}
                   </span>
+                  {isNewOrder && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800"
+                    >
+                      НОВЫЙ
+                    </motion.span>
+                  )}
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
@@ -261,7 +308,8 @@ const AdminOrders = () => {
               </button>
             </div>
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Order Details Modal */}

@@ -393,7 +393,7 @@ export const getOverallStats = () => {
 };
 
 // Функция для добавления нового заказа
-export const addNewOrder = (orderData, userId = null) => {
+export const addNewOrder = async (orderData, userId = null) => {
   const ordersData = getOrdersData();
   const newOrder = {
     id: ordersData.length + 1,
@@ -423,11 +423,22 @@ export const addNewOrder = (orderData, userId = null) => {
   
   const updatedOrders = [newOrder, ...ordersData]; // Добавляем в начало массива
   saveOrdersData(updatedOrders);
+  
+  // Отправляем уведомление в Telegram (асинхронно, не блокируем создание заказа)
+  try {
+    const { sendNewOrderNotification } = await import('../utils/telegramNotifications');
+    sendNewOrderNotification(newOrder).catch(error => {
+      console.error('Failed to send Telegram notification:', error);
+    });
+  } catch (error) {
+    console.error('Error importing telegram notifications:', error);
+  }
+  
   return newOrder;
 };
 
 // Функция для обновления статуса заказа
-export const updateOrderStatus = (orderId, newStatus) => {
+export const updateOrderStatus = async (orderId, newStatus) => {
   const ordersData = getOrdersData();
   const orderIndex = ordersData.findIndex(o => o.id === orderId);
   
@@ -481,6 +492,16 @@ export const updateOrderStatus = (orderId, newStatus) => {
         user.orders = userOrders;
         localStorage.setItem('tomyangbar_user', JSON.stringify(user));
       }
+    }
+    
+    // Отправляем уведомление об обновлении статуса в Telegram
+    try {
+      const { sendStatusUpdateNotification } = await import('../utils/telegramNotifications');
+      sendStatusUpdateNotification(updatedOrder).catch(error => {
+        console.error('Failed to send status update notification:', error);
+      });
+    } catch (error) {
+      console.error('Error importing telegram notifications:', error);
     }
     
     return updatedOrder;

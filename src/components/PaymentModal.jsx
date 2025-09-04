@@ -209,7 +209,11 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
             <div className="bg-blue-50 rounded-lg p-4 mb-6">
               <h4 className="font-semibold text-blue-900 mb-2">Умный платеж YooKassa</h4>
               <p className="text-sm text-blue-800">
-                На странице оплаты вы сможете выбрать удобный способ: банковскую карту, СБП, ЮMoney или другие доступные варианты.
+                На странице оплаты вы сможете выбрать удобный способ: банковскую карту, ЮMoney.
+                <br />
+                <span className="text-xs text-gray-600">
+                  СБП и другие методы доступны только в продакшене после активации в YooKassa.
+                </span>
               </p>
             </div>
 

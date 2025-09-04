@@ -12,6 +12,10 @@ export const PAYMENT_CONFIG = {
   // Настройки для тестового режима
   isTestMode: true,
   
+  // ВАЖНО: В тестовом режиме YooKassa доступны не все методы оплаты
+  // Доступны: банковские карты, ЮMoney
+  // НЕ доступны: СБП, SberPay, QIWI, WebMoney (требуют активации в продакшене)
+  
   // Валюта
   currency: 'RUB',
   
@@ -26,76 +30,95 @@ export const PAYMENT_CONFIG = {
   cancelUrl: `${window.location.origin}/payment/cancel`,
   
   // Настройки для разных способов оплаты
+  // ВАЖНО: В тестовом режиме доступны только базовые методы
   paymentMethods: {
     bank_card: {
       enabled: true,
       name: 'Банковская карта',
-      description: 'Оплата банковской картой'
+      description: 'Оплата банковской картой',
+      availableInTest: true // Доступно в тестовом режиме
     },
     yoo_money: {
       enabled: true,
       name: 'ЮMoney',
-      description: 'Оплата через ЮMoney'
+      description: 'Оплата через ЮMoney',
+      availableInTest: true // Доступно в тестовом режиме
     },
     qiwi: {
-      enabled: true,
+      enabled: false, // Отключено в тестовом режиме
       name: 'QIWI',
-      description: 'Оплата через QIWI'
+      description: 'Оплата через QIWI (только в продакшене)',
+      availableInTest: false
     },
     webmoney: {
-      enabled: true,
+      enabled: false, // Отключено в тестовом режиме
       name: 'WebMoney',
-      description: 'Оплата через WebMoney'
+      description: 'Оплата через WebMoney (только в продакшене)',
+      availableInTest: false
     },
     alfabank: {
-      enabled: true,
+      enabled: false, // Отключено в тестовом режиме
       name: 'Альфа-Клик',
-      description: 'Оплата через Альфа-Клик'
+      description: 'Оплата через Альфа-Клик (только в продакшене)',
+      availableInTest: false
     },
     sberbank: {
-      enabled: true,
+      enabled: false, // Отключено в тестовом режиме
       name: 'Сбербанк Онлайн',
-      description: 'Оплата через Сбербанк Онлайн'
+      description: 'Оплата через Сбербанк Онлайн (только в продакшене)',
+      availableInTest: false
+    },
+    sbp: {
+      enabled: false, // Отключено в тестовом режиме
+      name: 'СБП (Система быстрых платежей)',
+      description: 'Оплата через СБП (только в продакшене)',
+      availableInTest: false
+    },
+    sberpay: {
+      enabled: false, // Отключено в тестовом режиме
+      name: 'SberPay',
+      description: 'Оплата через SberPay (только в продакшене)',
+      availableInTest: false
     }
+  }
+};
+
+// Функция для получения доступных методов оплаты в зависимости от режима
+export const getAvailablePaymentMethods = () => {
+  const methods = [];
+  
+  Object.entries(PAYMENT_CONFIG.paymentMethods).forEach(([key, method]) => {
+    // В тестовом режиме показываем только доступные методы
+    if (PAYMENT_CONFIG.isTestMode) {
+      if (method.availableInTest) {
+        methods.push({ key, ...method });
+      }
+    } else {
+      // В продакшене показываем все включенные методы
+      if (method.enabled) {
+        methods.push({ key, ...method });
+      }
+    }
+  });
+  
+  return methods;
+};
+
+// Функция для проверки доступности метода оплаты
+export const isPaymentMethodAvailable = (methodKey) => {
+  const method = PAYMENT_CONFIG.paymentMethods[methodKey];
+  if (!method) return false;
+  
+  if (PAYMENT_CONFIG.isTestMode) {
+    return method.availableInTest;
+  } else {
+    return method.enabled;
   }
 };
 
 // Функция для создания платежа
 export const createPayment = async (orderData) => {
   try {
-    const paymentData = {
-      amount: {
-        value: orderData.total.toFixed(2),
-        currency: PAYMENT_CONFIG.currency
-      },
-      confirmation: {
-        type: 'redirect',
-        return_url: PAYMENT_CONFIG.returnUrl
-      },
-      capture: PAYMENT_CONFIG.capture, // Одностадийный платеж - сразу списание с карты
-      description: `Заказ #${orderData.orderId} в ресторане Tom Yang Bar`,
-      metadata: {
-        orderId: orderData.orderId,
-        customerName: orderData.customerName,
-        customerPhone: orderData.customerPhone,
-        customerEmail: orderData.customerEmail
-      },
-      receipt: {
-        customer: {
-          email: orderData.customerEmail,
-          phone: orderData.customerPhone
-        },
-        items: orderData.items.map(item => ({
-          description: item.name,
-          quantity: item.quantity.toString(),
-          amount: {
-            value: (item.price * item.quantity).toFixed(2),
-            currency: PAYMENT_CONFIG.currency
-          },
-          vat_code: 1 // НДС 20%
-        }))
-      }
-    };
 
     // Запрос к нашему API endpoint
     const response = await fetch('/api/payment/create', {
@@ -110,9 +133,9 @@ export const createPayment = async (orderData) => {
       const errorData = await response.json();
       console.error('Payment API Error:', errorData);
       
-      // Специальная обработка для недоступного СБП
-      if (errorData.code === 'SBP_NOT_AVAILABLE') {
-        throw new Error(`СБП недоступен: ${errorData.details}`);
+      // Специальная обработка для недоступных методов оплаты
+      if (errorData.code === 'PAYMENT_METHOD_NOT_AVAILABLE' || errorData.code === 'SBP_NOT_AVAILABLE') {
+        throw new Error(`${errorData.error}: ${errorData.details}`);
       }
       
       throw new Error(`Ошибка создания платежа: ${errorData.details || errorData.error || 'Неизвестная ошибка'}`);
