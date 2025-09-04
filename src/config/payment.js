@@ -15,6 +15,11 @@ export const PAYMENT_CONFIG = {
   // Валюта
   currency: 'RUB',
   
+  // Режим платежей
+  // capture: true - одностадийный платеж (сразу списание)
+  // capture: false - двухстадийный платеж (сначала авторизация, потом подтверждение)
+  capture: true,
+  
   // Настройки уведомлений
   notificationUrl: `${window.location.origin}/api/payment/notification`,
   returnUrl: `${window.location.origin}/payment/success`,
@@ -70,6 +75,7 @@ export const createPayment = async (orderData) => {
         type: 'redirect',
         return_url: PAYMENT_CONFIG.returnUrl
       },
+      capture: PAYMENT_CONFIG.capture, // Одностадийный платеж - сразу списание с карты
       description: `Заказ #${orderData.orderId} в ресторане Tom Yang Bar`,
       metadata: {
         orderId: orderData.orderId,
