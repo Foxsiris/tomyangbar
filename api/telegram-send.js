@@ -28,8 +28,8 @@ export default async function handler(req, res) {
 
     // Конфигурация Telegram
     const TELEGRAM_CONFIG = {
-      botToken: process.env.TELEGRAM_BOT_TOKEN || '7983524024:AAGef88m9TbeoPwEcg5mvOwR28Bzcc2q91A',
-      chatId: process.env.TELEGRAM_CHAT_ID || '594704789',
+      botToken: process.env.TELEGRAM_BOT_TOKEN,
+      chatId: process.env.TELEGRAM_CHAT_ID,
       isTestMode: process.env.NODE_ENV !== 'production'
     };
     
@@ -38,6 +38,22 @@ export default async function handler(req, res) {
     console.log('Chat ID:', TELEGRAM_CONFIG.chatId);
     console.log('Test Mode:', TELEGRAM_CONFIG.isTestMode);
     console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('Все переменные окружения:', Object.keys(process.env).filter(key => key.includes('TELEGRAM')));
+    
+    // Проверяем наличие обязательных переменных
+    if (!TELEGRAM_CONFIG.botToken) {
+      return res.status(500).json({
+        error: 'TELEGRAM_BOT_TOKEN not configured',
+        details: 'Bot token is missing from environment variables'
+      });
+    }
+    
+    if (!TELEGRAM_CONFIG.chatId) {
+      return res.status(500).json({
+        error: 'TELEGRAM_CHAT_ID not configured',
+        details: 'Chat ID is missing from environment variables'
+      });
+    }
 
     // В тестовом режиме логируем
     if (TELEGRAM_CONFIG.isTestMode) {
@@ -55,18 +71,29 @@ export default async function handler(req, res) {
     }
 
     // Отправляем сообщение через Telegram Bot API
-    const telegramResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_CONFIG.botToken}/sendMessage`, {
+    const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_CONFIG.botToken}/sendMessage`;
+    const telegramPayload = {
+      chat_id: TELEGRAM_CONFIG.chatId,
+      text: message,
+      parse_mode: 'Markdown',
+      disable_web_page_preview: true
+    };
+    
+    console.log('📤 Отправляем запрос в Telegram API:');
+    console.log('URL:', telegramUrl);
+    console.log('Payload:', telegramPayload);
+    
+    const telegramResponse = await fetch(telegramUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CONFIG.chatId,
-        text: message,
-        parse_mode: 'Markdown',
-        disable_web_page_preview: true
-      })
+      body: JSON.stringify(telegramPayload)
     });
+
+    console.log('📥 Ответ от Telegram API:');
+    console.log('Status:', telegramResponse.status);
+    console.log('Status Text:', telegramResponse.statusText);
 
     if (!telegramResponse.ok) {
       const errorData = await telegramResponse.json();
@@ -75,7 +102,8 @@ export default async function handler(req, res) {
       return res.status(500).json({
         error: 'Failed to send Telegram message',
         details: errorData.description || 'Unknown error',
-        chatId: TELEGRAM_CONFIG.chatId
+        chatId: TELEGRAM_CONFIG.chatId,
+        telegramError: errorData
       });
     }
 
