@@ -8,7 +8,6 @@ import { addNewOrder } from '../data/ordersData';
 import OrderSuccessModal from '../components/OrderSuccessModal';
 import AuthModal from '../components/AuthModal';
 import PaymentModal from '../components/PaymentModal';
-import SBPModal from '../components/SBPModal';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -32,7 +31,6 @@ const Checkout = () => {
   const [orderNumber, setOrderNumber] = useState(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [isSBPModalOpen, setIsSBPModalOpen] = useState(false);
   const [currentOrderData, setCurrentOrderData] = useState(null);
 
   // Заполняем форму данными пользователя, если он авторизован
@@ -111,19 +109,13 @@ const Checkout = () => {
         newOrder = addNewOrder(orderData);
       }
       
-      // Если выбран онлайн-платеж, показываем соответствующее модальное окно
-      if (formData.paymentMethod === 'card') {
+      // Если выбран онлайн-платеж, показываем модальное окно платежа
+      if (formData.paymentMethod === 'card' || formData.paymentMethod === 'sbp') {
         setCurrentOrderData({
           ...orderData,
           orderId: newOrder.id
         });
         setIsPaymentModalOpen(true);
-      } else if (formData.paymentMethod === 'sbp') {
-        setCurrentOrderData({
-          ...orderData,
-          orderId: newOrder.id
-        });
-        setIsSBPModalOpen(true);
       } else {
         // Для наличных показываем обычное окно успеха
         setOrderNumber(newOrder.id);
@@ -160,23 +152,6 @@ const Checkout = () => {
     setCurrentOrderData(null);
   };
 
-  const handleSBPSuccess = (paymentId) => {
-    console.log('SBP Payment Success:', paymentId);
-    setIsSBPModalOpen(false);
-    setCurrentOrderData(null);
-    setOrderNumber(currentOrderData?.orderId);
-    setShowSuccessModal(true);
-  };
-
-  const handleSBPError = (error) => {
-    console.error('SBP Payment Error:', error);
-    // Можно показать уведомление об ошибке
-  };
-
-  const handleSBPModalClose = () => {
-    setIsSBPModalOpen(false);
-    setCurrentOrderData(null);
-  };
 
   if (cart.length === 0) {
     return (
@@ -577,16 +552,6 @@ const Checkout = () => {
         />
       )}
 
-      {/* SBP Modal */}
-      {currentOrderData && (
-        <SBPModal
-          isOpen={isSBPModalOpen}
-          onClose={handleSBPModalClose}
-          orderData={currentOrderData}
-          onPaymentSuccess={handleSBPSuccess}
-          onPaymentError={handleSBPError}
-        />
-      )}
     </div>
   );
 };

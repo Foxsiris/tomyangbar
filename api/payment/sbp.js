@@ -24,12 +24,14 @@ export default async function handler(req, res) {
 
     // Конфигурация для СБП
     const SBP_CONFIG = {
-      // В реальном проекте здесь будут ваши данные для СБП
-      merchantId: 'test_merchant_123',
-      secretKey: 'test_sbp_secret_key',
+      // Реальные данные для СБП (нужно получить в банке или платежном сервисе)
+      apiUrl: 'https://api.joinpay.ru/v1', // Пример API для СБП
+      merchantId: process.env.SBP_MERCHANT_ID || 'your_merchant_id',
+      secretKey: process.env.SBP_SECRET_KEY || 'your_secret_key',
       returnUrl: 'https://tomyangbar.vercel.app/payment/sbp/success',
       cancelUrl: 'https://tomyangbar.vercel.app/payment/sbp/cancel',
-      isTestMode: true
+      webhookUrl: 'https://tomyangbar.vercel.app/api/payment/sbp-webhook',
+      isTestMode: process.env.NODE_ENV !== 'production'
     };
 
     // Подготовка данных для СБП

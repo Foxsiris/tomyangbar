@@ -163,7 +163,11 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white relative">
+          <div className={`p-6 text-white relative ${
+            orderData.paymentMethod === 'sbp' 
+              ? 'bg-gradient-to-r from-green-600 to-blue-600' 
+              : 'bg-gradient-to-r from-blue-600 to-purple-600'
+          }`}>
             <button
               onClick={onClose}
               className="absolute top-4 right-4 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-2 transition-colors"
@@ -174,7 +178,9 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
             <div className="flex items-center space-x-3">
               {getStatusIcon()}
               <div>
-                <h2 className="text-xl font-bold">Оплата заказа</h2>
+                <h2 className="text-xl font-bold">
+                  {orderData.paymentMethod === 'sbp' ? 'Оплата через СБП' : 'Оплата заказа'}
+                </h2>
                 <p className="text-blue-100 text-sm">#{orderData.orderId}</p>
               </div>
             </div>
@@ -201,7 +207,7 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
                 <div className="flex justify-between">
                   <span>Способ оплаты:</span>
                   <span className="font-semibold">
-                    {orderData.paymentMethod === 'sbp' ? 'СБП' : 
+                    {orderData.paymentMethod === 'sbp' ? 'СБП (через YooKassa)' : 
                      orderData.paymentMethod === 'card' ? 'Банковская карта' : 
                      'Наличные'}
                   </span>
@@ -233,10 +239,16 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
               {paymentStatus === 'idle' && (
                 <button
                   onClick={handleCreatePayment}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2"
+                  className={`w-full text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center space-x-2 ${
+                    orderData.paymentMethod === 'sbp'
+                      ? 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700'
+                      : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+                  }`}
                 >
                   <CreditCard className="w-5 h-5" />
-                  <span>Перейти к оплате</span>
+                  <span>
+                    {orderData.paymentMethod === 'sbp' ? 'Оплатить через СБП' : 'Перейти к оплате'}
+                  </span>
                 </button>
               )}
               

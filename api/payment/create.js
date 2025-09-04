@@ -73,7 +73,7 @@ export default async function handler(req, res) {
       }
     };
 
-    // Если выбран СБП, добавляем специальные настройки
+    // Если выбран СБП, добавляем специальные настройки для YooKassa
     if (isSBP) {
       paymentData.payment_method_data = {
         type: 'sbp'
@@ -82,6 +82,9 @@ export default async function handler(req, res) {
         type: 'redirect',
         return_url: PAYMENT_CONFIG.returnUrl
       };
+      
+      // Для СБП в YooKassa можно указать дополнительные параметры
+      paymentData.save_payment_method = false;
     }
 
     // Создание платежа в YooKassa
