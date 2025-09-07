@@ -32,11 +32,11 @@ const AddressAutocomplete = ({
     try {
       // Используем наш API endpoint для получения подсказок
       const apiUrl = import.meta.env.DEV 
-        ? 'http://localhost:3000/api/yandex/suggest' 
-        : '/api/yandex/suggest';
+        ? 'http://localhost:3000/api/yandex' 
+        : '/api/yandex';
       
       const response = await fetch(
-        `${apiUrl}?text=${encodeURIComponent(query)}&type=address&lang=ru_RU&results=10`
+        `${apiUrl}?action=suggest&text=${encodeURIComponent(query)}&type=address&lang=ru_RU&results=10`
       );
       
       if (response.ok) {

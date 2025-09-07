@@ -7,8 +7,7 @@
 ## Новые файлы
 
 ### API Endpoints:
-- `api/yandex/suggest.js` - подсказки адресов
-- `api/yandex/geocode.js` - геокодирование адресов
+- `api/yandex.js` - единый endpoint для всех Yandex API операций
 
 ### Документация:
 - `YANDEX_API_SETUP.md` - подробная инструкция по настройке
@@ -43,9 +42,8 @@
 
 ## API Endpoints
 
-После развертывания будут доступны:
-- `https://your-domain.vercel.app/api/yandex/suggest`
-- `https://your-domain.vercel.app/api/yandex/geocode`
+После развертывания будет доступен:
+- `https://your-domain.vercel.app/api/yandex` (с параметром action)
 
 ## Получение API ключа
 

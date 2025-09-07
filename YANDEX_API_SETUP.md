@@ -6,27 +6,23 @@ Yandex Maps API не позволяет делать запросы напрям
 
 ## Созданные API endpoints
 
-### 1. `/api/yandex/suggest` - Подсказки адресов
+### `/api/yandex` - Единый endpoint для Yandex API
 - **Метод**: GET
 - **Параметры**: 
-  - `text` - текст для поиска (обязательный)
-  - `type` - тип поиска (по умолчанию: address)
-  - `lang` - язык (по умолчанию: ru_RU)
-  - `results` - количество результатов (по умолчанию: 10)
+  - `action` - действие (suggest или geocode)
+  - Для suggest: `text`, `type`, `lang`, `results`
+  - Для geocode: `address`
 
-**Пример запроса:**
+**Примеры запросов:**
+
+Подсказки адресов:
 ```
-GET /api/yandex/suggest?text=площадь&type=address&lang=ru_RU&results=10
+GET /api/yandex?action=suggest&text=площадь&type=address&lang=ru_RU&results=10
 ```
 
-### 2. `/api/yandex/geocode` - Геокодирование адреса
-- **Метод**: GET
-- **Параметры**:
-  - `address` - адрес для геокодирования (обязательный)
-
-**Пример запроса:**
+Геокодирование:
 ```
-GET /api/yandex/geocode?address=Саратов, площадь Ленина, 1
+GET /api/yandex?action=geocode&address=Саратов, площадь Ленина, 1
 ```
 
 ## Настройка переменных окружения
@@ -76,8 +72,7 @@ YANDEX_MAPS_API_KEY=ваш_api_ключ_здесь
 При развертывании на Vercel/Netlify:
 1. Убедитесь, что переменная `YANDEX_MAPS_API_KEY` настроена
 2. API endpoints будут доступны по адресам:
-   - `https://your-domain.vercel.app/api/yandex/suggest`
-   - `https://your-domain.vercel.app/api/yandex/geocode`
+   - `https://your-domain.vercel.app/api/yandex` (с параметром action)
 
 ## Безопасность
 
