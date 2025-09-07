@@ -20,30 +20,7 @@ const AddressAutocomplete = ({
   const suggestionsRef = useRef(null);
   const timeoutRef = useRef(null);
 
-  // Временные подсказки для работы без API ключа
-  const generateTemporarySuggestions = (query) => {
-    const queryLower = query.toLowerCase();
-    const commonHouses = ['1', '2', '3', '4', '5', '6', '7', '8'];
-    
-    // Проверяем, является ли это поиском улицы
-    const isStreetSearch = !/\d+[а-я]?$/.test(queryLower.trim()) && 
-                          (/(улица|ул\.?|проспект|пр\.?|переулок|пер\.?|площадь|пл\.?)/.test(queryLower) || 
-                           queryLower.split(' ').length <= 3);
-    
-    if (isStreetSearch) {
-      const streetName = query.includes('ул.') ? query : `ул. ${query}`;
-      return commonHouses.map(house => ({
-        title: `${streetName}, ${house}`,
-        subtitle: 'Саратов, Саратовская область',
-        uri: `${query.toLowerCase().replace(/\s+/g, '_')}_${house}`,
-        isTemporary: true
-      }));
-    }
-    
-    return [];
-  };
-
-  // Функция для получения подсказок адресов
+  // Функция для получения подсказок адресов через SuggestView
   const fetchAddressSuggestions = useCallback(async (query) => {
     if (!query || query.length < 2) {
       setSuggestions([]);
@@ -53,16 +30,25 @@ const AddressAutocomplete = ({
     setIsLoading(true);
     
     try {
-      // Используем только API
-      const response = await fetch(
-        `/api/yandex?action=suggest&text=${encodeURIComponent(query)}&type=address&lang=ru_RU&results=10`
-      );
-      
-      if (response.ok) {
-        const data = await response.json();
-        setSuggestions(data.results || []);
+      // Используем SuggestView от Яндекс карт
+      if (window.ymaps && window.ymaps.suggest) {
+        // Получаем подсказки
+        const suggestions = await window.ymaps.suggest(query, {
+          results: 10,
+          boundedBy: [[51.4, 45.9], [51.6, 46.1]], // Ограничиваем поиск Саратовом
+          strictBounds: false
+        });
+        
+        const formattedSuggestions = suggestions.map(suggestion => ({
+          title: suggestion.displayName,
+          subtitle: suggestion.description || 'Саратов, Саратовская область',
+          uri: suggestion.uri,
+          value: suggestion.value
+        }));
+        
+        setSuggestions(formattedSuggestions);
       } else {
-        console.warn('Ошибка получения подсказок адресов:', response.status);
+        console.warn('Yandex Maps API не загружен');
         setSuggestions([]);
       }
     } catch (error) {
