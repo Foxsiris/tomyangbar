@@ -63,27 +63,52 @@ async function handleSuggest(req, res, params) {
   const suggestUrl = `https://suggest-maps.yandex.ru/v1/suggest?apikey=${YANDEX_API_KEY}&text=${encodeURIComponent(text)}&type=${type}&lang=${lang}&results=${results}`;
   const geocoderUrl = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&geocode=${encodeURIComponent(text)}&format=json&results=${results}`;
 
-  // Пробуем сначала Suggest API
-  console.log('Trying Suggest API:', suggestUrl);
-  
-  let response = await fetch(suggestUrl, {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (compatible; RestaurantApp/1.0)'
-    }
-  });
+  // Пробуем разные варианты поиска для лучших результатов
+  const searchVariants = [
+    text, // исходный запрос
+    text + ' Саратов', // добавляем город
+    text.replace(/\s+/g, ''), // убираем пробелы
+    text.split(' ')[0] // только первое слово
+  ].filter((variant, index, arr) => arr.indexOf(variant) === index); // убираем дубликаты
 
-  let data;
-  
-  if (response.ok) {
-    console.log('Suggest API success');
-    data = await response.json();
-  } else {
-    console.log('Suggest API failed, trying Geocoder API:', response.status);
+  let data = { results: [] };
+  let lastError = null;
+
+  for (const searchText of searchVariants) {
+    const currentSuggestUrl = `https://suggest-maps.yandex.ru/v1/suggest?apikey=${YANDEX_API_KEY}&text=${encodeURIComponent(searchText)}&type=address&lang=ru_RU&results=${results}`;
     
-    // Пробуем Geocoder API как fallback
-    response = await fetch(geocoderUrl, {
+    console.log('Trying Suggest API with:', searchText);
+    
+    try {
+      const response = await fetch(currentSuggestUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (compatible; RestaurantApp/1.0)'
+        }
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+        if (responseData.results && responseData.results.length > 0) {
+          console.log('Suggest API success with:', searchText);
+          data = responseData;
+          break; // Нашли результаты, выходим из цикла
+        }
+      } else {
+        lastError = response.status;
+      }
+    } catch (error) {
+      console.error('Error with search variant:', searchText, error);
+      lastError = error.message;
+    }
+  }
+
+  // Если Suggest API не дал результатов, пробуем Geocoder API
+  if (data.results.length === 0) {
+    console.log('Suggest API failed, trying Geocoder API');
+    
+    const response = await fetch(geocoderUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
