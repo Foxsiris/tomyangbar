@@ -337,40 +337,11 @@ const AddressChecker = ({ address, onZoneFound, onZoneNotFound }) => {
       }
     }
     
-    // Fallback: тестовые координаты для демонстрации
-    const testCoordinates = {
-      'плякин': [51.5406, 46.0086], // Центр Саратова
-      'плякина': [51.5406, 46.0086],
-      'чапаева': [51.5406, 46.0086],
-      'московская': [51.535, 46.005],
-      'волжская': [51.545, 46.015],
-      'проспект': [51.530, 46.010],
-      'университетская': [51.525, 46.020]
-    };
+    // Fallback: используем центр Саратова для всех адресов
+    const fallbackCoordinates = [51.5406, 46.0086]; // Центр Саратова
     
-    // Ищем подходящие координаты по ключевым словам
-    const addressLower = address.toLowerCase();
-    let foundCoordinates = null;
-    
-    for (const [keyword, coords] of Object.entries(testCoordinates)) {
-      if (addressLower.includes(keyword)) {
-        foundCoordinates = coords;
-        break;
-      }
-    }
-    
-    // Если не нашли по ключевым словам, используем случайные координаты в центре Саратова
-    if (!foundCoordinates) {
-      // Генерируем случайные координаты в пределах Саратова
-      const baseLat = 51.5406;
-      const baseLon = 46.0086;
-      const offset = 0.01; // Примерно 1км
-      
-      foundCoordinates = [
-        baseLat + (Math.random() - 0.5) * offset,
-        baseLon + (Math.random() - 0.5) * offset
-      ];
-    }
+    // Используем fallback координаты для всех адресов
+    let foundCoordinates = fallbackCoordinates;
     
     // Проверяем, в какой зоне находится адрес
     const foundZone = checkPointInZones(foundCoordinates);
