@@ -1,6 +1,10 @@
 // API ключ Яндекс.Карт
 const YANDEX_API_KEY = process.env.YANDEX_MAPS_API_KEY || 'YOUR_YANDEX_MAPS_API_KEY';
 
+// Отладочная информация
+console.log('Yandex API Key configured:', YANDEX_API_KEY ? 'YES' : 'NO');
+console.log('API Key length:', YANDEX_API_KEY ? YANDEX_API_KEY.length : 0);
+
 // Единый endpoint для всех Yandex API запросов
 export default async function handler(req, res) {
   // Настройка CORS
@@ -42,6 +46,15 @@ async function handleSuggest(req, res, params) {
 
   if (!text || text.length < 3) {
     return res.json({ results: [] });
+  }
+
+  // Проверяем API ключ
+  if (!YANDEX_API_KEY || YANDEX_API_KEY === 'YOUR_YANDEX_MAPS_API_KEY') {
+    console.error('Yandex API Key not configured');
+    return res.status(500).json({ 
+      error: 'API ключ Yandex Maps не настроен',
+      message: 'Обратитесь к администратору для настройки YANDEX_MAPS_API_KEY'
+    });
   }
 
   // Формируем URL для запроса к Yandex API
