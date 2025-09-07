@@ -146,6 +146,38 @@ async function handleSuggest(req, res, params) {
   // Если есть адреса в Саратове - показываем их в первую очередь
   // Если нет - показываем все найденные адреса
   let finalResults = saratovAddresses.length > 0 ? saratovAddresses : allAddresses;
+
+  // Добавляем номера домов к найденным улицам
+  if (finalResults.length > 0) {
+    const enhancedResults = [];
+    
+    for (const result of finalResults) {
+      // Добавляем оригинальный результат
+      enhancedResults.push(result);
+      
+      // Если это улица без номера дома, добавляем варианты с домами
+      const title = result.title.toLowerCase();
+      const isStreet = title.includes('улица') || title.includes('ул.') || 
+                      title.includes('проспект') || title.includes('пр.') ||
+                      title.includes('переулок') || title.includes('пер.');
+      
+      if (isStreet && !/\d+/.test(result.title)) {
+        // Генерируем номера домов для этой улицы
+        const houseNumbers = ['1', '2', '3', '4', '5', '6', '7', '8'];
+        
+        houseNumbers.forEach(house => {
+          enhancedResults.push({
+            title: `${result.title}, ${house}`,
+            subtitle: result.subtitle,
+            uri: `${result.uri}_${house}`,
+            isGenerated: true
+          });
+        });
+      }
+    }
+    
+    finalResults = enhancedResults;
+  }
   
   // Дополнительная фильтрация по тексту запроса для более точных результатов
   if (text && text.length > 2 && finalResults.length > 0) {
