@@ -4,6 +4,7 @@ const YANDEX_API_KEY = process.env.YANDEX_MAPS_API_KEY || 'YOUR_YANDEX_MAPS_API_
 // Отладочная информация
 console.log('Yandex API Key configured:', YANDEX_API_KEY ? 'YES' : 'NO');
 console.log('API Key length:', YANDEX_API_KEY ? YANDEX_API_KEY.length : 0);
+console.log('Environment:', process.env.NODE_ENV || 'development');
 
 // Единый endpoint для всех Yandex API запросов
 export default async function handler(req, res) {

@@ -109,6 +109,8 @@ src/
 
 Сайт доступен по адресу: [http://localhost:5173](http://localhost:5173)
 
+**Продакшен**: [tomyangbar.vercel.app](https://tomyangbar.vercel.app)
+
 ## 📞 Контакты
 
 - **Телефон**: +7 (927) 112-65-00
