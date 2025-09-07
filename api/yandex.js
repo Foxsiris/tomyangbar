@@ -59,10 +59,14 @@ async function handleSuggest(req, res, params) {
   }
 
   // Формируем URL для запроса к Yandex API
-  const yandexUrl = `https://suggest-maps.yandex.ru/v1/suggest?apikey=${YANDEX_API_KEY}&text=${encodeURIComponent(text)}&type=${type}&lang=${lang}&results=${results}`;
+  // Попробуем сначала Suggest API, если не работает - используем Geocoder
+  const suggestUrl = `https://suggest-maps.yandex.ru/v1/suggest?apikey=${YANDEX_API_KEY}&text=${encodeURIComponent(text)}&type=${type}&lang=${lang}&results=${results}`;
+  const geocoderUrl = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&geocode=${encodeURIComponent(text)}&format=json&results=${results}`;
 
-  // Делаем запрос к Yandex API
-  const response = await fetch(yandexUrl, {
+  // Пробуем сначала Suggest API
+  console.log('Trying Suggest API:', suggestUrl);
+  
+  let response = await fetch(suggestUrl, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -70,15 +74,46 @@ async function handleSuggest(req, res, params) {
     }
   });
 
-  if (!response.ok) {
-    console.error('Yandex API error:', response.status, response.statusText);
-    return res.status(response.status).json({ 
-      error: 'Ошибка при запросе к Yandex API',
-      status: response.status 
+  let data;
+  
+  if (response.ok) {
+    console.log('Suggest API success');
+    data = await response.json();
+  } else {
+    console.log('Suggest API failed, trying Geocoder API:', response.status);
+    
+    // Пробуем Geocoder API как fallback
+    response = await fetch(geocoderUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; RestaurantApp/1.0)'
+      }
     });
-  }
 
-  const data = await response.json();
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Both APIs failed:', response.status, response.statusText, errorText);
+      return res.status(response.status).json({ 
+        error: 'Ошибка при запросе к Yandex API',
+        status: response.status,
+        details: errorText
+      });
+    }
+
+    console.log('Geocoder API success');
+    const geocoderData = await response.json();
+    
+    // Преобразуем данные Geocoder в формат Suggest API
+    const geoObjects = geocoderData.response?.GeoObjectCollection?.featureMember || [];
+    data = {
+      results: geoObjects.map(item => ({
+        title: item.GeoObject.name,
+        subtitle: item.GeoObject.description || 'Саратов, Саратовская область',
+        uri: item.GeoObject.metaDataProperty.GeocoderMetaData.uri
+      }))
+    };
+  }
   
   // Фильтруем только адреса в Саратове
   const saratovAddresses = (data.results || []).filter(item => 
