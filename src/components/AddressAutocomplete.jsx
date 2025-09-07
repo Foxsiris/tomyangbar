@@ -22,7 +22,7 @@ const AddressAutocomplete = ({
 
   // Функция для получения подсказок адресов
   const fetchAddressSuggestions = useCallback(async (query) => {
-    if (!query || query.length < 3) {
+    if (!query || query.length < 2) {
       setSuggestions([]);
       return;
     }
@@ -230,7 +230,7 @@ const AddressAutocomplete = ({
                   </div>
                 </button>
               ))
-            ) : inputValue.length >= 3 ? (
+            ) : inputValue.length >= 2 ? (
               <div className="p-4 text-center text-gray-500">
                 <Search className="h-6 w-6 mx-auto mb-2 text-gray-400" />
                 Адреса не найдены

@@ -115,15 +115,29 @@ async function handleSuggest(req, res, params) {
     };
   }
   
-  // Фильтруем только адреса в Саратове
-  const saratovAddresses = (data.results || []).filter(item => 
+  // Фильтруем адреса - приоритет Саратову, но показываем и другие варианты
+  const allAddresses = data.results || [];
+  const saratovAddresses = allAddresses.filter(item => 
     item.subtitle && item.subtitle.toLowerCase().includes('саратов')
   );
+  
+  // Если есть адреса в Саратове - показываем их в первую очередь
+  // Если нет - показываем все найденные адреса
+  let finalResults = saratovAddresses.length > 0 ? saratovAddresses : allAddresses;
+  
+  // Дополнительная фильтрация по тексту запроса для более точных результатов
+  if (text && text.length >= 2) {
+    const queryLower = text.toLowerCase();
+    finalResults = finalResults.filter(item => 
+      item.title && item.title.toLowerCase().includes(queryLower)
+    );
+  }
 
   res.json({ 
-    results: saratovAddresses,
-    originalCount: data.results ? data.results.length : 0,
-    filteredCount: saratovAddresses.length
+    results: finalResults,
+    originalCount: allAddresses.length,
+    filteredCount: finalResults.length,
+    hasSaratovResults: saratovAddresses.length > 0
   });
 }
 
