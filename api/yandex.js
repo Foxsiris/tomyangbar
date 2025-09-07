@@ -148,10 +148,9 @@ async function handleSuggest(req, res, params) {
   let finalResults = saratovAddresses.length > 0 ? saratovAddresses : allAddresses;
   
   // Дополнительная фильтрация по тексту запроса для более точных результатов
-  // Но только если запрос достаточно длинный (больше 3 символов)
-  if (text && text.length > 3) {
+  if (text && text.length > 2 && finalResults.length > 0) {
     const queryLower = text.toLowerCase();
-    finalResults = finalResults.filter(item => {
+    const filteredResults = finalResults.filter(item => {
       if (!item.title) return false;
       const titleLower = item.title.toLowerCase();
       
@@ -160,8 +159,18 @@ async function handleSuggest(req, res, params) {
       
       // Проверяем по словам (для случаев типа "Плякина" в "улица имени А.В. Плякина")
       const words = titleLower.split(/[\s,.-]+/);
-      return words.some(word => word.includes(queryLower));
+      const queryWords = queryLower.split(/[\s,.-]+/);
+      
+      // Проверяем, что хотя бы одно слово из запроса содержится в названии
+      return queryWords.some(queryWord => 
+        words.some(word => word.includes(queryWord))
+      );
     });
+    
+    // Если фильтрация дала результаты, используем их, иначе показываем все
+    if (filteredResults.length > 0) {
+      finalResults = filteredResults;
+    }
   }
 
 
