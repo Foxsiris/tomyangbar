@@ -20,6 +20,7 @@ const AddressAutocomplete = ({
   const suggestionsRef = useRef(null);
   const timeoutRef = useRef(null);
 
+
   // Функция для получения подсказок адресов
   const fetchAddressSuggestions = useCallback(async (query) => {
     if (!query || query.length < 2) {
@@ -30,13 +31,9 @@ const AddressAutocomplete = ({
     setIsLoading(true);
     
     try {
-      // Используем наш API endpoint для получения подсказок
-      const apiUrl = import.meta.env.DEV 
-        ? 'http://localhost:3000/api/yandex' 
-        : '/api/yandex';
-      
+      // Используем API для получения подсказок
       const response = await fetch(
-        `${apiUrl}?action=suggest&text=${encodeURIComponent(query)}&type=address&lang=ru_RU&results=10`
+        `/api/yandex?action=suggest&text=${encodeURIComponent(query)}&type=address&lang=ru_RU&results=10`
       );
       
       if (response.ok) {
