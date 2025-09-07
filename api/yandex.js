@@ -73,33 +73,31 @@ async function handleSuggest(req, res, params) {
 
   let data = { results: [] };
 
-  for (const searchText of searchVariants) {
-    const currentSuggestUrl = `https://suggest-maps.yandex.ru/v1/suggest?apikey=${YANDEX_API_KEY}&text=${encodeURIComponent(searchText)}&type=address&lang=ru_RU&results=${results}`;
-    
-    console.log('Trying Suggest API with:', searchText);
-    
-    try {
-      const response = await fetch(currentSuggestUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (compatible; RestaurantApp/1.0)'
-        }
-      });
-
-      if (response.ok) {
-        const responseData = await response.json();
-        if (responseData.results && responseData.results.length > 0) {
-          console.log('Suggest API success with:', searchText);
-          data = responseData;
-          break; // Нашли результаты, выходим из цикла
-        }
-      } else {
-        console.warn('Suggest API failed with status:', response.status);
+  // Используем только Suggest API
+  const suggestUrl = `https://suggest-maps.yandex.ru/v1/suggest?apikey=${YANDEX_API_KEY}&text=${encodeURIComponent(text)}&type=address&lang=ru_RU&results=${results}`;
+  
+  console.log('Trying Suggest API with:', text);
+  
+  try {
+    const response = await fetch(suggestUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; RestaurantApp/1.0)'
       }
-    } catch (error) {
-      console.error('Error with search variant:', searchText, error);
+    });
+
+    if (response.ok) {
+      const responseData = await response.json();
+      console.log('Suggest API response:', responseData);
+      data = responseData;
+    } else {
+      console.warn('Suggest API failed with status:', response.status);
+      const errorText = await response.text();
+      console.error('Error response:', errorText);
     }
+  } catch (error) {
+    console.error('Error with Suggest API:', error);
   }
 
   // Если Suggest API не дал результатов, пробуем Geocoder API

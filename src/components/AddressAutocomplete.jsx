@@ -20,7 +20,7 @@ const AddressAutocomplete = ({
   const suggestionsRef = useRef(null);
   const timeoutRef = useRef(null);
 
-  // Функция для получения подсказок адресов через SuggestView
+  // Функция для получения подсказок адресов
   const fetchAddressSuggestions = useCallback(async (query) => {
     if (!query || query.length < 2) {
       setSuggestions([]);
@@ -30,25 +30,16 @@ const AddressAutocomplete = ({
     setIsLoading(true);
     
     try {
-      // Используем SuggestView от Яндекс карт
-      if (window.ymaps && window.ymaps.suggest) {
-        // Получаем подсказки
-        const suggestions = await window.ymaps.suggest(query, {
-          results: 10,
-          boundedBy: [[51.4, 45.9], [51.6, 46.1]], // Ограничиваем поиск Саратовом
-          strictBounds: false
-        });
-        
-        const formattedSuggestions = suggestions.map(suggestion => ({
-          title: suggestion.displayName,
-          subtitle: suggestion.description || 'Саратов, Саратовская область',
-          uri: suggestion.uri,
-          value: suggestion.value
-        }));
-        
-        setSuggestions(formattedSuggestions);
+      // Используем наш API endpoint
+      const response = await fetch(
+        `/api/yandex?action=suggest&text=${encodeURIComponent(query)}&type=address&lang=ru_RU&results=10`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSuggestions(data.results || []);
       } else {
-        console.warn('Yandex Maps API не загружен');
+        console.warn('Ошибка получения подсказок адресов:', response.status);
         setSuggestions([]);
       }
     } catch (error) {
