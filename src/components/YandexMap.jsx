@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { CheckCircle, XCircle } from 'lucide-react';
+import AddressAutocomplete from './AddressAutocomplete';
 
 const YandexMap = () => {
   const mapRef = useRef(null);
@@ -503,13 +504,18 @@ const YandexMap = () => {
               Улица
             </label>
             <div className="flex gap-2">
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Введите адрес"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
+              <div className="flex-1">
+                <AddressAutocomplete
+                  value={address}
+                  onChange={setAddress}
+                  placeholder="Введите адрес"
+                  onAddressSelect={(suggestion) => {
+                    // Автоматически проверяем адрес при выборе из подсказок
+                    setAddress(suggestion.title);
+                    setTimeout(() => checkAddress(), 100);
+                  }}
+                />
+              </div>
               <button
                 onClick={checkAddress}
                 disabled={isChecking}

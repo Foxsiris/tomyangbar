@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { CheckCircle, XCircle, MapPin } from 'lucide-react';
+import AddressAutocomplete from './AddressAutocomplete';
 
 const AddressChecker = ({ address, onZoneFound, onZoneNotFound }) => {
   const [addressResult, setAddressResult] = useState(null);

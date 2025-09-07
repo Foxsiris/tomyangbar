@@ -9,6 +9,7 @@ import OrderSuccessModal from '../components/OrderSuccessModal';
 import AuthModal from '../components/AuthModal';
 import PaymentModal from '../components/PaymentModal';
 import AddressChecker from '../components/AddressChecker';
+import AddressAutocomplete from '../components/AddressAutocomplete';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -365,15 +366,15 @@ const Checkout = () => {
                       Адрес доставки
                       <span className="text-xs text-gray-400 ml-2">住所</span>
                     </h3>
-                    <textarea
-                      name="address"
+                    <AddressAutocomplete
                       value={formData.address}
-                      onChange={handleInputChange}
-                      rows={3}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                        errors.address ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Улица, дом, квартира"
+                      onChange={(value) => setFormData(prev => ({ ...prev, address: value }))}
+                      placeholder="Введите адрес доставки"
+                      className={`${errors.address ? 'border-red-500' : ''}`}
+                      onAddressSelect={(suggestion) => {
+                        // Дополнительная обработка при выборе адреса из подсказок
+                        console.log('Выбран адрес:', suggestion);
+                      }}
                     />
                     {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
                     
