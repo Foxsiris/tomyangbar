@@ -73,7 +73,7 @@ async function handleSuggest(req, res, params) {
 
   let data = { results: [] };
 
-  // Используем только Suggest API
+  // Сначала пробуем Suggest API
   const suggestUrl = `https://suggest-maps.yandex.ru/v1/suggest?apikey=${YANDEX_API_KEY}&text=${encodeURIComponent(text)}&type=address&lang=ru_RU&results=${results}`;
   
   console.log('Trying Suggest API with:', text);
@@ -93,48 +93,50 @@ async function handleSuggest(req, res, params) {
       data = responseData;
     } else {
       console.warn('Suggest API failed with status:', response.status);
-      const errorText = await response.text();
-      console.error('Error response:', errorText);
     }
   } catch (error) {
     console.error('Error with Suggest API:', error);
   }
 
-  // Если Suggest API не дал результатов, пробуем Geocoder API
-  if (data.results.length === 0) {
-    console.log('Suggest API failed, trying Geocoder API');
+  // Если Suggest API не дал результатов или дал мало результатов, пробуем Geocoder
+  if (!data.results || data.results.length < 3) {
+    console.log('Trying Geocoder API for more detailed results');
     
-    const response = await fetch(geocoderUrl, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (compatible; RestaurantApp/1.0)'
-      }
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Both APIs failed:', response.status, response.statusText, errorText);
-      return res.status(response.status).json({ 
-        error: 'Ошибка при запросе к Yandex API',
-        status: response.status,
-        details: errorText
+    const geocoderUrl = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&geocode=${encodeURIComponent(text + ' Саратов')}&format=json&results=${results * 2}`;
+    
+    try {
+      const geocoderResponse = await fetch(geocoderUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (compatible; RestaurantApp/1.0)'
+        }
       });
-    }
 
-    console.log('Geocoder API success');
-    const geocoderData = await response.json();
-    
-    // Преобразуем данные Geocoder в формат Suggest API
-    const geoObjects = geocoderData.response?.GeoObjectCollection?.featureMember || [];
-    data = {
-      results: geoObjects.map(item => ({
-        title: item.GeoObject.name,
-        subtitle: item.GeoObject.description || 'Саратов, Саратовская область',
-        uri: item.GeoObject.metaDataProperty.GeocoderMetaData.uri
-      }))
-    };
+      if (geocoderResponse.ok) {
+        const geocoderData = await geocoderResponse.json();
+        console.log('Geocoder API response:', geocoderData);
+        
+        // Преобразуем данные Geocoder в формат Suggest API
+        const geoObjects = geocoderData.response?.GeoObjectCollection?.featureMember || [];
+        const geocoderResults = geoObjects.map(item => ({
+          title: item.GeoObject.name,
+          subtitle: item.GeoObject.description || 'Саратов, Саратовская область',
+          uri: item.GeoObject.metaDataProperty.GeocoderMetaData.uri
+        }));
+        
+        // Объединяем результаты Suggest и Geocoder
+        if (data.results) {
+          data.results = [...data.results, ...geocoderResults];
+        } else {
+          data.results = geocoderResults;
+        }
+      }
+    } catch (error) {
+      console.error('Error with Geocoder API:', error);
+    }
   }
+
 
   
   // Фильтруем адреса - приоритет Саратову, но показываем и другие варианты
@@ -147,37 +149,8 @@ async function handleSuggest(req, res, params) {
   // Если нет - показываем все найденные адреса
   let finalResults = saratovAddresses.length > 0 ? saratovAddresses : allAddresses;
 
-  // Добавляем номера домов к найденным улицам
-  if (finalResults.length > 0) {
-    const enhancedResults = [];
-    
-    for (const result of finalResults) {
-      // Добавляем оригинальный результат
-      enhancedResults.push(result);
-      
-      // Если это улица без номера дома, добавляем варианты с домами
-      const title = result.title.toLowerCase();
-      const isStreet = title.includes('улица') || title.includes('ул.') || 
-                      title.includes('проспект') || title.includes('пр.') ||
-                      title.includes('переулок') || title.includes('пер.');
-      
-      if (isStreet && !/\d+/.test(result.title)) {
-        // Генерируем номера домов для этой улицы
-        const houseNumbers = ['1', '2', '3', '4', '5', '6', '7', '8'];
-        
-        houseNumbers.forEach(house => {
-          enhancedResults.push({
-            title: `${result.title}, ${house}`,
-            subtitle: result.subtitle,
-            uri: `${result.uri}_${house}`,
-            isGenerated: true
-          });
-        });
-      }
-    }
-    
-    finalResults = enhancedResults;
-  }
+  // Показываем только реальные адреса от Яндекс API
+  // Не генерируем фейковые номера домов
   
   // Дополнительная фильтрация по тексту запроса для более точных результатов
   if (text && text.length > 2 && finalResults.length > 0) {
