@@ -20,6 +20,28 @@ const AddressAutocomplete = ({
   const suggestionsRef = useRef(null);
   const timeoutRef = useRef(null);
 
+  // Временные подсказки для работы без API ключа
+  const generateTemporarySuggestions = (query) => {
+    const queryLower = query.toLowerCase();
+    const commonHouses = ['1', '2', '3', '4', '5', '6', '7', '8'];
+    
+    // Проверяем, является ли это поиском улицы
+    const isStreetSearch = !/\d+[а-я]?$/.test(queryLower.trim()) && 
+                          (/(улица|ул\.?|проспект|пр\.?|переулок|пер\.?|площадь|пл\.?)/.test(queryLower) || 
+                           queryLower.split(' ').length <= 3);
+    
+    if (isStreetSearch) {
+      const streetName = query.includes('ул.') ? query : `ул. ${query}`;
+      return commonHouses.map(house => ({
+        title: `${streetName}, ${house}`,
+        subtitle: 'Саратов, Саратовская область',
+        uri: `${query.toLowerCase().replace(/\s+/g, '_')}_${house}`,
+        isTemporary: true
+      }));
+    }
+    
+    return [];
+  };
 
   // Функция для получения подсказок адресов
   const fetchAddressSuggestions = useCallback(async (query) => {
