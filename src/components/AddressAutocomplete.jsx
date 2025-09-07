@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { MapPin, Search, X } from 'lucide-react';
 
 const AddressAutocomplete = ({ 
@@ -31,7 +31,7 @@ const AddressAutocomplete = ({
     setIsLoading(true);
     
     try {
-      // Используем API для получения подсказок
+      // Используем только API
       const response = await fetch(
         `/api/yandex?action=suggest&text=${encodeURIComponent(query)}&type=address&lang=ru_RU&results=10`
       );

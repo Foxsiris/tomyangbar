@@ -70,40 +70,6 @@ async function handleSuggest(req, res, params) {
     text.split(' ')[0] // только первое слово
   ].filter((variant, index, arr) => arr.indexOf(variant) === index); // убираем дубликаты
 
-  // Простая система для генерации домов
-  const generateHouseNumbers = () => {
-    // Стандартные номера домов, которые часто встречаются
-    return ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 
-            '11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
-            '21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
-            '33', '35', '37', '39', '41', '43', '45', '47', '49', '51',
-            '53', '55', '57', '59', '61', '63', '65', '67', '69', '71',
-            '73', '75', '77', '79', '81', '83', '85', '86', '87', '88',
-            '89', '91', '93', '94', '95', '97', '99', '101', '103', '105'].slice(0, 8);
-  };
-
-  // Определяем, является ли запрос поиском улицы (без номера дома)
-  const isStreetSearch = (query) => {
-    const queryLower = query.toLowerCase().trim();
-    
-    // Проверяем, что в запросе нет номера дома в конце
-    const hasHouseNumber = /\d+[а-я]?$/.test(queryLower);
-    
-    // Проверяем, что это похоже на название улицы
-    const hasStreetKeywords = /(улица|ул\.?|проспект|пр\.?|переулок|пер\.?|площадь|пл\.?|бульвар|б-р|набережная|наб\.?)/.test(queryLower);
-    
-    // Проверяем длину - короткие запросы скорее всего названия улиц
-    const isShortQuery = queryLower.split(' ').length <= 3;
-    
-    // Проверяем, что это не полный адрес с домом
-    const isNotFullAddress = !queryLower.includes(',') || !hasHouseNumber;
-    
-    // Это поиск улицы, если:
-    // 1. Нет номера дома в конце И
-    // 2. (Есть ключевые слова улицы ИЛИ короткий запрос) И
-    // 3. Это не полный адрес
-    return !hasHouseNumber && (hasStreetKeywords || isShortQuery) && isNotFullAddress;
-  };
 
   let data = { results: [] };
 
@@ -172,19 +138,6 @@ async function handleSuggest(req, res, params) {
     };
   }
 
-  // Добавляем дома только если Яндекс не вернул результатов
-  if (isStreetSearch(text) && data.results.length === 0) {
-    console.log('No results from Yandex, adding fallback addresses for street:', text);
-    const houseNumbers = generateHouseNumbers();
-    const streetName = text.includes('ул.') ? text : `ул. ${text}`;
-    
-    data.results = houseNumbers.map(house => ({
-      title: `${streetName}, ${house}`,
-      subtitle: 'Саратов, Саратовская область',
-      uri: `${text.toLowerCase().replace(/\s+/g, '_')}_${house}`,
-      isFallback: true
-    }));
-  }
   
   // Фильтруем адреса - приоритет Саратову, но показываем и другие варианты
   const allAddresses = data.results || [];
@@ -213,29 +166,6 @@ async function handleSuggest(req, res, params) {
     });
   }
 
-  // Добавляем дома к результатам от Яндекса, если их нет
-  if (isStreetSearch(text) && finalResults.length > 0) {
-    // Проверяем, есть ли уже дома в результатах
-    const hasHouses = finalResults.some(item => 
-      item.title && /\d+/.test(item.title)
-    );
-    
-    // Если нет конкретных домов, добавляем стандартные
-    if (!hasHouses) {
-      const houseNumbers = generateHouseNumbers();
-      const streetName = text.includes('ул.') ? text : `ул. ${text}`;
-      
-      const streetAddresses = houseNumbers.map(house => ({
-        title: `${streetName}, ${house}`,
-        subtitle: 'Саратов, Саратовская область',
-        uri: `${text.toLowerCase().replace(/\s+/g, '_')}_${house}`,
-        isFallback: true
-      }));
-      
-      // Добавляем в начало списка
-      finalResults = [...streetAddresses, ...finalResults];
-    }
-  }
 
   res.json({ 
     results: finalResults,

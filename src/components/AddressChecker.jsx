@@ -337,75 +337,12 @@ const AddressChecker = ({ address, onZoneFound, onZoneNotFound }) => {
       }
     }
     
-    // Fallback: используем центр Саратова для всех адресов
-    const fallbackCoordinates = [51.5406, 46.0086]; // Центр Саратова
-    
-    // Используем fallback координаты для всех адресов
-    let foundCoordinates = fallbackCoordinates;
-    
-    // Проверяем, в какой зоне находится адрес
-    const foundZone = checkPointInZones(foundCoordinates);
-    
-    if (foundZone) {
-      setAddressResult({
-        success: true,
-        zone: foundZone,
-        message: `Адрес входит в ${foundZone.name.toLowerCase()} (демо-режим)`,
-        minOrder: foundZone.minOrder,
-        deliveryTime: foundZone.deliveryTime,
-        coordinates: foundCoordinates
-      });
-      onZoneFound && onZoneFound(foundZone);
-    } else {
-      setAddressResult({ 
-        success: false, 
-        message: `Адрес не входит в зону доставки (демо-режим)`,
-        coordinates: foundCoordinates
-      });
-      onZoneNotFound && onZoneNotFound();
-    }
-
-    // Перемещаем карту к найденному адресу с приближением
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.setCenter(foundCoordinates, 16);
-      
-      // Очищаем старые маркеры адресов (оставляем только ресторан)
-      const geoObjects = mapInstanceRef.current.geoObjects;
-      geoObjects.each((geoObject) => {
-        if (geoObject.properties && geoObject.properties.get('type') === 'address') {
-          geoObjects.remove(geoObject);
-        }
-      });
-      
-      // Добавляем маркер адреса
-      const addressPlacemark = new window.ymaps.Placemark(
-        foundCoordinates,
-        {
-          hintContent: address,
-          balloonContent: foundZone ? `
-            <div>
-              <h3>${address}</h3>
-              <p>${foundZone.name} (демо-режим)</p>
-              <p>Минимальный заказ: ${foundZone.minOrder}₽</p>
-              <p>Время доставки: ${foundZone.deliveryTime}</p>
-            </div>
-          ` : `
-            <div>
-              <h3>${address}</h3>
-              <p style="color: red;">Адрес не входит в зону доставки (демо-режим)</p>
-            </div>
-          `,
-          type: 'address'
-        },
-        {
-          preset: foundZone ? 'islands#blueDotIcon' : 'islands#redDotIcon',
-          iconColor: foundZone ? '#3b82f6' : '#dc2626'
-        }
-      );
-
-      mapInstanceRef.current.geoObjects.add(addressPlacemark);
-    }
-    
+    // Если Яндекс API не работает, показываем ошибку
+    setAddressResult({ 
+      success: false, 
+      message: 'Не удалось найти адрес. Проверьте подключение к интернету или попробуйте позже.'
+    });
+    onZoneNotFound && onZoneNotFound();
     setIsChecking(false);
   }, [address, onZoneFound, onZoneNotFound, checkPointInZones]);
 
