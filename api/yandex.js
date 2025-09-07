@@ -126,11 +126,20 @@ async function handleSuggest(req, res, params) {
   let finalResults = saratovAddresses.length > 0 ? saratovAddresses : allAddresses;
   
   // Дополнительная фильтрация по тексту запроса для более точных результатов
-  if (text && text.length >= 2) {
+  // Но только если запрос достаточно длинный (больше 3 символов)
+  if (text && text.length > 3) {
     const queryLower = text.toLowerCase();
-    finalResults = finalResults.filter(item => 
-      item.title && item.title.toLowerCase().includes(queryLower)
-    );
+    finalResults = finalResults.filter(item => {
+      if (!item.title) return false;
+      const titleLower = item.title.toLowerCase();
+      
+      // Проверяем точное вхождение
+      if (titleLower.includes(queryLower)) return true;
+      
+      // Проверяем по словам (для случаев типа "Плякина" в "улица имени А.В. Плякина")
+      const words = titleLower.split(/[\s,.-]+/);
+      return words.some(word => word.includes(queryLower));
+    });
   }
 
   res.json({ 
