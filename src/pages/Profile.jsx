@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { 
   User, 
   Mail, 
@@ -15,7 +16,6 @@ import {
   Truck
 } from 'lucide-react';
 import { useUser } from '../context/UserContext';
-import { getOrdersData } from '../data/ordersData';
 import { getUserOrders } from '../data/usersData';
 import OrderStatusProgress from '../components/OrderStatusProgress';
 
@@ -155,13 +155,29 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-pink-50 relative overflow-hidden">
+      {/* Background decorations */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-orange-200 to-red-200 rounded-full opacity-20 blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-pink-200 to-orange-200 rounded-full opacity-20 blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-yellow-200 to-orange-200 rounded-full opacity-10 blur-3xl"></div>
+      </div>
+
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Личный кабинет</h1>
-          <p className="text-gray-600 mt-2">Управляйте своими заказами и данными</p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-12 text-center"
+        >
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 to-red-500 rounded-full mb-6 shadow-lg">
+            <User className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent mb-4">
+            Личный кабинет
+          </h1>
+          <p className="text-gray-600 text-lg">Добро пожаловать, {user.name}! Управляйте своими заказами и данными</p>
+        </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Profile Info */}
@@ -169,91 +185,132 @@ const Profile = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 relative overflow-hidden"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Личная информация
-                </h2>
+              {/* Card background decoration */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-100 to-red-100 rounded-full -translate-y-16 translate-x-16 opacity-50"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-100 to-orange-100 rounded-full translate-y-12 -translate-x-12 opacity-50"></div>
+              <div className="relative z-10 flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                    Личная информация
+                  </h2>
+                  <p className="text-gray-500 text-sm mt-1">Управляйте своими данными</p>
+                </div>
                 {!isEditing ? (
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                     onClick={handleEdit}
-                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="p-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
                   >
                     <Edit3 className="w-5 h-5" />
-                  </button>
+                  </motion.button>
                 ) : (
                   <div className="flex gap-2">
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
                       onClick={handleSave}
-                      className="p-2 text-green-600 hover:text-green-700 transition-colors"
+                      className="p-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
                     >
                       <CheckCircle className="w-5 h-5" />
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
                       onClick={handleCancel}
-                      className="p-2 text-red-600 hover:text-red-700 transition-colors"
+                      className="p-3 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
                     >
                       <XCircle className="w-5 h-5" />
-                    </button>
+                    </motion.button>
                   </div>
                 )}
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center">
-                  <User className="w-5 h-5 text-gray-400 mr-3" />
+              <div className="relative z-10 space-y-6">
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="flex items-center p-4 bg-white/50 rounded-xl border border-white/30 backdrop-blur-sm"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-full mr-4">
+                    <User className="w-5 h-5 text-white" />
+                  </div>
                   {isEditing ? (
                     <input
                       type="text"
                       name="name"
                       value={editData.name}
                       onChange={handleInputChange}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="flex-1 px-4 py-2 bg-white/80 border border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                      placeholder="Ваше имя"
                     />
                   ) : (
-                    <span className="text-gray-900">{user.name}</span>
+                    <div>
+                      <span className="text-gray-900 font-medium">{user.name}</span>
+                      <p className="text-gray-500 text-sm">Полное имя</p>
+                    </div>
                   )}
-                </div>
+                </motion.div>
 
-                <div className="flex items-center">
-                  <Mail className="w-5 h-5 text-gray-400 mr-3" />
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="flex items-center p-4 bg-white/50 rounded-xl border border-white/30 backdrop-blur-sm"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full mr-4">
+                    <Mail className="w-5 h-5 text-white" />
+                  </div>
                   {isEditing ? (
                     <input
                       type="email"
                       name="email"
                       value={editData.email}
                       onChange={handleInputChange}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="flex-1 px-4 py-2 bg-white/80 border border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                      placeholder="Ваш email"
                     />
                   ) : (
-                    <span className="text-gray-900">{user.email}</span>
+                    <div>
+                      <span className="text-gray-900 font-medium">{user.email}</span>
+                      <p className="text-gray-500 text-sm">Email адрес</p>
+                    </div>
                   )}
-                </div>
+                </motion.div>
 
-                <div className="flex items-center">
-                  <Phone className="w-5 h-5 text-gray-400 mr-3" />
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="flex items-center p-4 bg-white/50 rounded-xl border border-white/30 backdrop-blur-sm"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-green-500 to-teal-500 rounded-full mr-4">
+                    <Phone className="w-5 h-5 text-white" />
+                  </div>
                   {isEditing ? (
                     <input
                       type="tel"
                       name="phone"
                       value={editData.phone}
                       onChange={handleInputChange}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="flex-1 px-4 py-2 bg-white/80 border border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                      placeholder="Ваш телефон"
                     />
                   ) : (
-                    <span className="text-gray-900">{user.phone || 'Не указан'}</span>
+                    <div>
+                      <span className="text-gray-900 font-medium">{user.phone || 'Не указан'}</span>
+                      <p className="text-gray-500 text-sm">Номер телефона</p>
+                    </div>
                   )}
-                </div>
+                </motion.div>
               </div>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={logout}
-                className="w-full mt-6 flex items-center justify-center gap-2 px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
+                className="relative z-10 w-full mt-8 flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-5 h-5" />
                 Выйти из аккаунта
-              </button>
+              </motion.button>
             </motion.div>
           </div>
 
@@ -264,20 +321,49 @@ const Profile = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                Мои заказы ({userOrders.length})
-              </h2>
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent mb-2">
+                  Мои заказы
+                </h2>
+                <div className="flex items-center gap-4">
+                  <div className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-sm font-medium">
+                    {userOrders.length} заказ{userOrders.length === 1 ? '' : userOrders.length < 5 ? 'а' : 'ов'}
+                  </div>
+                  <p className="text-gray-600">Отслеживайте статус ваших заказов</p>
+                </div>
+              </div>
 
               {userOrders.length === 0 ? (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-                  <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    У вас пока нет заказов
-                  </h3>
-                  <p className="text-gray-600">
-                    Сделайте первый заказ, чтобы отслеживать его статус здесь
-                  </p>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-12 text-center relative overflow-hidden"
+                >
+                  {/* Background decoration */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-100 to-red-100 rounded-full -translate-y-16 translate-x-16 opacity-50"></div>
+                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-100 to-orange-100 rounded-full translate-y-12 -translate-x-12 opacity-50"></div>
+                  
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 to-red-500 rounded-full mb-6 shadow-lg">
+                      <Package className="w-10 h-10 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                      У вас пока нет заказов
+                    </h3>
+                    <p className="text-gray-600 text-lg mb-6">
+                      Сделайте первый заказ, чтобы отслеживать его статус здесь
+                    </p>
+                    <Link to="/menu">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                      >
+                        Сделать заказ
+                      </motion.button>
+                    </Link>
+                  </div>
+                </motion.div>
               ) : (
                 <div className="space-y-6">
                   {userOrders.map((order) => {
@@ -288,64 +374,98 @@ const Profile = () => {
                         key={order.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+                        whileHover={{ scale: 1.02 }}
+                        className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden relative"
                       >
+                        {/* Card background decoration */}
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-orange-100 to-red-100 rounded-full -translate-y-12 translate-x-12 opacity-30"></div>
                         {/* Order Header */}
-                        <div className="p-6 border-b border-gray-200">
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                              <h3 className="text-lg font-semibold text-gray-900">
-                                Заказ #{order.id}
-                              </h3>
-                              <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
-                                <StatusIcon className="w-3 h-3" />
-                                {getStatusText(order.status)}
-                              </span>
+                        <div className="relative z-10 p-8 border-b border-white/20">
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-full">
+                                <Package className="w-6 h-6 text-white" />
+                              </div>
+                              <div>
+                                <h3 className="text-2xl font-bold text-gray-900">
+                                  Заказ #{order.id}
+                                </h3>
+                                <p className="text-gray-500 text-sm">от {formatDate(order.createdAt)}</p>
+                              </div>
                             </div>
                             <div className="text-right">
-                              <div className="text-lg font-bold text-primary-600">
+                              <div className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                                 {order.finalTotal} ₽
                               </div>
-                              <div className="text-sm text-gray-500">
-                                {formatDate(order.createdAt)}
-                              </div>
+                              <span className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full ${getStatusColor(order.status)}`}>
+                                <StatusIcon className="w-4 h-4" />
+                                {getStatusText(order.status)}
+                              </span>
                             </div>
                           </div>
 
                           {/* Order Items */}
-                          <div className="mb-4">
-                            <h4 className="font-medium text-gray-900 mb-2">
+                          <div className="mb-6">
+                            <h4 className="font-semibold text-gray-900 mb-4 text-lg">
                               Позиции заказа:
                             </h4>
-                            <div className="space-y-1">
+                            <div className="space-y-3">
                               {order.items.map((item, index) => (
-                                <div key={index} className="flex justify-between text-sm text-gray-600">
-                                  <span>{item.name} x{item.quantity}</span>
-                                  <span>{item.price * item.quantity} ₽</span>
-                                </div>
+                                <motion.div 
+                                  key={index} 
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: index * 0.1 }}
+                                  className="flex items-center justify-between p-3 bg-white/50 rounded-xl border border-white/30"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                      {item.quantity}
+                                    </div>
+                                    <span className="font-medium text-gray-900">{item.name}</span>
+                                  </div>
+                                  <span className="font-bold text-orange-600">{item.price * item.quantity} ₽</span>
+                                </motion.div>
                               ))}
                             </div>
                           </div>
 
                           {/* Order Details */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            <div className="flex items-center">
-                              <MapPin className="w-4 h-4 text-gray-400 mr-2" />
-                              <span className="text-gray-600">
-                                {order.deliveryType === 'delivery' ? 'Доставка' : 'Самовывоз'}
-                              </span>
-                            </div>
-                            <div className="flex items-center">
-                              <Clock className="w-4 h-4 text-gray-400 mr-2" />
-                              <span className="text-gray-600">
-                                {order.deliveryTime === 'asap' ? 'Как можно скорее' : 'На определенное время'}
-                              </span>
-                            </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <motion.div 
+                              whileHover={{ scale: 1.02 }}
+                              className="flex items-center p-3 bg-white/50 rounded-xl border border-white/30"
+                            >
+                              <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full mr-3">
+                                <MapPin className="w-5 h-5 text-white" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {order.deliveryType === 'delivery' ? 'Доставка' : 'Самовывоз'}
+                                </p>
+                                <p className="text-gray-500 text-sm">Способ получения</p>
+                              </div>
+                            </motion.div>
+                            <motion.div 
+                              whileHover={{ scale: 1.02 }}
+                              className="flex items-center p-3 bg-white/50 rounded-xl border border-white/30"
+                            >
+                              <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-green-500 to-teal-500 rounded-full mr-3">
+                                <Clock className="w-5 h-5 text-white" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {order.deliveryTime === 'asap' ? 'Как можно скорее' : 'На определенное время'}
+                                </p>
+                                <p className="text-gray-500 text-sm">Время доставки</p>
+                              </div>
+                            </motion.div>
                           </div>
                         </div>
 
                         {/* Order Status Progress */}
-                        <div className="p-6">
+                        <div className="relative z-10 p-8 bg-gradient-to-r from-orange-50 to-red-50">
+                          <h4 className="font-semibold text-gray-900 mb-4 text-lg">Статус заказа</h4>
                           <OrderStatusProgress 
                             status={order.status} 
                             orderId={order.id}
