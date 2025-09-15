@@ -119,6 +119,9 @@ export const isPaymentMethodAvailable = (methodKey) => {
 // Функция для создания платежа
 export const createPayment = async (orderData) => {
   try {
+    // Формируем returnUrl с параметрами заказа
+    const returnUrl = `${window.location.origin}/payment/success?order_id=${orderData.orderId}`;
+    const cancelUrl = `${window.location.origin}/payment/cancel?order_id=${orderData.orderId}`;
 
     // Запрос к нашему API endpoint
     const response = await fetch('/api/payment/create', {
@@ -126,7 +129,11 @@ export const createPayment = async (orderData) => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ orderData })
+      body: JSON.stringify({ 
+        orderData,
+        returnUrl,
+        cancelUrl
+      })
     });
 
     if (!response.ok) {

@@ -54,8 +54,19 @@ const PaymentSuccess = () => {
             <div>
               <h1 className="text-3xl font-bold text-green-600 mb-2">Оплата успешна!</h1>
               <p className="text-gray-600 mb-4">
-                Ваш заказ #{orderId || 'N/A'} успешно оплачен
+                Ваш заказ успешно оплачен
               </p>
+              
+              {/* Номер заказа */}
+              {orderId && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-center space-x-2">
+                    <span className="text-blue-600 font-semibold">Номер заказа:</span>
+                    <span className="text-2xl font-bold text-blue-800">#{orderId}</span>
+                  </div>
+                </div>
+              )}
+              
               {paymentData && (
                 <div className="bg-green-50 rounded-lg p-4 text-sm">
                   <p className="text-green-800">

@@ -22,12 +22,20 @@ const SBPModal = ({
       setPaymentStatus('processing');
       setErrorMessage('');
 
+      // Формируем URL с параметрами заказа
+      const returnUrl = `${window.location.origin}/payment/sbp/success?order_id=${orderData.orderId}`;
+      const cancelUrl = `${window.location.origin}/payment/sbp/cancel?order_id=${orderData.orderId}`;
+
       const response = await fetch('/api/payment/sbp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ orderData })
+        body: JSON.stringify({ 
+          orderData,
+          returnUrl,
+          cancelUrl
+        })
       });
 
       if (!response.ok) {

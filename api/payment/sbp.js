@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { orderData } = req.body;
+    const { orderData, returnUrl, cancelUrl } = req.body;
 
     if (!orderData) {
       return res.status(400).json({ error: 'Order data is required' });
@@ -28,8 +28,8 @@ export default async function handler(req, res) {
       apiUrl: 'https://api.joinpay.ru/v1', // Пример API для СБП
       merchantId: process.env.SBP_MERCHANT_ID || 'your_merchant_id',
       secretKey: process.env.SBP_SECRET_KEY || 'your_secret_key',
-      returnUrl: 'https://tomyangbar.vercel.app/payment/sbp/success',
-      cancelUrl: 'https://tomyangbar.vercel.app/payment/sbp/cancel',
+      returnUrl: returnUrl || 'https://tomyangbar.vercel.app/payment/sbp/success',
+      cancelUrl: cancelUrl || 'https://tomyangbar.vercel.app/payment/sbp/cancel',
       webhookUrl: 'https://tomyangbar.vercel.app/api/payment/sbp-webhook',
       isTestMode: process.env.NODE_ENV !== 'production'
     };

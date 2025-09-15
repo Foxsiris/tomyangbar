@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, User, Phone, Eye, EyeOff } from 'lucide-react';
-import { createUser, authenticateUser, userExists } from '../data/usersData';
+import { createUser, authenticateUserByEmailOrPhone, userExistsByEmailOrPhone } from '../data/usersData';
+import { applyPhoneMask, validateRussianPhone } from '../utils/phoneMask';
 
 const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -18,10 +19,28 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // Применяем маску для поля телефона
+    if (name === 'phone') {
+      const maskedValue = applyPhoneMask(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: maskedValue
+      }));
+    } else if (name === 'email' && isLogin && !value.includes('@')) {
+      // Для поля входа, если вводится не email, применяем маску телефона
+      const maskedValue = applyPhoneMask(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: maskedValue
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+    
     // Очищаем ошибку при изменении поля
     if (errors[name]) {
       setErrors(prev => ({
@@ -34,10 +53,28 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.email) {
-      newErrors.email = 'Email обязателен';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Некорректный email';
+    // Для входа проверяем email или телефон
+    if (isLogin) {
+      if (!formData.email) {
+        newErrors.email = 'Email или телефон обязателен';
+      } else if (formData.email.includes('@')) {
+        // Если это email, проверяем формат email
+        if (!/\S+@\S+\.\S+/.test(formData.email)) {
+          newErrors.email = 'Некорректный email';
+        }
+      } else {
+        // Если это телефон, проверяем формат телефона
+        if (!validateRussianPhone(formData.email)) {
+          newErrors.email = 'Некорректный номер телефона';
+        }
+      }
+    } else {
+      // Для регистрации проверяем email отдельно
+      if (!formData.email) {
+        newErrors.email = 'Email обязателен';
+      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        newErrors.email = 'Некорректный email';
+      }
     }
 
     if (!formData.password) {
@@ -52,7 +89,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
       }
       if (!formData.phone) {
         newErrors.phone = 'Телефон обязателен';
-      } else if (!/^\+?[1-9]\d{1,14}$/.test(formData.phone.replace(/\s/g, ''))) {
+      } else if (!validateRussianPhone(formData.phone)) {
         newErrors.phone = 'Некорректный номер телефона';
       }
       if (formData.password !== formData.confirmPassword) {
@@ -75,11 +112,11 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
       let userData;
 
       if (isLogin) {
-        // Вход в систему
-        userData = authenticateUser(formData.email, formData.password);
+        // Вход в систему по email или телефону
+        userData = authenticateUserByEmailOrPhone(formData.email, formData.password);
       } else {
         // Регистрация
-        if (userExists(formData.email)) {
+        if (userExistsByEmailOrPhone(formData.email)) {
           setErrors({ email: 'Пользователь с таким email уже существует' });
           setIsLoading(false);
           return;
@@ -259,21 +296,29 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
                   transition={{ delay: 0.7 }}
                 >
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
+                    {isLogin ? 'Email или телефон' : 'Email'}
                   </label>
                   <div className="relative">
                     <div className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-primary-100 rounded-full p-1">
-                      <Mail className="text-primary-600 w-4 h-4" />
+                      {isLogin ? (
+                        formData.email.includes('@') ? (
+                          <Mail className="text-primary-600 w-4 h-4" />
+                        ) : (
+                          <Phone className="text-primary-600 w-4 h-4" />
+                        )
+                      ) : (
+                        <Mail className="text-primary-600 w-4 h-4" />
+                      )}
                     </div>
                     <input
-                      type="email"
+                      type={isLogin ? "text" : "email"}
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
                       className={`w-full pl-12 pr-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 ${
                         errors.email ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-gray-300'
                       }`}
-                      placeholder="Введите email"
+                      placeholder={isLogin ? "Введите email или +7 (999) 123-45-67" : "Введите email"}
                     />
                   </div>
                   {errors.email && (

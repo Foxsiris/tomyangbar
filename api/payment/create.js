@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { orderData } = req.body;
+    const { orderData, returnUrl, cancelUrl } = req.body;
 
     if (!orderData) {
       return res.status(400).json({ error: 'Order data is required' });
@@ -27,8 +27,8 @@ export default async function handler(req, res) {
       shopId: '1158814',
       secretKey: 'test_oa3ugm0nFNCbbN-fIuWXtY_GiLVkLL5DgCbyZSwNVA8',
       currency: 'RUB',
-      returnUrl: 'https://tomyangbar.vercel.app/payment/success',
-      cancelUrl: 'https://tomyangbar.vercel.app/payment/cancel',
+      returnUrl: returnUrl || 'https://tomyangbar.vercel.app/payment/success',
+      cancelUrl: cancelUrl || 'https://tomyangbar.vercel.app/payment/cancel',
       capture: true, // Одностадийный платеж
       isTestMode: true
     };

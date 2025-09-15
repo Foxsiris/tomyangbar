@@ -1,4 +1,5 @@
 // Система управления пользователями и их заказами
+import { normalizePhoneNumber } from '../utils/phoneMask.js';
 
 // Получение всех пользователей
 export const getUsersData = () => {
@@ -20,15 +21,43 @@ export const findUserByEmail = (email) => {
   return users.find(user => user.email === email);
 };
 
+// Поиск пользователя по телефону
+export const findUserByPhone = (phone) => {
+  const users = getUsersData();
+  const normalizedPhone = normalizePhoneNumber(phone);
+  return users.find(user => normalizePhoneNumber(user.phone) === normalizedPhone);
+};
+
+// Поиск пользователя по email или телефону
+export const findUserByEmailOrPhone = (identifier) => {
+  // Проверяем, является ли идентификатор email
+  if (identifier.includes('@')) {
+    return findUserByEmail(identifier);
+  } else {
+    // Иначе ищем по телефону
+    return findUserByPhone(identifier);
+  }
+};
+
 // Поиск пользователя по ID
 export const findUserById = (id) => {
   const users = getUsersData();
   return users.find(user => user.id === id);
 };
 
-// Проверка существования пользователя
+// Проверка существования пользователя по email
 export const userExists = (email) => {
   return findUserByEmail(email) !== undefined;
+};
+
+// Проверка существования пользователя по телефону
+export const userExistsByPhone = (phone) => {
+  return findUserByPhone(phone) !== undefined;
+};
+
+// Проверка существования пользователя по email или телефону
+export const userExistsByEmailOrPhone = (identifier) => {
+  return findUserByEmailOrPhone(identifier) !== undefined;
 };
 
 // Создание нового пользователя
@@ -44,7 +73,7 @@ export const createUser = (userData) => {
     id: Date.now(), // Простой ID на основе времени
     name: userData.name,
     email: userData.email,
-    phone: userData.phone,
+    phone: normalizePhoneNumber(userData.phone), // Нормализуем номер телефона
     password: userData.password, // В реальном приложении пароль должен быть зашифрован
     avatar: userData.avatar || null,
     orders: [], // История заказов пользователя
@@ -59,9 +88,27 @@ export const createUser = (userData) => {
   return newUser;
 };
 
-// Аутентификация пользователя
+// Аутентификация пользователя по email
 export const authenticateUser = (email, password) => {
   const user = findUserByEmail(email);
+  
+  if (!user) {
+    throw new Error('Пользователь не найден');
+  }
+  
+  if (user.password !== password) {
+    throw new Error('Неверный пароль');
+  }
+  
+  // Обновляем время последнего входа
+  updateUserLastLogin(user.id);
+  
+  return user;
+};
+
+// Аутентификация пользователя по email или телефону
+export const authenticateUserByEmailOrPhone = (identifier, password) => {
+  const user = findUserByEmailOrPhone(identifier);
   
   if (!user) {
     throw new Error('Пользователь не найден');

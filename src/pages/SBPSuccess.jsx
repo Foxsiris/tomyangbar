@@ -1,17 +1,23 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, ArrowLeft, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const SBPSuccess = () => {
+  const [orderId, setOrderId] = useState(null);
+  
   useEffect(() => {
     // Получаем параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
     const paymentId = urlParams.get('paymentId');
-    const orderId = urlParams.get('orderId');
+    const orderIdParam = urlParams.get('orderId') || urlParams.get('order_id');
+    
+    if (orderIdParam) {
+      setOrderId(orderIdParam);
+    }
     
     if (paymentId) {
-      console.log('SBP Payment Success:', { paymentId, orderId });
+      console.log('SBP Payment Success:', { paymentId, orderId: orderIdParam });
     }
   }, []);
 
@@ -51,6 +57,21 @@ const SBPSuccess = () => {
         >
           Ваш заказ оплачен через СБП. Мы получили уведомление о платеже и начнем готовить ваш заказ.
         </motion.p>
+
+        {/* Номер заказа */}
+        {orderId && (
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.45 }}
+            className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6"
+          >
+            <div className="flex items-center justify-center space-x-2">
+              <span className="text-blue-600 font-semibold">Номер заказа:</span>
+              <span className="text-2xl font-bold text-blue-800">#{orderId}</span>
+            </div>
+          </motion.div>
+        )}
 
         {/* Детали */}
         <motion.div
