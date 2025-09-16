@@ -86,10 +86,10 @@ const CartSidePanel = () => {
                       
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-medium text-gray-900 truncate">
-                          {item.name}
+                          {item.dish_name}
                         </h4>
                         <p className="text-xs text-gray-500">
-                          {item.weight}
+                          {item.weight || 'Вес не указан'}
                         </p>
                         <p className="text-sm font-semibold text-primary-600">
                           {item.price} ₽

@@ -1,14 +1,16 @@
 import { motion } from 'framer-motion';
 import { Star, Flame, Leaf } from 'lucide-react';
 import { useCartContext } from '../context/CartContext';
-import { menuData } from '../data/menuData';
 
 const DishCard = ({ dish, index = 0 }) => {
   const { addToCart } = useCartContext();
 
   const getCategoryName = (categoryId) => {
-    const category = menuData.categories.find(cat => cat.id === categoryId);
-    return category ? category.name : categoryId;
+    // Если категория уже загружена в dish.categories
+    if (dish.categories) {
+      return dish.categories.name;
+    }
+    return categoryId;
   };
 
   return (
@@ -30,19 +32,19 @@ const DishCard = ({ dish, index = 0 }) => {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
         <div className="absolute top-3 left-3 flex gap-2">
-          {dish.popular && (
+          {dish.is_popular && (
             <div className="bg-primary-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
               <Star className="w-3 h-3 mr-1" />
               Популярное
             </div>
           )}
-          {dish.spicy && (
+          {dish.is_spicy && (
             <div className="bg-orange-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
               <Flame className="w-3 h-3 mr-1" />
               Острое
             </div>
           )}
-          {dish.vegetarian && (
+          {dish.is_vegetarian && (
             <div className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
               <Leaf className="w-3 h-3 mr-1" />
               Вегетарианское
@@ -70,7 +72,7 @@ const DishCard = ({ dish, index = 0 }) => {
         
         <div className="flex justify-between items-center">
           <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-            {getCategoryName(dish.category)}
+            {getCategoryName(dish.category_id)}
           </span>
           <button
             onClick={() => addToCart(dish)}

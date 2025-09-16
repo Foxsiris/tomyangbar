@@ -2,15 +2,17 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Clock, Truck, Utensils } from 'lucide-react';
-import { menuData } from '../data/menuData';
+import { useMenu } from '../hooks/useMenu';
 import PopularDishCard from '../components/PopularDishCard';
+import LoadingSpinner from '../components/LoadingSpinner';
 import QuickActions from '../components/QuickActions';
 import SpecialOffers from '../components/SpecialOffers';
 import RestaurantStats from '../components/RestaurantStats';
 import DishGallery from '../components/DishGallery';
 
 const Home = () => {
-  const popularDishes = menuData.dishes.filter(dish => dish.popular).slice(0, 6);
+  const { getPopularDishes, isLoading } = useMenu();
+  const popularDishes = getPopularDishes().slice(0, 6);
 
   const features = [
     {
@@ -29,6 +31,14 @@ const Home = () => {
       description: 'При заказе от 1000 рублей'
     }
   ];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">

@@ -1,8 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CartProvider } from './context/CartContext';
-import { UserProvider } from './context/UserContext';
-import { initializeTestUsers } from './data/usersData';
+import { SupabaseUserProvider } from './context/SupabaseUserContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import CartSidePanel from './components/CartSidePanel';
@@ -22,11 +21,8 @@ import SBPSuccess from './pages/SBPSuccess';
 import SBPCancel from './pages/SBPCancel';
 
 function App() {
-  // Инициализируем тестовых пользователей при первом запуске
-  initializeTestUsers();
-
   return (
-    <UserProvider>
+    <SupabaseUserProvider>
       <CartProvider>
         <Router>
           <div className="min-h-screen bg-gray-50">
@@ -58,7 +54,7 @@ function App() {
           </div>
         </Router>
       </CartProvider>
-    </UserProvider>
+    </SupabaseUserProvider>
   );
 }
 

@@ -1,22 +1,25 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Filter, X } from 'lucide-react';
-import { menuData } from '../data/menuData';
+import { useMenu } from '../hooks/useMenu';
 import DishCard from '../components/DishCard';
 import MenuFilters from '../components/MenuFilters';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Menu = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  
+  const { menuData, isLoading, error, getDishesByCategory } = useMenu();
 
   const filteredDishes = useMemo(() => {
-    let filtered = menuData.dishes;
+    let filtered = menuData.dishes || [];
 
     // Фильтрация по категории
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(dish => dish.category === selectedCategory);
+      filtered = filtered.filter(dish => dish.category_id === selectedCategory);
     }
 
     // Фильтрация по поиску
@@ -37,19 +40,44 @@ const Menu = () => {
         case 'name':
           return a.name.localeCompare(b.name);
         case 'popular':
-          return b.popular - a.popular;
+          return b.is_popular - a.is_popular;
         default:
           return 0;
       }
     });
 
     return filtered;
-  }, [selectedCategory, searchQuery, sortBy]);
+  }, [selectedCategory, searchQuery, sortBy, menuData.dishes]);
 
   const getCategoryName = (categoryId) => {
-    const category = menuData.categories.find(cat => cat.id === categoryId);
+    const category = menuData.categories?.find(cat => cat.id === categoryId);
     return category ? category.name : categoryId;
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Ошибка загрузки меню</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+          >
+            Перезагрузить
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -120,7 +148,7 @@ const Menu = () => {
                   setSelectedCategory={setSelectedCategory}
                   sortBy={sortBy}
                   setSortBy={setSortBy}
-                  categories={menuData.categories}
+                  categories={menuData.categories || []}
                 />
               </div>
             </motion.div>
@@ -141,7 +169,7 @@ const Menu = () => {
                 setSelectedCategory={setSelectedCategory}
                 sortBy={sortBy}
                 setSortBy={setSortBy}
-                categories={menuData.categories}
+                categories={menuData.categories || []}
               />
             </div>
 

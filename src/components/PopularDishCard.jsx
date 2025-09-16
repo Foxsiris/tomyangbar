@@ -24,7 +24,7 @@ const PopularDishCard = ({ dish, index = 0 }) => {
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-        {dish.popular && (
+        {dish.is_popular && (
           <div className="absolute top-3 left-3 bg-primary-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
             <Star className="w-3 h-3 mr-1" />
             Популярное

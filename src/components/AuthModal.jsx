@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, User, Phone, Eye, EyeOff } from 'lucide-react';
-import { createUser, authenticateUserByEmailOrPhone, userExistsByEmailOrPhone } from '../data/usersData';
+import { UserService } from '../services/userService.js';
 import { applyPhoneMask, validateRussianPhone } from '../utils/phoneMask';
 
 const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
@@ -113,16 +113,17 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
 
       if (isLogin) {
         // Вход в систему по email или телефону
-        userData = authenticateUserByEmailOrPhone(formData.email, formData.password);
+        userData = await UserService.authenticateByEmailOrPhone(formData.email, formData.password);
       } else {
         // Регистрация
-        if (userExistsByEmailOrPhone(formData.email)) {
+        const userExists = await UserService.userExists(formData.email);
+        if (userExists) {
           setErrors({ email: 'Пользователь с таким email уже существует' });
           setIsLoading(false);
           return;
         }
         
-        userData = createUser({
+        userData = await UserService.register({
           name: formData.name,
           email: formData.email,
           phone: formData.phone,

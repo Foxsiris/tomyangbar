@@ -15,12 +15,11 @@ import {
   ChefHat,
   Truck
 } from 'lucide-react';
-import { useUser } from '../context/UserContext';
-import { getUserOrders } from '../data/usersData';
+import { useSupabaseUser } from '../context/SupabaseUserContext';
 import OrderStatusProgress from '../components/OrderStatusProgress';
 
 const Profile = () => {
-  const { user, logout, updateUser } = useUser();
+  const { user, logout, updateUser, getUserOrders } = useSupabaseUser();
   const [userOrders, setUserOrders] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({

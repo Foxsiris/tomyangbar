@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import { MapPin, Phone, Clock, Truck, Store, CreditCard, ArrowLeft, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCartContext } from '../context/CartContext';
-import { useUser } from '../context/UserContext';
-import { addNewOrder } from '../data/ordersData';
+import { useSupabaseUser } from '../context/SupabaseUserContext';
+import { OrderService } from '../services/orderService.js';
 import OrderSuccessModal from '../components/OrderSuccessModal';
 import AuthModal from '../components/AuthModal';
 import PaymentModal from '../components/PaymentModal';
@@ -14,7 +14,7 @@ import AddressAutocomplete from '../components/AddressAutocomplete';
 const Checkout = () => {
   const navigate = useNavigate();
   const { cart, getTotalPrice, clearCart } = useCartContext();
-  const { user, login, addOrder } = useUser();
+  const { user, login, addOrder } = useSupabaseUser();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -130,7 +130,7 @@ const Checkout = () => {
         newOrder = await addOrder(orderData);
       } else {
         // Если пользователь не авторизован, создаем заказ напрямую
-        newOrder = await addNewOrder(orderData);
+        newOrder = await OrderService.createOrder(orderData);
       }
       
       // Если выбран онлайн-платеж, показываем модальное окно платежа

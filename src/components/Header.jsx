@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Menu, X, Phone, User, LogIn, ChevronDown, Package, Settings, LogOut } from 'lucide-react';
 import { useCartContext } from '../context/CartContext';
-import { useUser } from '../context/UserContext';
+import { useSupabaseUser } from '../context/SupabaseUserContext';
 import AuthModal from './AuthModal';
 
 const Header = () => {
@@ -12,7 +12,7 @@ const Header = () => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const location = useLocation();
   const { getTotalItems, openCart } = useCartContext();
-  const { user, login, logout } = useUser();
+  const { user, login, logout } = useSupabaseUser();
   const dropdownRef = useRef(null);
   const hoverTimeoutRef = useRef(null);
 
