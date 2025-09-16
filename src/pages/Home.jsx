@@ -6,10 +6,8 @@ import { menuData } from '../data/menuData';
 import PopularDishCard from '../components/PopularDishCard';
 import QuickActions from '../components/QuickActions';
 import SpecialOffers from '../components/SpecialOffers';
-import TestimonialsSection from '../components/TestimonialsSection';
 import RestaurantStats from '../components/RestaurantStats';
 import DishGallery from '../components/DishGallery';
-import NewsletterSignup from '../components/NewsletterSignup';
 
 const Home = () => {
   const popularDishes = menuData.dishes.filter(dish => dish.popular).slice(0, 6);
@@ -221,17 +219,11 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <TestimonialsSection />
-
       {/* Restaurant Stats Section */}
       <RestaurantStats />
 
       {/* Dish Gallery Section */}
       <DishGallery />
-
-      {/* Newsletter Signup Section */}
-      <NewsletterSignup />
 
       {/* About Section */}
       <section className="section-padding bg-white">

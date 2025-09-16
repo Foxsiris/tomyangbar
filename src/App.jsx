@@ -16,7 +16,6 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
-import Booking from './pages/Booking';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentCancel from './pages/PaymentCancel';
 import SBPSuccess from './pages/SBPSuccess';
@@ -46,7 +45,6 @@ function App() {
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/admin" element={<Admin />} />
-                <Route path="/booking" element={<Booking />} />
                 <Route path="/payment/success" element={<PaymentSuccess />} />
                 <Route path="/payment/cancel" element={<PaymentCancel />} />
                 <Route path="/payment/sbp/success" element={<SBPSuccess />} />

@@ -20,8 +20,7 @@ const Header = () => {
     { path: '/', label: 'Главная', kanji: 'ホーム' },
     { path: '/menu', label: 'Меню', kanji: 'メニュー' },
     { path: '/about', label: 'О нас', kanji: '私たち' },
-    { path: '/contact', label: 'Контакты', kanji: '連絡先' },
-    { path: '/booking', label: 'Бронирование', kanji: '予約' }
+    { path: '/contact', label: 'Контакты', kanji: '連絡先' }
   ];
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
