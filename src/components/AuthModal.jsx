@@ -112,8 +112,14 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
       let userData;
 
       if (isLogin) {
-        // Вход в систему по email или телефону
-        userData = await UserService.authenticateByEmailOrPhone(formData.email, formData.password);
+        // Проверяем, это админ или обычный пользователь
+        if (formData.email === 'admin@tomyangbar.ru') {
+          // Авторизация админа
+          userData = await UserService.authenticateAdmin(formData.email, formData.password);
+        } else {
+          // Вход в систему по email или телефону
+          userData = await UserService.authenticateByEmailOrPhone(formData.email, formData.password);
+        }
       } else {
         // Регистрация
         const userExists = await UserService.userExists(formData.email);

@@ -31,8 +31,8 @@ export class OrderService {
       // Создаем элементы заказа
       const orderItems = orderData.items.map(item => ({
         order_id: order.id,
-        dish_id: item.id,
-        dish_name: item.name,
+        dish_id: item.dish_id, // Используем dish_id из cart_items
+        dish_name: item.dish_name || item.name, // Используем dish_name из cart_items
         quantity: item.quantity,
         price: item.price
       }));

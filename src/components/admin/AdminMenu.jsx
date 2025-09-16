@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, 
@@ -10,10 +10,12 @@ import {
   EyeOff,
   Star
 } from 'lucide-react';
-import { menuData } from '../../data/menuData';
+import { MenuService } from '../../services/menuService';
 
 const AdminMenu = () => {
-  const [dishes, setDishes] = useState(menuData.dishes);
+  const [dishes, setDishes] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -23,17 +25,46 @@ const AdminMenu = () => {
     description: '',
     price: '',
     weight: '',
-    category: '',
-    popular: false,
-    available: true
+    category_id: '',
+    is_popular: false,
+    is_active: true
   });
 
+  // Загружаем данные из Supabase
+  useEffect(() => {
+    const loadMenuData = async () => {
+      try {
+        setLoading(true);
+        const [dishesData, categoriesData] = await Promise.all([
+          MenuService.getDishes(),
+          MenuService.getCategories()
+        ]);
+        setDishes(dishesData);
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Ошибка при загрузке меню:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMenuData();
+  }, []);
+
   const filteredDishes = dishes.filter(dish => {
-    const matchesSearch = dish.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         dish.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || dish.category === selectedCategory;
+    const matchesSearch = dish.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         dish.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || dish.category_id?.toString() === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-gray-600">Загрузка меню...</div>
+      </div>
+    );
+  }
 
   const handleAddDish = () => {
     const newDish = {
@@ -70,9 +101,9 @@ const AdminMenu = () => {
       description: dish.description,
       price: dish.price.toString(),
       weight: dish.weight,
-      category: dish.category,
-      popular: dish.popular,
-      available: dish.available
+      category_id: dish.category_id,
+      is_popular: dish.is_popular,
+      is_active: dish.is_active
     });
   };
 
@@ -82,14 +113,14 @@ const AdminMenu = () => {
       description: '',
       price: '',
       weight: '',
-      category: '',
-      popular: false,
-      available: true
+      category_id: '',
+      is_popular: false,
+      is_active: true
     });
   };
 
   const getCategoryName = (categoryId) => {
-    const category = menuData.categories.find(cat => cat.id === categoryId);
+    const category = categories.find(cat => cat.id === categoryId);
     return category ? category.name : categoryId;
   };
 
@@ -132,7 +163,7 @@ const AdminMenu = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="all">Все категории</option>
-              {menuData.categories.map((category) => (
+              {categories.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
                 </option>
@@ -160,18 +191,18 @@ const AdminMenu = () => {
                 className="w-full h-48 object-cover"
               />
               <div className="absolute top-2 right-2 flex space-x-1">
-                {dish.popular && (
+                {dish.is_popular && (
                   <span className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs flex items-center">
                     <Star className="w-3 h-3 mr-1" />
                     Популярное
                   </span>
                 )}
                 <span className={`px-2 py-1 rounded-full text-xs ${
-                  dish.available 
+                  dish.is_active 
                     ? 'bg-green-500 text-white' 
                     : 'bg-red-500 text-white'
                 }`}>
-                  {dish.available ? 'Доступно' : 'Недоступно'}
+                  {dish.is_active ? 'Доступно' : 'Недоступно'}
                 </span>
               </div>
             </div>
@@ -186,7 +217,7 @@ const AdminMenu = () => {
               
               <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                 <span>{dish.weight}</span>
-                <span>{getCategoryName(dish.category)}</span>
+                <span>{getCategoryName(dish.category_id)}</span>
               </div>
               
               <div className="flex space-x-2">
@@ -294,12 +325,12 @@ const AdminMenu = () => {
                     Категория *
                   </label>
                   <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({...formData, category: e.target.value})}
+                    value={formData.category_id}
+                    onChange={(e) => setFormData({...formData, category_id: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
                     <option value="">Выберите категорию</option>
-                    {menuData.categories.map((category) => (
+                    {categories.map((category) => (
                       <option key={category.id} value={category.id}>
                         {category.name}
                       </option>
@@ -311,8 +342,8 @@ const AdminMenu = () => {
                   <label className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={formData.popular}
-                      onChange={(e) => setFormData({...formData, popular: e.target.checked})}
+                    checked={formData.is_popular}
+                    onChange={(e) => setFormData({...formData, is_popular: e.target.checked})}
                       className="mr-2"
                     />
                     <span className="text-sm text-gray-700">Популярное</span>
@@ -321,8 +352,8 @@ const AdminMenu = () => {
                   <label className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={formData.available}
-                      onChange={(e) => setFormData({...formData, available: e.target.checked})}
+                    checked={formData.is_active}
+                    onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
                       className="mr-2"
                     />
                     <span className="text-sm text-gray-700">Доступно</span>

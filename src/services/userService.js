@@ -247,4 +247,44 @@ export class UserService {
       return false;
     }
   }
+
+  // Авторизация админа
+  static async authenticateAdmin(email, password) {
+    try {
+      console.log('🔐 Авторизация админа:', email);
+      
+      const { data, error } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('email', email)
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        console.error('❌ Ошибка поиска админа:', error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error('Админ не найден');
+      }
+
+      // Простая проверка пароля (в реальном проекте используйте bcrypt)
+      if (password === 'admin123') {
+        console.log('✅ Админ авторизован:', data);
+        return {
+          id: data.id,
+          email: data.email,
+          name: data.name,
+          role: 'admin',
+          isAdmin: true
+        };
+      } else {
+        throw new Error('Неверный пароль');
+      }
+    } catch (error) {
+      console.error('❌ Ошибка авторизации админа:', error);
+      throw error;
+    }
+  }
 }

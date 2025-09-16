@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { getDisplayOrderNumber } from '../../utils/orderUtils';
 import { 
   X, 
   User, 
@@ -63,7 +64,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
     });
   };
 
-  const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = (order.order_items || []).reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <AnimatePresence>
@@ -99,7 +100,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                   <ShoppingBag className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">Заказ #{order.id}</h2>
+                  <h2 className="text-2xl font-bold">Заказ {getDisplayOrderNumber(order)}</h2>
                   <p className="text-primary-100">Детальная информация</p>
                 </div>
               </div>
@@ -148,7 +149,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Имя</p>
-                      <p className="font-medium text-gray-900">{order.customer}</p>
+                      <p className="font-medium text-gray-900">{order.customer_name}</p>
                     </div>
                   </div>
                   
@@ -180,7 +181,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Адрес</p>
-                      <p className="font-medium text-gray-900">{order.address}</p>
+                      <p className="font-medium text-gray-900">{order.delivery_address}</p>
                     </div>
                   </div>
                 </div>
@@ -200,7 +201,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
                     <div className="bg-primary-100 rounded-full p-2">
-                      {order.deliveryType === 'delivery' ? (
+                      {order.delivery_type === 'delivery' ? (
                         <Truck className="w-4 h-4 text-primary-600" />
                       ) : (
                         <Store className="w-4 h-4 text-primary-600" />
@@ -209,7 +210,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                     <div>
                       <p className="text-sm text-gray-500">Способ получения</p>
                       <p className="font-medium text-gray-900">
-                        {order.deliveryType === 'delivery' ? 'Доставка' : 'Самовывоз'}
+                        {order.delivery_type === 'delivery' ? 'Доставка' : 'Самовывоз'}
                       </p>
                     </div>
                   </div>
@@ -221,7 +222,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                     <div>
                       <p className="text-sm text-gray-500">Способ оплаты</p>
                       <p className="font-medium text-gray-900">
-                        {order.paymentMethod === 'cash' ? 'Наличные' : 'Банковская карта'}
+                        {order.payment_method === 'cash' ? 'Наличные' : 'Банковская карта'}
                       </p>
                     </div>
                   </div>
@@ -232,7 +233,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Время заказа</p>
-                      <p className="font-medium text-gray-900">{formatTime(order.createdAt)}</p>
+                      <p className="font-medium text-gray-900">{formatTime(order.created_at)}</p>
                     </div>
                   </div>
                   
@@ -242,7 +243,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Последнее обновление</p>
-                      <p className="font-medium text-gray-900">{formatTime(order.updatedAt)}</p>
+                      <p className="font-medium text-gray-900">{formatTime(order.updated_at)}</p>
                     </div>
                   </div>
                 </div>
@@ -264,7 +265,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
               </div>
               
               <div className="divide-y divide-gray-200">
-                {order.items.map((item, index) => (
+                {(order.order_items || []).map((item, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, x: -20 }}
@@ -320,16 +321,16 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                   </div>
                   <div>
                     <p className="text-primary-100">Итого к оплате</p>
-                    <p className="text-2xl font-bold">{order.finalTotal} ₽</p>
+                    <p className="text-2xl font-bold">{order.final_total} ₽</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-primary-100">Стоимость блюд</p>
-                  <p className="text-lg font-semibold">{order.total} ₽</p>
-                  {order.deliveryFee > 0 && (
+                  <p className="text-lg font-semibold">{order.subtotal} ₽</p>
+                  {order.delivery_fee > 0 && (
                     <>
                       <p className="text-primary-100 mt-1">Доставка</p>
-                      <p className="text-lg font-semibold">{order.deliveryFee} ₽</p>
+                      <p className="text-lg font-semibold">{order.delivery_fee} ₽</p>
                     </>
                   )}
                 </div>

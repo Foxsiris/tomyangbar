@@ -130,7 +130,7 @@ const Checkout = () => {
         newOrder = await addOrder(orderData);
       } else {
         // Если пользователь не авторизован, создаем заказ напрямую
-        newOrder = await OrderService.createOrder(orderData);
+        newOrder = await OrderService.createOrder(orderData, null);
       }
       
       // Если выбран онлайн-платеж, показываем модальное окно платежа

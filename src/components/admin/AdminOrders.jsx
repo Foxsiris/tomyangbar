@@ -13,17 +13,39 @@ import {
   Bell,
   BellRing
 } from 'lucide-react';
-import { getOrdersData, updateOrderStatus } from '../../data/ordersData';
+import { OrderService } from '../../services/orderService';
 import OrderDetailsModal from './OrderDetailsModal';
+import { getDisplayOrderNumber } from '../../utils/orderUtils';
 
 const AdminOrders = () => {
-  const [orders, setOrders] = useState(getOrdersData());
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [newOrdersCount, setNewOrdersCount] = useState(0);
   const [lastOrderCount, setLastOrderCount] = useState(0);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState(null);
+
+  // Загружаем заказы из Supabase
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        setLoading(true);
+        console.log('🔍 Загружаем заказы для списка...');
+        const ordersData = await OrderService.getAllOrders();
+        console.log('📊 Заказы загружены в списке:', ordersData);
+        setOrders(ordersData);
+        setLastOrderCount(ordersData.length);
+      } catch (error) {
+        console.error('Ошибка при загрузке заказов:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadOrders();
+  }, []);
 
   // Отслеживаем новые заказы
   useEffect(() => {
@@ -51,24 +73,29 @@ const AdminOrders = () => {
   ];
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         order.phone.includes(searchQuery) ||
+    const matchesSearch = order.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         order.phone?.includes(searchQuery) ||
                          order.id.toString().includes(searchQuery);
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const handleStatusChange = async (orderId, newStatus) => {
-    // Обновляем статус в системе данных
-    const updatedOrder = await updateOrderStatus(orderId, newStatus);
-    
-    if (updatedOrder) {
-      // Обновляем локальное состояние
-      setOrders(prevOrders => 
-        prevOrders.map(order => 
-          order.id === orderId ? updatedOrder : order
-        )
-      );
+    try {
+      // Обновляем статус в Supabase
+      const updatedOrder = await OrderService.updateOrderStatus(orderId, newStatus);
+      
+      if (updatedOrder) {
+        // Обновляем локальное состояние
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            order.id === orderId ? updatedOrder : order
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Ошибка при обновлении статуса заказа:', error);
+      alert('Ошибка при обновлении статуса заказа');
     }
   };
 
@@ -102,6 +129,14 @@ const AdminOrders = () => {
       minute: '2-digit'
     });
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-gray-600">Загрузка заказов...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -174,7 +209,7 @@ const AdminOrders = () => {
               <div className="flex-1">
                 <div className="flex items-center space-x-4 mb-2">
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Заказ #{order.id}
+                    Заказ {getDisplayOrderNumber(order)}
                   </h3>
                   <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
                     {getStatusText(order.status)}
@@ -193,35 +228,35 @@ const AdminOrders = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
                   <div className="flex items-center">
                     <Phone className="w-4 h-4 mr-2" />
-                    <span>{order.customer} - {order.phone}</span>
+                    <span>{order.customer_name} - {order.phone}</span>
                   </div>
                   <div className="flex items-center">
                     <MapPin className="w-4 h-4 mr-2" />
-                    <span>{order.deliveryType === 'delivery' ? order.address : 'Самовывоз'}</span>
+                    <span>{order.delivery_type === 'delivery' ? order.address : 'Самовывоз'}</span>
                   </div>
                   <div className="flex items-center">
                     <Clock className="w-4 h-4 mr-2" />
-                    <span>{formatTime(order.createdAt)}</span>
+                    <span>{formatTime(order.created_at)}</span>
                   </div>
                 </div>
               </div>
               
-                             <div className="text-right">
-                 <div className="text-2xl font-bold text-primary-600">{order.finalTotal} ₽</div>
-                 <div className="text-sm text-gray-500">{order.items.length} позиций</div>
-               </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-primary-600">{order.final_total} ₽</div>
+                <div className="text-sm text-gray-500">{order.order_items?.length || 0} позиций</div>
+              </div>
             </div>
 
             {/* Order Items */}
             <div className="mb-4">
               <h4 className="font-medium text-gray-900 mb-2">Позиции заказа:</h4>
               <div className="space-y-2">
-                {order.items.map((item, index) => (
+                {order.order_items?.map((item, index) => (
                   <div key={index} className="flex justify-between text-sm">
-                    <span>{item.name} x{item.quantity}</span>
+                    <span>{item.dish_name} x{item.quantity}</span>
                     <span>{item.price * item.quantity} ₽</span>
                   </div>
-                ))}
+                )) || <div className="text-sm text-gray-500">Позиции не найдены</div>}
               </div>
             </div>
 
@@ -230,13 +265,13 @@ const AdminOrders = () => {
               <div>
                 <span className="text-gray-500">Способ получения:</span>
                 <span className="ml-2 font-medium">
-                  {order.deliveryType === 'delivery' ? 'Доставка' : 'Самовывоз'}
+                  {order.delivery_type === 'delivery' ? 'Доставка' : 'Самовывоз'}
                 </span>
               </div>
               <div>
                 <span className="text-gray-500">Способ оплаты:</span>
                 <span className="ml-2 font-medium">
-                  {order.paymentMethod === 'cash' ? 'Наличные' : 'Карта'}
+                  {order.payment_method === 'cash' ? 'Наличные' : 'Карта'}
                 </span>
               </div>
               {order.notes && (
@@ -277,7 +312,7 @@ const AdminOrders = () => {
                     <Truck className="w-4 h-4 mr-1" />
                     Отправить на доставку
                   </button>
-                  {order.deliveryType === 'pickup' && (
+                  {order.delivery_type === 'pickup' && (
                     <button
                       onClick={() => handleStatusChange(order.id, 'completed')}
                       className="bg-green-100 text-green-700 px-3 py-2 rounded-lg hover:bg-green-200 transition-colors flex items-center"

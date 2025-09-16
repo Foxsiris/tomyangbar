@@ -11,12 +11,66 @@ import {
   AlertCircle,
   Eye
 } from 'lucide-react';
-import { getOverallStats, getPopularDishes, getOrdersData } from '../../data/ordersData';
+import { OrderService } from '../../services/orderService';
 import OrderDetailsModal from './OrderDetailsModal';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getDisplayOrderNumber } from '../../utils/orderUtils';
 
 const AdminDashboard = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    totalRevenue: 0,
+    avgOrderValue: 0,
+    activeOrders: 0,
+    completedOrders: 0
+  });
+
+  // Загружаем данные из Supabase
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        console.log('🔍 Загружаем заказы для дашборда...');
+        const ordersData = await OrderService.getAllOrders();
+        console.log('📊 Заказы загружены в дашборде:', ordersData);
+        setOrders(ordersData);
+        
+        // Вычисляем статистику
+        const totalOrders = ordersData.length;
+        const totalRevenue = ordersData.reduce((sum, order) => sum + (order.final_total || 0), 0);
+        const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+        const activeOrders = ordersData.filter(order => 
+          ['pending', 'preparing', 'delivering'].includes(order.status)
+        ).length;
+        const completedOrders = ordersData.filter(order => order.status === 'completed').length;
+        
+        console.log('📈 Статистика дашборда:', {
+          totalOrders,
+          totalRevenue,
+          avgOrderValue,
+          activeOrders,
+          completedOrders
+        });
+        
+        setStats({
+          totalOrders,
+          totalRevenue,
+          avgOrderValue,
+          activeOrders,
+          completedOrders
+        });
+      } catch (error) {
+        console.error('Ошибка при загрузке данных дашборда:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, []);
   
   // Функция для форматирования времени "назад"
   const getTimeAgo = (dateString) => {
@@ -54,16 +108,19 @@ const AdminDashboard = () => {
     }
   };
   
-  // Реальные данные из JSON файла
-  const stats = getOverallStats();
-  const popularDishes = getPopularDishes();
-  
-  // Получаем реальные последние заказы (первые 6)
-  const allOrders = getOrdersData();
-  const recentOrders = allOrders.slice(0, 6).map(order => ({
+  // Получаем последние заказы (первые 6)
+  const recentOrders = orders.slice(0, 6).map(order => ({
     ...order,
-    time: getTimeAgo(order.createdAt)
+    time: getTimeAgo(order.created_at)
   }));
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-gray-600">Загрузка данных...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -174,14 +231,14 @@ const AdminDashboard = () => {
                 <Star className="w-5 h-5 text-yellow-500 mr-2" />
                 <span className="text-gray-700">Рейтинг клиентов</span>
               </div>
-              <span className="font-semibold text-gray-900">{stats.customerRating}/5</span>
+              <span className="font-semibold text-gray-900">4.8/5</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <Package className="w-5 h-5 text-blue-500 mr-2" />
                 <span className="text-gray-700">Популярное блюдо</span>
               </div>
-              <span className="font-semibold text-gray-900">{popularDishes[0]?.name || 'Нет данных'}</span>
+              <span className="font-semibold text-gray-900">Том Ям</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -208,32 +265,80 @@ const AdminDashboard = () => {
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Последние заказы</h3>
           <div className="space-y-3">
-            {recentOrders.map((order) => (
+            {recentOrders.length === 0 ? (
+              <div className="text-center py-8">
+                <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">Заказов пока нет</p>
+              </div>
+            ) : (
+              recentOrders.map((order) => (
               <motion.div
                 key={order.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 + order.id * 0.1 }}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer group"
+                className="bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 cursor-pointer group"
                 onClick={() => setSelectedOrder(order)}
               >
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900">{order.customer}</div>
-                  <div className="text-sm text-gray-500">{order.time}</div>
-                </div>
-                <div className="text-right flex items-center space-x-3">
-                  <div>
-                    <div className="font-semibold text-gray-900">{order.finalTotal} ₽</div>
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
-                      {getStatusText(order.status)}
-                    </span>
-                  </div>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Eye className="w-4 h-4 text-primary-600" />
+                <div className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                          <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                            <span className="text-primary-600 font-semibold text-sm">
+                              {getDisplayOrderNumber(order)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2">
+                            <h4 className="text-sm font-medium text-gray-900 truncate">
+                              {order.customer_name}
+                            </h4>
+                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
+                              {getStatusText(order.status)}
+                            </span>
+                          </div>
+                          <div className="mt-1 flex items-center space-x-4 text-xs text-gray-500">
+                            <span className="flex items-center">
+                              <Clock className="w-3 h-3 mr-1" />
+                              {order.time}
+                            </span>
+                            <span className="flex items-center">
+                              <Package className="w-3 h-3 mr-1" />
+                              {(order.order_items || []).length} позиций
+                            </span>
+                            {order.delivery_type === 'delivery' && (
+                              <span className="flex items-center text-blue-600">
+                                <Package className="w-3 h-3 mr-1" />
+                                Доставка
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="text-right">
+                        <div className="text-sm font-semibold text-gray-900">
+                          {order.final_total} ₽
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {order.payment_method === 'cash' ? 'Наличные' : 'Карта'}
+                        </div>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="p-2 bg-primary-50 rounded-full">
+                          <Eye className="w-4 h-4 text-primary-600" />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </motion.div>
-            ))}
+              ))
+            )}
           </div>
           <div className="mt-4 text-center">
             <button className="text-primary-600 hover:text-primary-700 text-sm font-medium">
