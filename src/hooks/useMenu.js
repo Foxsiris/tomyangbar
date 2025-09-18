@@ -17,7 +17,7 @@ export const useMenu = () => {
       const data = await MenuService.getFullMenu();
       
       // Преобразуем данные из формата API в ожидаемый формат
-      const categories = data.map(category => ({
+      const categories = (data.categories || []).map(category => ({
         id: category.id,
         name: category.name,
         description: category.description,
@@ -25,12 +25,10 @@ export const useMenu = () => {
         is_active: category.is_active
       }));
       
-      const dishes = data.flatMap(category => 
-        (category.dishes || []).map(dish => ({
-          ...dish,
-          image: dish.image_url // Преобразуем image_url в image для совместимости
-        }))
-      );
+      const dishes = (data.dishes || []).map(dish => ({
+        ...dish,
+        image: dish.image_url // Преобразуем image_url в image для совместимости
+      }));
       
       setMenuData({ categories, dishes });
     } catch (err) {
