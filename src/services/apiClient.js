@@ -229,23 +229,23 @@ class ApiClient {
 
   // Методы для работы с меню
   async getCategories() {
-    return this.get('/api?path=menu&action=categories');
+    return this.get('/menu/categories');
   }
 
   async getDishes() {
-    return this.get('/api?path=menu&action=dishes');
+    return this.get('/menu/dishes');
   }
 
   async getDishesByCategory(categoryId) {
-    return this.get(`/api?path=menu&action=dishes&category=${categoryId}`);
+    return this.get(`/menu/dishes?category=${categoryId}`);
   }
 
   async getPopularDishes() {
-    return this.get('/api?path=menu&action=dishes&popular=true');
+    return this.get('/menu/dishes?popular=true');
   }
 
   async getDishById(id) {
-    return this.get(`/api?path=menu&action=dishes&id=${id}`);
+    return this.get(`/menu/dishes?id=${id}`);
   }
 
   async searchDishes(query) {
@@ -287,7 +287,7 @@ class ApiClient {
 
   // Методы для работы с корзиной
   async getOrCreateCart(sessionId = null) {
-    return this.post('/api?path=cart&action=get-or-create', { sessionId });
+    return this.post('/cart/get-or-create', { sessionId });
   }
 
   async addToCart(cartId, dish) {
