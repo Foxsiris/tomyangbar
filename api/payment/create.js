@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { orderData, returnUrl, cancelUrl } = req.body;
+    const { orderData } = req.body;
 
     if (!orderData) {
       return res.status(400).json({ error: 'Order data is required' });
@@ -27,8 +27,8 @@ export default async function handler(req, res) {
       shopId: '1158814',
       secretKey: 'test_oa3ugm0nFNCbbN-fIuWXtY_GiLVkLL5DgCbyZSwNVA8',
       currency: 'RUB',
-      returnUrl: returnUrl || 'https://tomyangbar.vercel.app/payment/success',
-      cancelUrl: cancelUrl || 'https://tomyangbar.vercel.app/payment/cancel',
+      returnUrl: 'https://tomyangbar.vercel.app/payment/success',
+      cancelUrl: 'https://tomyangbar.vercel.app/payment/cancel',
       capture: true, // Одностадийный платеж
       isTestMode: true
     };
@@ -94,7 +94,7 @@ export default async function handler(req, res) {
     const response = await fetch('https://api.yookassa.ru/v3/payments', {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${btoa(`${PAYMENT_CONFIG.shopId}:${PAYMENT_CONFIG.secretKey}`)}`,
+        'Authorization': `Basic ${Buffer.from(`${PAYMENT_CONFIG.shopId}:${PAYMENT_CONFIG.secretKey}`).toString('base64')}`,
         'Content-Type': 'application/json',
         'Idempotence-Key': `order_${orderData.orderId}_${Date.now()}`
       },
@@ -108,23 +108,10 @@ export default async function handler(req, res) {
       // Специальная обработка для недоступного способа оплаты
       if (errorData.code === 'payment_method_not_available' || 
           errorData.description?.includes('Payment method is not available')) {
-        
-        let errorMessage = 'Выбранный способ оплаты недоступен.';
-        let details = 'Пожалуйста, выберите другой способ оплаты.';
-        
-        if (isSBP) {
-          errorMessage = 'СБП недоступен в тестовом режиме';
-          details = 'В тестовом режиме YooKassa СБП не доступен. В продакшене необходимо активировать СБП в личном кабинете YooKassa. Доступные методы: банковские карты, ЮMoney.';
-        } else if (paymentMethod === 'sberpay') {
-          errorMessage = 'SberPay недоступен в тестовом режиме';
-          details = 'В тестовом режиме YooKassa SberPay не доступен. В продакшене необходимо активировать SberPay в личном кабинете YooKassa.';
-        }
-        
         return res.status(400).json({ 
-          error: errorMessage,
-          details: details,
-          code: 'PAYMENT_METHOD_NOT_AVAILABLE',
-          availableMethods: ['card', 'yoo_money'] // Доступные в тестовом режиме
+          error: 'Payment method not available',
+          details: 'СБП не включен в настройках магазина YooKassa. Пожалуйста, включите СБП в личном кабинете YooKassa или выберите другой способ оплаты.',
+          code: 'SBP_NOT_AVAILABLE'
         });
       }
       

@@ -25,12 +25,6 @@ export default async function handler(req, res) {
         return await handleMenu(req, res, action);
       case 'cart':
         return await handleCart(req, res, action);
-      case 'payment':
-        return await handlePayment(req, res, action);
-      case 'yandex':
-        return await handleYandex(req, res, action);
-      case 'telegram':
-        return await handleTelegram(req, res, action);
       default:
         return res.status(404).json({ error: 'Endpoint not found' });
     }
@@ -63,24 +57,6 @@ async function handleCart(req, res, action) {
     default:
       return res.status(404).json({ error: 'Cart action not found' });
   }
-}
-
-// Обработка платежей
-async function handlePayment(req, res, action) {
-  // Здесь будет логика платежей
-  return res.status(501).json({ error: 'Payment endpoints not implemented yet' });
-}
-
-// Обработка Yandex API
-async function handleYandex(req, res, action) {
-  // Здесь будет логика Yandex API
-  return res.status(501).json({ error: 'Yandex endpoints not implemented yet' });
-}
-
-// Обработка Telegram
-async function handleTelegram(req, res, action) {
-  // Здесь будет логика Telegram
-  return res.status(501).json({ error: 'Telegram endpoints not implemented yet' });
 }
 
 // Получение всех блюд
