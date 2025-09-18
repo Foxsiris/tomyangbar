@@ -89,7 +89,7 @@ export class MenuService {
   // Получение полного меню (категории + блюда)
   static async getFullMenu() {
     try {
-      const response = await apiClient.get('/menu/full');
+      const response = await apiClient.get('/api?path=menu&action=full');
       return response.menu;
     } catch (error) {
       console.error('Error getting full menu:', error);
