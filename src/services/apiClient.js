@@ -1,7 +1,8 @@
 // API клиент для подключения к бэкэнду
 class ApiClient {
   constructor() {
-    this.baseURL = 'http://localhost:3001/api';
+    // Используем относительные пути для продакшена
+    this.baseURL = import.meta.env.PROD ? '/api' : 'http://localhost:3001/api';
     this.token = localStorage.getItem('tomyangbar_token');
     
     // Request throttling and caching
