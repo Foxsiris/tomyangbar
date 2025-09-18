@@ -30,11 +30,16 @@ const AdminOrders = () => {
   // Загружаем заказы из Supabase
   useEffect(() => {
     const loadOrders = async () => {
+      // Проверяем, что токен авторизации есть
+      const token = localStorage.getItem('tomyangbar_token');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        console.log('🔍 Загружаем заказы для списка...');
         const ordersData = await OrderService.getAllOrders();
-        console.log('📊 Заказы загружены в списке:', ordersData);
         setOrders(ordersData);
         setLastOrderCount(ordersData.length);
       } catch (error) {

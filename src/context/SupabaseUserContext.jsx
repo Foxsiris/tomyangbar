@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { UserService } from '../services/userService.js';
 import { OrderService } from '../services/orderService.js';
 
@@ -123,7 +123,7 @@ export const SupabaseUserProvider = ({ children }) => {
     }
   };
 
-  const getUserOrders = async () => {
+  const getUserOrders = useCallback(async () => {
     if (!user) return [];
 
     try {
@@ -133,7 +133,7 @@ export const SupabaseUserProvider = ({ children }) => {
       console.error('Error getting user orders:', error);
       return [];
     }
-  };
+  }, [user]);
 
   const getUserStats = async () => {
     if (!user) return null;

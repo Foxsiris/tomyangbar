@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, ShoppingBag, Clock, Phone } from 'lucide-react';
+import { getDisplayOrderNumber } from '../utils/orderUtils';
 
 const OrderSuccessModal = ({ isOpen, orderNumber, onClose }) => {
   if (!isOpen) return null;
@@ -80,7 +81,9 @@ const OrderSuccessModal = ({ isOpen, orderNumber, onClose }) => {
               className="bg-primary-50 border-2 border-primary-200 rounded-xl p-4 mb-6"
             >
               <div className="text-sm text-primary-600 mb-1">Номер заказа</div>
-              <div className="text-2xl font-bold text-primary-700">#{orderNumber}</div>
+              <div className="text-2xl font-bold text-primary-700">
+                {getDisplayOrderNumber({ order_number: orderNumber, id: orderNumber })}
+              </div>
             </motion.div>
 
             {/* Info cards */}

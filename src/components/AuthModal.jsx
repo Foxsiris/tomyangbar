@@ -118,10 +118,15 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
           userData = await UserService.authenticateAdmin(formData.email, formData.password);
         } else {
           // Вход в систему по email или телефону
+          // Очищаем токен админа, если он есть
+          localStorage.removeItem('tomyangbar_token');
           userData = await UserService.authenticateByEmailOrPhone(formData.email, formData.password);
         }
       } else {
         // Регистрация
+        // Очищаем токен админа, если он есть
+        localStorage.removeItem('tomyangbar_token');
+        
         const userExists = await UserService.userExists(formData.email);
         if (userExists) {
           setErrors({ email: 'Пользователь с таким email уже существует' });

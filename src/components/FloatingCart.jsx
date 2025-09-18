@@ -4,8 +4,7 @@ import { useCartContext } from '../context/CartContext';
 import { useEffect, useState } from 'react';
 
 const FloatingCart = () => {
-  const { getTotalItems, openCart } = useCartContext();
-  const totalItems = getTotalItems();
+  const { totalItems, openCart } = useCartContext();
   const [isPulsing, setIsPulsing] = useState(false);
 
   // Анимация пульсации при изменении количества товаров

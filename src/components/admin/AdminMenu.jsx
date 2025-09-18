@@ -27,12 +27,22 @@ const AdminMenu = () => {
     weight: '',
     category_id: '',
     is_popular: false,
-    is_active: true
+    is_active: true,
+    image_url: ''
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   // Загружаем данные из Supabase
   useEffect(() => {
     const loadMenuData = async () => {
+      // Проверяем, что токен авторизации есть
+      const token = localStorage.getItem('tomyangbar_token');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         const [dishesData, categoriesData] = await Promise.all([
@@ -66,31 +76,64 @@ const AdminMenu = () => {
     );
   }
 
-  const handleAddDish = () => {
-    const newDish = {
-      id: Date.now(),
-      ...formData,
-      price: parseInt(formData.price),
-      image: 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'
-    };
-    setDishes([...dishes, newDish]);
-    setShowAddModal(false);
-    resetForm();
+  const handleAddDish = async () => {
+    try {
+      let imageUrl = formData.image_url;
+      
+      // Если загружено новое изображение, загружаем его
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+      }
+      
+      const newDish = await MenuService.createDish({
+        ...formData,
+        price: parseInt(formData.price),
+        image_url: imageUrl || 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'
+      });
+      setDishes([...dishes, newDish]);
+      setShowAddModal(false);
+      resetForm();
+    } catch (error) {
+      console.error('Error creating dish:', error);
+      alert('Ошибка при создании блюда');
+    }
   };
 
-  const handleEditDish = () => {
-    setDishes(dishes.map(dish => 
-      dish.id === editingDish.id 
-        ? { ...dish, ...formData, price: parseInt(formData.price) }
-        : dish
-    ));
-    setEditingDish(null);
-    resetForm();
+  const handleEditDish = async () => {
+    try {
+      let imageUrl = formData.image_url;
+      
+      // Если загружено новое изображение, загружаем его
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+      }
+      
+      const updatedDish = await MenuService.updateDish(editingDish.id, {
+        ...formData,
+        price: parseInt(formData.price),
+        image_url: imageUrl
+      });
+      
+      setDishes(dishes.map(dish => 
+        dish.id === editingDish.id ? updatedDish : dish
+      ));
+      setEditingDish(null);
+      resetForm();
+    } catch (error) {
+      console.error('Error updating dish:', error);
+      alert('Ошибка при обновлении блюда');
+    }
   };
 
-  const handleDeleteDish = (dishId) => {
+  const handleDeleteDish = async (dishId) => {
     if (window.confirm('Вы уверены, что хотите удалить это блюдо?')) {
-      setDishes(dishes.filter(dish => dish.id !== dishId));
+      try {
+        await MenuService.deleteDish(dishId);
+        setDishes(dishes.filter(dish => dish.id !== dishId));
+      } catch (error) {
+        console.error('Error deleting dish:', error);
+        alert('Ошибка при удалении блюда');
+      }
     }
   };
 
@@ -103,8 +146,11 @@ const AdminMenu = () => {
       weight: dish.weight,
       category_id: dish.category_id,
       is_popular: dish.is_popular,
-      is_active: dish.is_active
+      is_active: dish.is_active,
+      image_url: dish.image_url || ''
     });
+    setImagePreview(dish.image_url || null);
+    setImageFile(null);
   };
 
   const resetForm = () => {
@@ -115,8 +161,48 @@ const AdminMenu = () => {
       weight: '',
       category_id: '',
       is_popular: false,
-      is_active: true
+      is_active: true,
+      image_url: ''
     });
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await fetch('http://localhost:3001/api/admin/upload-image', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('tomyangbar_token')}`
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Ошибка при загрузке изображения');
+      }
+      
+      const data = await response.json();
+      return `http://localhost:3001${data.imageUrl}`;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
   };
 
   const getCategoryName = (categoryId) => {
@@ -186,9 +272,12 @@ const AdminMenu = () => {
           >
             <div className="relative">
               <img
-                src={dish.image}
+                src={dish.image_url || dish.image || 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'}
                 alt={dish.name}
                 className="w-full h-48 object-cover"
+                onError={(e) => {
+                  e.target.src = 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
+                }}
               />
               <div className="absolute top-2 right-2 flex space-x-1">
                 {dish.is_popular && (
@@ -290,6 +379,57 @@ const AdminMenu = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Описание блюда"
                   />
+                </div>
+
+                {/* Image Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Изображение
+                  </label>
+                  <div className="space-y-3">
+                    {/* Image Preview */}
+                    {imagePreview && (
+                      <div className="relative">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImagePreview(null);
+                            setImageFile(null);
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
+                    
+                    {/* File Input */}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                    
+                    {/* URL Input */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Или введите URL изображения
+                      </label>
+                      <input
+                        type="url"
+                        value={formData.image_url}
+                        onChange={(e) => setFormData({...formData, image_url: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="https://example.com/image.jpg"
+                      />
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">

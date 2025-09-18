@@ -278,7 +278,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                         <Package className="w-5 h-5 text-primary-600" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{item.name}</p>
+                        <p className="font-medium text-gray-900">{item.dish_name}</p>
                         <p className="text-sm text-gray-500">Количество: {item.quantity}</p>
                       </div>
                     </div>

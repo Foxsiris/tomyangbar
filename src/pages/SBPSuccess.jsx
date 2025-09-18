@@ -68,7 +68,9 @@ const SBPSuccess = () => {
           >
             <div className="flex items-center justify-center space-x-2">
               <span className="text-blue-600 font-semibold">Номер заказа:</span>
-              <span className="text-2xl font-bold text-blue-800">#{orderId}</span>
+              <span className="text-2xl font-bold text-blue-800">
+                {orderId.length > 10 ? `#${orderId.slice(-6)}` : `#${orderId}`}
+              </span>
             </div>
           </motion.div>
         )}

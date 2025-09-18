@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { useSupabaseCart } from '../hooks/useSupabaseCart';
+import { useApiCart } from '../hooks/useApiCart';
 import { useSupabaseUser } from './SupabaseUserContext';
 
 const CartContext = createContext();
@@ -14,7 +14,7 @@ export const useCartContext = () => {
 
 export const CartProvider = ({ children }) => {
   const { user } = useSupabaseUser();
-  const cartData = useSupabaseCart(user?.id);
+  const cartData = useApiCart(user?.id);
 
   return (
     <CartContext.Provider value={cartData}>

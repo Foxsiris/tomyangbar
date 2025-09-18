@@ -1,5 +1,5 @@
 // import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   TrendingUp, 
   TrendingDown,
@@ -28,14 +28,29 @@ const AdminStats = () => {
     repeatCustomers: 68
   });
 
+  // Ref для предотвращения дублирующих запросов
+  const loadingRef = useRef(false);
+
   // Загружаем данные из Supabase
   useEffect(() => {
     const loadStatsData = async () => {
+      // Предотвращаем дублирующие запросы
+      if (loadingRef.current) {
+        return;
+      }
+
+      // Проверяем, что токен авторизации есть
+      const token = localStorage.getItem('tomyangbar_token');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       try {
+        loadingRef.current = true;
         setLoading(true);
-        console.log('🔍 Загружаем заказы для статистики...');
         const ordersData = await OrderService.getAllOrders();
-        console.log('📊 Заказы загружены:', ordersData);
+        
         setOrders(ordersData);
         
         // Вычисляем статистику
@@ -46,14 +61,6 @@ const AdminStats = () => {
           ['pending', 'preparing', 'delivering'].includes(order.status)
         ).length;
         const completedOrders = ordersData.filter(order => order.status === 'completed').length;
-        
-        console.log('📈 Вычисленная статистика:', {
-          totalOrders,
-          totalRevenue,
-          avgOrderValue,
-          activeOrders,
-          completedOrders
-        });
         
         setStats({
           totalOrders,
@@ -66,13 +73,19 @@ const AdminStats = () => {
           repeatCustomers: 68
         });
       } catch (error) {
-        console.error('❌ Ошибка загрузки статистики:', error);
+        console.error('Ошибка загрузки статистики:', error);
       } finally {
+        loadingRef.current = false;
         setLoading(false);
       }
     };
 
     loadStatsData();
+    
+    // Cleanup функция для предотвращения утечек памяти
+    return () => {
+      loadingRef.current = false;
+    };
   }, []);
 
   // Функции для расчета данных графиков

@@ -15,12 +15,11 @@ const PopularDishCard = ({ dish, index = 0 }) => {
     >
       <div className="h-48 bg-gray-200 relative">
         <img
-          src={dish.image}
+          src={dish.image || 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'}
           alt={dish.name}
           className="w-full h-full object-cover"
           onError={(e) => {
-            e.target.style.display = 'none';
-            e.target.nextSibling.style.display = 'block';
+            e.target.src = 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>

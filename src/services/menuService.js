@@ -1,24 +1,12 @@
-import { supabase } from '../config/supabase.js';
+import { apiClient } from './apiClient.js';
 
 // Сервис для работы с меню
 export class MenuService {
   // Получение всех категорий
   static async getCategories() {
     try {
-      console.log('🔍 Загружаем категории из Supabase...');
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-
-      if (error) {
-        console.error('❌ Ошибка при загрузке категорий:', error);
-        throw error;
-      }
-      
-      console.log('✅ Категории загружены:', data);
-      return data;
+      const response = await apiClient.getCategories();
+      return response.categories;
     } catch (error) {
       console.error('Error getting categories:', error);
       throw error;
@@ -28,27 +16,8 @@ export class MenuService {
   // Получение всех блюд
   static async getDishes() {
     try {
-      console.log('🔍 Загружаем блюда из Supabase...');
-      const { data, error } = await supabase
-        .from('dishes')
-        .select(`
-          *,
-          categories (
-            id,
-            name,
-            description
-          )
-        `)
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-
-      if (error) {
-        console.error('❌ Ошибка при загрузке блюд:', error);
-        throw error;
-      }
-      
-      console.log('✅ Блюда загружены:', data);
-      return data;
+      const response = await apiClient.getDishes();
+      return response.dishes;
     } catch (error) {
       console.error('Error getting dishes:', error);
       throw error;
@@ -58,22 +27,8 @@ export class MenuService {
   // Получение блюд по категории
   static async getDishesByCategory(categoryId) {
     try {
-      const { data, error } = await supabase
-        .from('dishes')
-        .select(`
-          *,
-          categories (
-            id,
-            name,
-            description
-          )
-        `)
-        .eq('category_id', categoryId)
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-
-      if (error) throw error;
-      return data;
+      const response = await apiClient.getDishesByCategory(categoryId);
+      return response.dishes;
     } catch (error) {
       console.error('Error getting dishes by category:', error);
       throw error;
@@ -83,22 +38,8 @@ export class MenuService {
   // Получение популярных блюд
   static async getPopularDishes() {
     try {
-      const { data, error } = await supabase
-        .from('dishes')
-        .select(`
-          *,
-          categories (
-            id,
-            name,
-            description
-          )
-        `)
-        .eq('is_popular', true)
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-
-      if (error) throw error;
-      return data;
+      const response = await apiClient.getPopularDishes();
+      return response.dishes;
     } catch (error) {
       console.error('Error getting popular dishes:', error);
       throw error;
@@ -108,22 +49,8 @@ export class MenuService {
   // Получение блюда по ID
   static async getDishById(id) {
     try {
-      const { data, error } = await supabase
-        .from('dishes')
-        .select(`
-          *,
-          categories (
-            id,
-            name,
-            description
-          )
-        `)
-        .eq('id', id)
-        .eq('is_active', true)
-        .single();
-
-      if (error) throw error;
-      return data;
+      const response = await apiClient.getDishById(id);
+      return response.dish;
     } catch (error) {
       console.error('Error getting dish by ID:', error);
       throw error;
@@ -133,22 +60,8 @@ export class MenuService {
   // Поиск блюд
   static async searchDishes(query) {
     try {
-      const { data, error } = await supabase
-        .from('dishes')
-        .select(`
-          *,
-          categories (
-            id,
-            name,
-            description
-          )
-        `)
-        .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-
-      if (error) throw error;
-      return data;
+      const response = await apiClient.searchDishes(query);
+      return response.dishes;
     } catch (error) {
       console.error('Error searching dishes:', error);
       throw error;
@@ -158,55 +71,15 @@ export class MenuService {
   // Получение блюд с фильтрами
   static async getDishesWithFilters(filters = {}) {
     try {
-      let query = supabase
-        .from('dishes')
-        .select(`
-          *,
-          categories (
-            id,
-            name,
-            description
-          )
-        `)
-        .eq('is_active', true);
-
-      // Фильтр по категории
-      if (filters.category) {
-        query = query.eq('category_id', filters.category);
-      }
-
-      // Фильтр по популярности
-      if (filters.popular !== undefined) {
-        query = query.eq('is_popular', filters.popular);
-      }
-
-      // Фильтр по остроте
-      if (filters.spicy !== undefined) {
-        query = query.eq('is_spicy', filters.spicy);
-      }
-
-      // Фильтр по вегетарианству
-      if (filters.vegetarian !== undefined) {
-        query = query.eq('is_vegetarian', filters.vegetarian);
-      }
-
-      // Фильтр по цене
-      if (filters.minPrice !== undefined) {
-        query = query.gte('price', filters.minPrice);
-      }
-      if (filters.maxPrice !== undefined) {
-        query = query.lte('price', filters.maxPrice);
-      }
-
-      // Сортировка
-      const sortBy = filters.sortBy || 'sort_order';
-      const sortOrder = filters.sortOrder || 'asc';
-      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data;
+      const queryParams = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, value);
+        }
+      });
+      
+      const response = await apiClient.get(`/menu/dishes/filter?${queryParams.toString()}`);
+      return response.dishes;
     } catch (error) {
       console.error('Error getting dishes with filters:', error);
       throw error;
@@ -216,18 +89,8 @@ export class MenuService {
   // Получение полного меню (категории + блюда)
   static async getFullMenu() {
     try {
-      const [categories, dishes] = await Promise.all([
-        this.getCategories(),
-        this.getDishes()
-      ]);
-
-      // Группируем блюда по категориям
-      const menuData = {
-        categories: categories,
-        dishes: dishes
-      };
-
-      return menuData;
+      const response = await apiClient.get('/menu/full');
+      return response.menu;
     } catch (error) {
       console.error('Error getting full menu:', error);
       throw error;
@@ -237,25 +100,43 @@ export class MenuService {
   // Получение статистики меню
   static async getMenuStats() {
     try {
-      const { data, error } = await supabase
-        .from('dishes')
-        .select('category_id, is_popular, is_spicy, is_vegetarian, price')
-        .eq('is_active', true);
-
-      if (error) throw error;
-
-      const stats = {
-        totalDishes: data.length,
-        popularDishes: data.filter(dish => dish.is_popular).length,
-        spicyDishes: data.filter(dish => dish.is_spicy).length,
-        vegetarianDishes: data.filter(dish => dish.is_vegetarian).length,
-        averagePrice: data.reduce((sum, dish) => sum + parseFloat(dish.price), 0) / data.length,
-        categoriesCount: new Set(data.map(dish => dish.category_id)).size
-      };
-
-      return stats;
+      const response = await apiClient.get('/menu/stats');
+      return response.stats;
     } catch (error) {
       console.error('Error getting menu stats:', error);
+      throw error;
+    }
+  }
+
+  // Обновление блюда (для админа)
+  static async updateDish(dishId, updates) {
+    try {
+      const response = await apiClient.updateDish(dishId, updates);
+      return response.dish;
+    } catch (error) {
+      console.error('Error updating dish:', error);
+      throw error;
+    }
+  }
+
+  // Создание блюда (для админа)
+  static async createDish(dishData) {
+    try {
+      const response = await apiClient.createDish(dishData);
+      return response.dish;
+    } catch (error) {
+      console.error('Error creating dish:', error);
+      throw error;
+    }
+  }
+
+  // Удаление блюда (для админа)
+  static async deleteDish(dishId) {
+    try {
+      const response = await apiClient.deleteDish(dishId);
+      return response;
+    } catch (error) {
+      console.error('Error deleting dish:', error);
       throw error;
     }
   }

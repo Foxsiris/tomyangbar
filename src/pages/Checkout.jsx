@@ -13,7 +13,7 @@ import AddressAutocomplete from '../components/AddressAutocomplete';
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { cart, getTotalPrice, clearCart } = useCartContext();
+  const { cart, totalPrice, clearCart } = useCartContext();
   const { user, login, addOrder } = useSupabaseUser();
   
   const [formData, setFormData] = useState({
@@ -50,7 +50,7 @@ const Checkout = () => {
   }, [user]);
 
   const deliveryFee = formData.deliveryType === 'delivery' ? 200 : 0;
-  const totalPrice = getTotalPrice() + deliveryFee;
+  const finalTotalPrice = totalPrice + deliveryFee;
 
   // Обработчики для проверки адреса
   const handleZoneFound = (zone) => {
@@ -96,7 +96,7 @@ const Checkout = () => {
     if (formData.deliveryType === 'delivery' && formData.address.trim()) {
       if (!isAddressValid) {
         newErrors.address = 'Адрес не входит в зону доставки';
-      } else if (deliveryZone && getTotalPrice() < deliveryZone.minOrder) {
+      } else if (deliveryZone && totalPrice < deliveryZone.minOrder) {
         newErrors.delivery = `Минимальная сумма заказа для ${deliveryZone.name.toLowerCase()}: ${deliveryZone.minOrder}₽`;
       }
     }
@@ -137,12 +137,12 @@ const Checkout = () => {
       if (formData.paymentMethod === 'card') {
         setCurrentOrderData({
           ...orderData,
-          orderId: newOrder.id
+          orderId: newOrder.order_number || newOrder.id
         });
         setIsPaymentModalOpen(true);
       } else {
         // Для наличных показываем обычное окно успеха
-        setOrderNumber(newOrder.id);
+        setOrderNumber(newOrder.order_number || newOrder.id);
         setShowSuccessModal(true);
       }
     }
@@ -489,7 +489,7 @@ const Checkout = () => {
                 </div>
 
                 {/* Предупреждение о недостаточной сумме заказа */}
-                {formData.deliveryType === 'delivery' && deliveryZone && getTotalPrice() < deliveryZone.minOrder && (
+                {formData.deliveryType === 'delivery' && deliveryZone && totalPrice < deliveryZone.minOrder && (
                   <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
                     <div className="flex items-start">
                       <div className="flex-shrink-0">
@@ -503,8 +503,8 @@ const Checkout = () => {
                         </h3>
                         <div className="mt-2 text-sm text-orange-700">
                           <p>Для {deliveryZone.name.toLowerCase()} минимальная сумма заказа составляет <strong>{deliveryZone.minOrder}₽</strong></p>
-                          <p className="mt-1">Текущая сумма: <strong>{getTotalPrice()}₽</strong></p>
-                          <p className="mt-1">Нужно добавить еще: <strong className="text-orange-900">{deliveryZone.minOrder - getTotalPrice()}₽</strong></p>
+                          <p className="mt-1">Текущая сумма: <strong>{totalPrice}₽</strong></p>
+                          <p className="mt-1">Нужно добавить еще: <strong className="text-orange-900">{deliveryZone.minOrder - totalPrice}₽</strong></p>
                         </div>
                         <div className="mt-3">
                           <div className="flex space-x-3">
@@ -533,7 +533,7 @@ const Checkout = () => {
                   <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                     <p className="text-red-800 font-medium">{errors.delivery}</p>
                     <p className="text-red-600 text-sm mt-1">
-                      Добавьте блюда на сумму {deliveryZone ? deliveryZone.minOrder - getTotalPrice() : 0}₽ или выберите самовывоз
+                      Добавьте блюда на сумму {deliveryZone ? deliveryZone.minOrder - totalPrice : 0}₽ или выберите самовывоз
                     </p>
                   </div>
                 )}
@@ -542,13 +542,13 @@ const Checkout = () => {
                 <button
                   type="submit"
                   className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
-                    formData.deliveryType === 'delivery' && deliveryZone && getTotalPrice() < deliveryZone.minOrder
+                    formData.deliveryType === 'delivery' && deliveryZone && totalPrice < deliveryZone.minOrder
                       ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                       : 'bg-primary-600 text-white hover:bg-primary-700'
                   }`}
-                  disabled={formData.deliveryType === 'delivery' && (!isAddressValid || (deliveryZone && getTotalPrice() < deliveryZone.minOrder))}
+                  disabled={formData.deliveryType === 'delivery' && (!isAddressValid || (deliveryZone && totalPrice < deliveryZone.minOrder))}
                 >
-                  {formData.deliveryType === 'delivery' && deliveryZone && getTotalPrice() < deliveryZone.minOrder
+                  {formData.deliveryType === 'delivery' && deliveryZone && totalPrice < deliveryZone.minOrder
                     ? `Минимум ${deliveryZone.minOrder}₽ для доставки`
                     : `Оформить заказ за ${totalPrice} ₽`
                   }
@@ -567,10 +567,10 @@ const Checkout = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Ваш заказ</h3>
               
               <div className="space-y-3 mb-6">
-                {cart.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-100">
+                {cart.map((item, index) => (
+                  <div key={item.dish_id || item.id || index} className="flex justify-between items-center py-2 border-b border-gray-100">
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900">{item.name}</div>
+                      <div className="font-medium text-gray-900">{item.dish_name || item.name}</div>
                       <div className="text-sm text-gray-500">Количество: {item.quantity}</div>
                     </div>
                     <div className="text-right">
@@ -583,7 +583,7 @@ const Checkout = () => {
               <div className="space-y-2 border-t border-gray-200 pt-4">
                 <div className="flex justify-between text-sm">
                   <span>Стоимость блюд:</span>
-                  <span>{getTotalPrice()} ₽</span>
+                  <span>{totalPrice} ₽</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Доставка:</span>
@@ -596,12 +596,12 @@ const Checkout = () => {
               </div>
 
               <div className={`mt-6 p-4 rounded-lg ${
-                formData.deliveryType === 'delivery' && deliveryZone && getTotalPrice() < deliveryZone.minOrder
+                formData.deliveryType === 'delivery' && deliveryZone && totalPrice < deliveryZone.minOrder
                   ? 'bg-orange-50 border border-orange-200'
                   : 'bg-gray-50'
               }`}>
                 <div className={`text-sm ${
-                  formData.deliveryType === 'delivery' && deliveryZone && getTotalPrice() < deliveryZone.minOrder
+                  formData.deliveryType === 'delivery' && deliveryZone && totalPrice < deliveryZone.minOrder
                     ? 'text-orange-700'
                     : 'text-gray-600'
                 }`}>
@@ -610,10 +610,10 @@ const Checkout = () => {
                     deliveryZone ? (
                       <>
                         <div>• Зона: {deliveryZone.name}</div>
-                        <div className={`${getTotalPrice() < deliveryZone.minOrder ? 'text-orange-800 font-semibold' : ''}`}>
+                        <div className={`${totalPrice < deliveryZone.minOrder ? 'text-orange-800 font-semibold' : ''}`}>
                           • Минимальная сумма: {deliveryZone.minOrder} ₽
-                          {getTotalPrice() < deliveryZone.minOrder && (
-                            <span className="ml-1 text-orange-600">(не хватает {deliveryZone.minOrder - getTotalPrice()}₽)</span>
+                          {totalPrice < deliveryZone.minOrder && (
+                            <span className="ml-1 text-orange-600">(не хватает {deliveryZone.minOrder - totalPrice}₽)</span>
                           )}
                         </div>
                         <div>• Время доставки: {deliveryZone.deliveryTime}</div>

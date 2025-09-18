@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { 
@@ -28,6 +28,19 @@ const Profile = () => {
     phone: ''
   });
 
+  // Функция для загрузки заказов
+  const loadUserOrders = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const userOrdersList = await getUserOrders();
+      setUserOrders(userOrdersList || []);
+    } catch (error) {
+      console.error('Error loading user orders:', error);
+      setUserOrders([]);
+    }
+  }, [user, getUserOrders]);
+
   useEffect(() => {
     if (user) {
       setEditData({
@@ -36,18 +49,15 @@ const Profile = () => {
         phone: user.phone || ''
       });
       
-      // Получаем заказы пользователя из его истории
-      const userOrdersList = getUserOrders(user.id);
-      setUserOrders(userOrdersList);
+      loadUserOrders();
     }
-  }, [user]);
+  }, [user, loadUserOrders]);
 
   // Обновляем заказы при изменении localStorage
   useEffect(() => {
     const handleStorageChange = () => {
       if (user) {
-        const userOrdersList = getUserOrders(user.id);
-        setUserOrders(userOrdersList);
+        loadUserOrders();
       }
     };
 
@@ -63,11 +73,29 @@ const Profile = () => {
     
     window.addEventListener('customStorageChange', handleCustomStorageChange);
     
+    // Обновляем заказы при фокусе на вкладку
+    const handleFocus = () => {
+      if (user) {
+        loadUserOrders();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+
+    // Периодическое обновление заказов каждые 30 секунд
+    const interval = setInterval(() => {
+      if (user) {
+        loadUserOrders();
+      }
+    }, 30000);
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('customStorageChange', handleCustomStorageChange);
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(interval);
     };
-  }, [user]);
+  }, [user, loadUserOrders]);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -387,14 +415,14 @@ const Profile = () => {
                               </div>
                               <div>
                                 <h3 className="text-2xl font-bold text-gray-900">
-                                  Заказ #{order.id}
+                                  Заказ #{order.order_number || order.id}
                                 </h3>
-                                <p className="text-gray-500 text-sm">от {formatDate(order.createdAt)}</p>
+                                <p className="text-gray-500 text-sm">от {formatDate(order.created_at || order.createdAt)}</p>
                               </div>
                             </div>
                             <div className="text-right">
                               <div className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                                {order.finalTotal} ₽
+                                {order.final_total || order.finalTotal} ₽
                               </div>
                               <span className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full ${getStatusColor(order.status)}`}>
                                 <StatusIcon className="w-4 h-4" />
@@ -409,7 +437,7 @@ const Profile = () => {
                               Позиции заказа:
                             </h4>
                             <div className="space-y-3">
-                              {order.items.map((item, index) => (
+                              {(order.items || order.order_items || []).map((item, index) => (
                                 <motion.div 
                                   key={index} 
                                   initial={{ opacity: 0, x: -20 }}
@@ -421,7 +449,7 @@ const Profile = () => {
                                     <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
                                       {item.quantity}
                                     </div>
-                                    <span className="font-medium text-gray-900">{item.name}</span>
+                                    <span className="font-medium text-gray-900">{item.dish_name || item.name}</span>
                                   </div>
                                   <span className="font-bold text-orange-600">{item.price * item.quantity} ₽</span>
                                 </motion.div>
@@ -440,7 +468,7 @@ const Profile = () => {
                               </div>
                               <div>
                                 <p className="font-medium text-gray-900">
-                                  {order.deliveryType === 'delivery' ? 'Доставка' : 'Самовывоз'}
+                                  {(order.delivery_type || order.deliveryType) === 'delivery' ? 'Доставка' : 'Самовывоз'}
                                 </p>
                                 <p className="text-gray-500 text-sm">Способ получения</p>
                               </div>
@@ -454,7 +482,7 @@ const Profile = () => {
                               </div>
                               <div>
                                 <p className="font-medium text-gray-900">
-                                  {order.deliveryTime === 'asap' ? 'Как можно скорее' : 'На определенное время'}
+                                  {(order.delivery_time || order.deliveryTime) === 'asap' ? 'Как можно скорее' : 'На определенное время'}
                                 </p>
                                 <p className="text-gray-500 text-sm">Время доставки</p>
                               </div>

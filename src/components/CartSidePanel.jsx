@@ -12,12 +12,12 @@ const CartSidePanel = () => {
     closeCart, 
     removeFromCart, 
     updateQuantity, 
-    getTotalPrice, 
+    totalPrice, 
     clearCart 
   } = useCartContext();
 
   const handleCheckout = () => {
-    if (getTotalPrice() < 1000) {
+    if (totalPrice < 1000) {
       alert('Минимальная сумма заказа 1000 рублей');
       return;
     }
@@ -78,8 +78,8 @@ const CartSidePanel = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {cart.map((item) => (
-                    <div key={item.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg bg-white">
+                  {cart.map((item, index) => (
+                    <div key={item.dish_id || item.id || index} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg bg-white">
                       <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 flex items-center justify-center">
                         <span className="text-2xl">🍽️</span>
                       </div>
@@ -98,7 +98,7 @@ const CartSidePanel = () => {
                       
                       <div className="flex items-center space-x-2">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.dish_id, item.quantity - 1)}
                           className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
                         >
                           <Minus className="w-3 h-3" />
@@ -109,7 +109,7 @@ const CartSidePanel = () => {
                         </span>
                         
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.dish_id, item.quantity + 1)}
                           className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
                         >
                           <Plus className="w-3 h-3" />
@@ -117,7 +117,7 @@ const CartSidePanel = () => {
                       </div>
                       
                       <button
-                        onClick={() => removeFromCart(item.id)}
+                        onClick={() => removeFromCart(item.dish_id)}
                         className="text-red-500 hover:text-red-700 transition-colors p-1"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -137,11 +137,11 @@ const CartSidePanel = () => {
                     <p className="text-xs text-gray-500">合計</p>
                   </div>
                   <span className="text-xl font-bold text-primary-600">
-                    {getTotalPrice()} ₽
+                    {totalPrice} ₽
                   </span>
                 </div>
                 
-                <MinimumOrderAlert currentTotal={getTotalPrice()} />
+                <MinimumOrderAlert currentTotal={totalPrice} />
 
                 <div className="flex space-x-3 mb-3">
                   <button

@@ -107,9 +107,24 @@ src/
 
 ## 🌐 Демо
 
-Сайт доступен по адресу: [http://localhost:5173](http://localhost:5173)
-
 **Продакшен**: [tomyangbar.vercel.app](https://tomyangbar.vercel.app)
+
+**Локальная разработка**: [http://localhost:5173](http://localhost:5173)
+
+## 🚀 Развертывание на Vercel
+
+Для развертывания на Vercel следуйте инструкциям в файле [DEPLOYMENT_VERCEL.md](./DEPLOYMENT_VERCEL.md)
+
+### Быстрый старт:
+1. Подключите репозиторий к Vercel
+2. Настройте переменные окружения
+3. Разверните проект
+
+### Необходимые переменные окружения:
+- `VITE_SUPABASE_URL` - URL вашего Supabase проекта
+- `VITE_SUPABASE_ANON_KEY` - Anon ключ Supabase
+- `YOOKASSA_SHOP_ID` - Shop ID от YooKassa
+- `YOOKASSA_SECRET_KEY` - Secret Key от YooKassa
 
 ## 📞 Контакты
 

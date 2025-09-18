@@ -5,11 +5,11 @@ import { Link } from 'react-router-dom';
 import { useCartContext } from '../context/CartContext';
 
 const Cart = () => {
-  const { cart, removeFromCart, updateQuantity, getTotalPrice, clearCart } = useCartContext();
+  const { cart, removeFromCart, updateQuantity, totalPrice, clearCart } = useCartContext();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const handleCheckout = () => {
-    if (getTotalPrice() < 1000) {
+    if (totalPrice < 1000) {
       alert('Минимальная сумма заказа 1000 рублей');
       return;
     }
@@ -68,7 +68,7 @@ const Cart = () => {
                 <div className="space-y-4">
                   {cart.map((item) => (
                     <motion.div
-                      key={item.id}
+                      key={item.dish_id || item.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg"
@@ -89,7 +89,7 @@ const Cart = () => {
                       
                       <div className="flex items-center space-x-2">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.dish_id, item.quantity - 1)}
                           className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
                         >
                           <Minus className="w-4 h-4" />
@@ -100,7 +100,7 @@ const Cart = () => {
                         </span>
                         
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.dish_id, item.quantity + 1)}
                           className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
                         >
                           <Plus className="w-4 h-4" />
@@ -117,7 +117,7 @@ const Cart = () => {
                       </div>
                       
                       <button
-                        onClick={() => removeFromCart(item.id)}
+                        onClick={() => removeFromCart(item.dish_id)}
                         className="text-red-500 hover:text-red-700 transition-colors"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -139,27 +139,27 @@ const Cart = () => {
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Товары ({cart.length})</span>
-                  <span className="font-medium">{getTotalPrice()} ₽</span>
+                  <span className="font-medium">{totalPrice} ₽</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Доставка</span>
                   <span className="font-medium text-green-600">
-                    {getTotalPrice() >= 1000 ? 'Бесплатно' : '200 ₽'}
+                    {totalPrice >= 1000 ? 'Бесплатно' : '200 ₽'}
                   </span>
                 </div>
                 <hr className="border-gray-200" />
                 <div className="flex justify-between text-lg font-bold">
                   <span>Итого</span>
                   <span className="text-primary-600">
-                    {getTotalPrice() >= 1000 ? getTotalPrice() : getTotalPrice() + 200} ₽
+                    {totalPrice >= 1000 ? totalPrice : totalPrice + 200} ₽
                   </span>
                 </div>
               </div>
 
-              {getTotalPrice() < 1000 && (
+              {totalPrice < 1000 && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                   <p className="text-sm text-yellow-800">
-                    До бесплатной доставки осталось {1000 - getTotalPrice()} ₽
+                    До бесплатной доставки осталось {1000 - totalPrice} ₽
                   </p>
                 </div>
               )}

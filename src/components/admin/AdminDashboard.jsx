@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { OrderService } from '../../services/orderService';
 import OrderDetailsModal from './OrderDetailsModal';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getDisplayOrderNumber } from '../../utils/orderUtils';
 
 const AdminDashboard = () => {
@@ -28,14 +28,28 @@ const AdminDashboard = () => {
     completedOrders: 0
   });
 
+  // Ref для предотвращения дублирующих запросов
+  const loadingRef = useRef(false);
+
   // Загружаем данные из Supabase
   useEffect(() => {
     const loadDashboardData = async () => {
+      // Предотвращаем дублирующие запросы
+      if (loadingRef.current) {
+        return;
+      }
+
+      // Проверяем, что токен авторизации есть
+      const token = localStorage.getItem('tomyangbar_token');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       try {
+        loadingRef.current = true;
         setLoading(true);
-        console.log('🔍 Загружаем заказы для дашборда...');
         const ordersData = await OrderService.getAllOrders();
-        console.log('📊 Заказы загружены в дашборде:', ordersData);
         setOrders(ordersData);
         
         // Вычисляем статистику
@@ -47,14 +61,6 @@ const AdminDashboard = () => {
         ).length;
         const completedOrders = ordersData.filter(order => order.status === 'completed').length;
         
-        console.log('📈 Статистика дашборда:', {
-          totalOrders,
-          totalRevenue,
-          avgOrderValue,
-          activeOrders,
-          completedOrders
-        });
-        
         setStats({
           totalOrders,
           totalRevenue,
@@ -65,11 +71,17 @@ const AdminDashboard = () => {
       } catch (error) {
         console.error('Ошибка при загрузке данных дашборда:', error);
       } finally {
+        loadingRef.current = false;
         setLoading(false);
       }
     };
 
     loadDashboardData();
+    
+    // Cleanup функция для предотвращения утечек памяти
+    return () => {
+      loadingRef.current = false;
+    };
   }, []);
   
   // Функция для форматирования времени "назад"
@@ -113,7 +125,8 @@ const AdminDashboard = () => {
     ...order,
     time: getTimeAgo(order.created_at)
   }));
-
+  
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
