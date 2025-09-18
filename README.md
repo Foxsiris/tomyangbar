@@ -107,7 +107,7 @@ src/
 
 ## 🌐 Демо
 
-**Продакшен**: [tomyangbar.vercel.app](https://tomyangbar.vercel.app)
+**Продакшен**: [tomyangbar.vercel.app](https://tomyangbar.vercel.app) 🚀
 
 **Локальная разработка**: [http://localhost:5173](http://localhost:5173)
 
