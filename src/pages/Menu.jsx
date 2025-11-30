@@ -15,37 +15,48 @@ const Menu = () => {
   const { menuData, isLoading, error, getDishesByCategory } = useMenu();
 
   const filteredDishes = useMemo(() => {
-    let filtered = menuData.dishes || [];
+    console.log('Menu.filteredDishes: menuData:', menuData);
+    console.log('Menu.filteredDishes: menuData.dishes:', menuData.dishes);
+    console.log('Menu.filteredDishes: dishes type:', typeof menuData.dishes);
+    console.log('Menu.filteredDishes: dishes is array:', Array.isArray(menuData.dishes));
+    
+    let filtered = Array.isArray(menuData.dishes) ? menuData.dishes : [];
+    console.log('Menu.filteredDishes: Initial filtered count:', filtered.length);
 
     // Фильтрация по категории
     if (selectedCategory !== 'all') {
+      const beforeCount = filtered.length;
       filtered = filtered.filter(dish => dish.category_id === selectedCategory);
+      console.log('Menu.filteredDishes: After category filter:', filtered.length, '(was', beforeCount + ')');
     }
 
     // Фильтрация по поиску
     if (searchQuery) {
+      const beforeCount = filtered.length;
       filtered = filtered.filter(dish =>
-        dish.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        dish.description.toLowerCase().includes(searchQuery.toLowerCase())
+        dish.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        dish.description?.toLowerCase().includes(searchQuery.toLowerCase())
       );
+      console.log('Menu.filteredDishes: After search filter:', filtered.length, '(was', beforeCount + ')');
     }
 
     // Сортировка
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'price-low':
-          return a.price - b.price;
+          return (a.price || 0) - (b.price || 0);
         case 'price-high':
-          return b.price - a.price;
+          return (b.price || 0) - (a.price || 0);
         case 'name':
-          return a.name.localeCompare(b.name);
+          return (a.name || '').localeCompare(b.name || '');
         case 'popular':
-          return b.is_popular - a.is_popular;
+          return (b.is_popular || 0) - (a.is_popular || 0);
         default:
           return 0;
       }
     });
 
+    console.log('Menu.filteredDishes: Final filtered count:', filtered.length);
     return filtered;
   }, [selectedCategory, searchQuery, sortBy, menuData.dishes]);
 

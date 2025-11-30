@@ -25,7 +25,7 @@ app.use(helmet({
   },
 }));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL || '*',
   credentials: true
 }));
 
@@ -44,6 +44,12 @@ app.use(limiter);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Debug: Log all incoming requests
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
 
 // Статическая раздача загруженных файлов
 app.use('/uploads', (req, res, next) => {

@@ -101,7 +101,15 @@ class ApiClient {
   // Выполнение запроса с обработкой ошибок
   async executeRequest(url, config, endpoint, requestKey, retryCount) {
     try {
+      console.log(`apiClient.executeRequest: Making request to ${url}`);
+      console.log(`apiClient.executeRequest: Endpoint: ${endpoint}`);
+      console.log(`apiClient.executeRequest: Config:`, config);
+      
       const response = await fetch(url, config);
+      
+      console.log(`apiClient.executeRequest: Response status: ${response.status}`);
+      console.log(`apiClient.executeRequest: Response ok: ${response.ok}`);
+      console.log(`apiClient.executeRequest: Response headers:`, Object.fromEntries(response.headers.entries()));
       
       // Если токен истек, удаляем его
       if (response.status === 401) {
@@ -123,16 +131,21 @@ class ApiClient {
 
       let data;
       try {
-        data = await response.json();
-      } catch {
+        const text = await response.text();
+        console.log(`apiClient.executeRequest: Response text (first 500 chars):`, text.substring(0, 500));
+        data = JSON.parse(text);
+        console.log(`apiClient.executeRequest: Parsed data:`, data);
+      } catch (parseError) {
+        console.error(`apiClient.executeRequest: JSON parse error:`, parseError);
         // Если ответ не JSON (например, "Too many requests" текст)
         if (response.status === 429) {
           throw new Error('Превышен лимит запросов. Попробуйте позже.');
         }
-        throw new Error('Ошибка парсинга ответа сервера');
+        throw new Error('Ошибка парсинга ответа сервера: ' + parseError.message);
       }
       
       if (!response.ok) {
+        console.error(`apiClient.executeRequest: Response not OK. Status: ${response.status}, Data:`, data);
         throw new Error(data.error || data.message || 'Ошибка сервера');
       }
 
@@ -144,9 +157,11 @@ class ApiClient {
         });
       }
 
+      console.log(`apiClient.executeRequest: Successfully returning data`);
       return data;
     } catch (error) {
-      console.error(`API Error (${endpoint}):`, error);
+      console.error(`apiClient.executeRequest: API Error (${endpoint}):`, error);
+      console.error(`apiClient.executeRequest: Error stack:`, error.stack);
       throw error;
     }
   }

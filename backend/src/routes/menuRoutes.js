@@ -49,40 +49,75 @@ router.get('/categories', async (req, res) => {
 // Получение полного меню (категории + блюда)
 router.get('/full', async (req, res) => {
   try {
+    console.log('GET /menu/full: Request received');
+    
     // Получаем категории
-    const { data: categories, error: categoriesError } = await supabase
+    console.log('GET /menu/full: Fetching categories...');
+    let { data: categories, error: categoriesError } = await supabase
       .from('categories')
       .select('*')
-      .order('name');
+      .eq('is_active', true);
+    
+    console.log('GET /menu/full: Categories result:', {
+      count: categories?.length || 0,
+      error: categoriesError,
+      sample: categories?.[0]
+    });
+    
+    if (!categoriesError && categories) {
+      // Сортируем категории: сначала по sort_order, потом по name
+      categories.sort((a, b) => {
+        const aOrder = a.sort_order ?? 999;
+        const bOrder = b.sort_order ?? 999;
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        return (a.name || '').localeCompare(b.name || '');
+      });
+      console.log('GET /menu/full: Categories sorted');
+    }
 
     if (categoriesError) {
-      console.error('Get categories error:', categoriesError);
-      return res.status(500).json({ error: 'Ошибка при получении категорий' });
+      console.error('GET /menu/full: Get categories error:', categoriesError);
+      return res.status(500).json({ error: 'Ошибка при получении категорий', details: categoriesError.message });
     }
 
     // Получаем блюда
+    console.log('GET /menu/full: Fetching dishes...');
     const { data: dishes, error: dishesError } = await supabase
       .from('dishes')
       .select('*')
       .eq('is_active', true)
       .order('name');
 
+    console.log('GET /menu/full: Dishes result:', {
+      count: dishes?.length || 0,
+      error: dishesError,
+      sample: dishes?.[0]
+    });
+
     if (dishesError) {
-      console.error('Get dishes error:', dishesError);
-      return res.status(500).json({ error: 'Ошибка при получении блюд' });
+      console.error('GET /menu/full: Get dishes error:', dishesError);
+      return res.status(500).json({ error: 'Ошибка при получении блюд', details: dishesError.message });
     }
 
-    // Группируем блюда по категориям
-    const menu = categories.map(category => ({
-      ...category,
-      dishes: dishes.filter(dish => dish.category_id === category.id)
-    }));
+    // Возвращаем плоскую структуру: категории и блюда отдельно
+    const menu = {
+      categories: categories || [],
+      dishes: dishes || []
+    };
+
+    console.log('GET /menu/full: Sending response:', {
+      categoriesCount: menu.categories.length,
+      dishesCount: menu.dishes.length
+    });
 
     res.json({ menu });
 
   } catch (error) {
-    console.error('Get full menu error:', error);
-    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+    console.error('GET /menu/full: Get full menu error:', error);
+    console.error('GET /menu/full: Error stack:', error.stack);
+    res.status(500).json({ error: 'Внутренняя ошибка сервера', details: error.message });
   }
 });
 
