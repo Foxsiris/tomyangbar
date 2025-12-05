@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, Clock, Instagram, Facebook } from 'lucide-react';
-import ContactInfo from './ContactInfo';
 
 const Footer = () => {
   return (

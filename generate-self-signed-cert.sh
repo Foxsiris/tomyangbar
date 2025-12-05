@@ -44,3 +44,8 @@ echo "🚀 Теперь запустите:"
 echo "   docker-compose -f docker-compose.https.yml up -d --build"
 echo ""
 
+
+
+
+
+
