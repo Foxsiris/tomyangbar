@@ -16,24 +16,44 @@ export const useMenu = () => {
       setError(null);
       const data = await MenuService.getFullMenu();
       
-      // Преобразуем данные из формата API в ожидаемый формат
-      const categories = (data.categories || []).map(category => ({
-        id: category.id,
-        name: category.name,
-        description: category.description,
-        sort_order: category.sort_order,
-        is_active: category.is_active
-      }));
+      console.log('Menu data received:', data); // Отладка
       
-      const dishes = (data.dishes || []).map(dish => ({
-        ...dish,
-        image: dish.image_url // Преобразуем image_url в image для совместимости
-      }));
+      // Бэкенд возвращает данные в формате { menu: [...] }
+      // где каждый элемент menu содержит категорию с массивом dishes
+      const categories = [];
+      const dishes = [];
       
+      if (data && Array.isArray(data)) {
+        data.forEach(category => {
+          // Добавляем категорию
+          categories.push({
+            id: category.id,
+            name: category.name,
+            description: category.description,
+            sort_order: category.sort_order,
+            is_active: category.is_active
+          });
+          
+          // Добавляем блюда этой категории
+          if (category.dishes && Array.isArray(category.dishes)) {
+            category.dishes.forEach(dish => {
+              dishes.push({
+                ...dish,
+                image: dish.image_url // Преобразуем image_url в image для совместимости
+              });
+            });
+          }
+        });
+      } else {
+        console.warn('Menu data is not an array:', data);
+      }
+      
+      console.log('Processed categories:', categories.length, 'dishes:', dishes.length); // Отладка
       setMenuData({ categories, dishes });
     } catch (err) {
       console.error('Error loading menu:', err);
-      setError(err.message);
+      setError(err.message || 'Ошибка загрузки меню');
+      setMenuData({ categories: [], dishes: [] }); // Устанавливаем пустые данные при ошибке
     } finally {
       setIsLoading(false);
     }

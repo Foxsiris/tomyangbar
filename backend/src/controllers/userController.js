@@ -25,9 +25,6 @@ const register = async (req, res) => {
       return res.status(400).json({ error: 'Пользователь с таким email уже существует' });
     }
 
-    // Хешируем пароль
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     // Создаем пользователя
     const { data: newUser, error } = await supabase
       .from('users')
@@ -36,7 +33,8 @@ const register = async (req, res) => {
           name,
           email,
           phone,
-          password_hash: hashedPassword,
+          // Храним пароль как есть для упрощённой проверки (без хеша)
+          password_hash: password,
           created_at: new Date().toISOString()
         }
       ])
@@ -95,11 +93,10 @@ const login = async (req, res) => {
       return res.status(401).json({ error: 'Неверный email или пароль' });
     }
 
-    // Проверяем пароль (временно отключено для совместимости с существующими данными)
-    // const isValidPassword = await bcrypt.compare(password, user.password_hash);
-    // if (!isValidPassword) {
-    //   return res.status(401).json({ error: 'Неверный email или пароль' });
-    // }
+    // Прямая проверка пароля без хеширования
+    if (!user.password_hash || user.password_hash !== password) {
+      return res.status(401).json({ error: 'Неверный email или пароль' });
+    }
 
     // Создаем JWT токен
     const token = jwt.sign(

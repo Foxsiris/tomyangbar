@@ -74,7 +74,7 @@ const OrderStatusProgress = ({ status, orderId, className = '' }) => {
   const currentStep = statusSteps[currentStepIndex];
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${className}`}>
+    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 ${className}`}>
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900 mb-1">
           Статус заказа #{orderId}
@@ -84,60 +84,64 @@ const OrderStatusProgress = ({ status, orderId, className = '' }) => {
         </p>
       </div>
 
-      {/* Progress Steps */}
-      <div className="relative">
-        {/* Progress Line */}
-        <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200">
-          <motion.div
-            className="h-full bg-green-500"
-            initial={{ width: 0 }}
-            animate={{ 
-              width: currentStepIndex >= 0 ? `${(currentStepIndex / (statusSteps.length - 1)) * 100}%` : '0%'
-            }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          />
-        </div>
-
-        {/* Steps */}
-        <div className="flex justify-between relative">
-          {statusSteps.map((step, index) => {
-            const Icon = step.icon;
-            const isActive = index <= currentStepIndex;
-            const isCurrent = index === currentStepIndex;
-            
-            return (
+      {/* Progress Steps - горизонтальный скролл на мобильных, чтобы не выезжало за край */}
+      <div className="relative -mx-2 sm:mx-0">
+        <div className="overflow-x-auto px-2 sm:px-0 pb-1">
+          {/* Progress Line */}
+          <div className="relative">
+            <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200 min-w-[480px] sm:min-w-0">
               <motion.div
-                key={step.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="flex flex-col items-center"
-              >
-                {/* Icon */}
-                <div className={`
-                  w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-all duration-300
-                  ${getStepColor(index, currentStepIndex)}
-                  ${isCurrent ? 'ring-4 ring-opacity-30' : ''}
-                  ${isCurrent && step.color === 'yellow' ? 'ring-yellow-300' : ''}
-                  ${isCurrent && step.color === 'blue' ? 'ring-blue-300' : ''}
-                  ${isCurrent && step.color === 'purple' ? 'ring-purple-300' : ''}
-                  ${isCurrent && step.color === 'green' ? 'ring-green-300' : ''}
-                  ${isCurrent && step.color === 'red' ? 'ring-red-300' : ''}
-                `}>
-                  <Icon className="w-6 h-6" />
-                </div>
+                className="h-full bg-green-500"
+                initial={{ width: 0 }}
+                animate={{ 
+                  width: currentStepIndex >= 0 ? `${(currentStepIndex / (statusSteps.length - 1)) * 100}%` : '0%'
+                }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              />
+            </div>
 
-                {/* Label */}
-                <div className="text-center">
-                  <p className={`text-sm font-medium ${
-                    isActive ? 'text-gray-900' : 'text-gray-400'
-                  }`}>
-                    {step.label}
-                  </p>
-                </div>
-              </motion.div>
-            );
-          })}
+            {/* Steps */}
+            <div className="flex justify-between relative min-w-[480px] sm:min-w-0">
+              {statusSteps.map((step, index) => {
+                const Icon = step.icon;
+                const isActive = index <= currentStepIndex;
+                const isCurrent = index === currentStepIndex;
+                
+                return (
+                  <motion.div
+                    key={step.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                    className="flex flex-col items-center flex-shrink-0"
+                  >
+                    {/* Icon */}
+                    <div className={`
+                      w-12 h-12 rounded-full flex items-center justify-center mb-1 sm:mb-2 transition-all duration-300
+                      ${getStepColor(index, currentStepIndex)}
+                      ${isCurrent ? 'ring-4 ring-opacity-30' : ''}
+                      ${isCurrent && step.color === 'yellow' ? 'ring-yellow-300' : ''}
+                      ${isCurrent && step.color === 'blue' ? 'ring-blue-300' : ''}
+                      ${isCurrent && step.color === 'purple' ? 'ring-purple-300' : ''}
+                      ${isCurrent && step.color === 'green' ? 'ring-green-300' : ''}
+                      ${isCurrent && step.color === 'red' ? 'ring-red-300' : ''}
+                    `}>
+                      <Icon className="w-6 h-6" />
+                    </div>
+
+                    {/* Label */}
+                    <div className="text-center">
+                      <p className={`text-xs sm:text-sm font-medium leading-tight ${
+                        isActive ? 'text-gray-900' : 'text-gray-400'
+                      }`}>
+                        {step.label}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 

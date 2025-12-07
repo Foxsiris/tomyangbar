@@ -22,11 +22,12 @@ const DishCard = ({ dish, index = 0 }) => {
     >
       <div className="h-48 bg-gray-200 relative overflow-hidden">
         <img
-          src={dish.image || 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'}
+          src={dish.image || '/vite.svg'}
           alt={dish.name}
           className="w-full h-full object-cover"
           onError={(e) => {
-            e.target.src = 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
+            e.target.onerror = null;
+            e.target.src = '/vite.svg';
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>

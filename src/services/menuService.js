@@ -78,7 +78,7 @@ export class MenuService {
         }
       });
       
-      const response = await apiClient.get(`/menu/dishes/filter?${queryParams.toString()}`);
+      const response = await apiClient.get(`/api/menu/dishes/filter?${queryParams.toString()}`);
       return response.dishes;
     } catch (error) {
       console.error('Error getting dishes with filters:', error);
@@ -89,8 +89,10 @@ export class MenuService {
   // Получение полного меню (категории + блюда)
   static async getFullMenu() {
     try {
-      const response = await apiClient.get('/menu/full');
-      return response.menu;
+      const response = await apiClient.getFullMenu();
+      console.log('API response:', response); // Отладка
+      // Бэкенд возвращает { menu: [...] }
+      return response?.menu || response || [];
     } catch (error) {
       console.error('Error getting full menu:', error);
       throw error;
@@ -100,7 +102,7 @@ export class MenuService {
   // Получение статистики меню
   static async getMenuStats() {
     try {
-      const response = await apiClient.get('/menu/stats');
+      const response = await apiClient.get('/api/menu/stats');
       return response.stats;
     } catch (error) {
       console.error('Error getting menu stats:', error);

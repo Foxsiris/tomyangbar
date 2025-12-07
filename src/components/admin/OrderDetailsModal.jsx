@@ -12,7 +12,6 @@ import {
   ShoppingBag,
   Calendar,
   MessageSquare,
-  DollarSign,
   Package,
   CheckCircle,
   AlertCircle
@@ -65,6 +64,11 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
   };
 
   const totalItems = (order.order_items || []).reduce((sum, item) => sum + item.quantity, 0);
+  
+  // Вычисляем стоимость блюд из позиций заказа, если subtotal не указан
+  const subtotal = order.subtotal || (order.order_items || []).reduce((sum, item) => {
+    return sum + (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0);
+  }, 0);
 
   return (
     <AnimatePresence>
@@ -316,8 +320,8 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="bg-white bg-opacity-20 rounded-full p-2">
-                    <DollarSign className="w-5 h-5" />
+                  <div className="bg-white bg-opacity-20 rounded-full p-2 w-9 h-9 flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">Р</span>
                   </div>
                   <div>
                     <p className="text-primary-100">Итого к оплате</p>
@@ -326,7 +330,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                 </div>
                 <div className="text-right">
                   <p className="text-primary-100">Стоимость блюд</p>
-                  <p className="text-lg font-semibold">{order.subtotal} ₽</p>
+                  <p className="text-lg font-semibold">{subtotal.toFixed(2)} ₽</p>
                   {order.delivery_fee > 0 && (
                     <>
                       <p className="text-primary-100 mt-1">Доставка</p>

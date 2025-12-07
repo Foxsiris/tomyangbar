@@ -32,13 +32,20 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'development' ? 1000 : 100, // More generous in development
+  max: process.env.NODE_ENV === 'development' ? 5000 : 100, // Very generous in development
   message: {
     error: 'Too many requests',
     message: 'Превышен лимит запросов. Попробуйте позже.'
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Пропускаем rate limiting для menu endpoints в development
+    if (process.env.NODE_ENV === 'development' && req.path.startsWith('/api/menu/')) {
+      return true;
+    }
+    return false;
+  }
 });
 app.use(limiter);
 
