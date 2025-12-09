@@ -18,16 +18,41 @@ export const useMenu = () => {
       
       const data = await MenuService.getFullMenu();
       
-      console.log('Menu data received:', data); // Отладка
+      const isDev = import.meta.env.DEV || import.meta.env.MODE === 'development';
+      if (isDev) {
+        console.log('useMenu.loadMenu: Menu data received:', data);
+        console.log('useMenu.loadMenu: Data type:', typeof data);
+        console.log('useMenu.loadMenu: Is array:', Array.isArray(data));
+        console.log('useMenu.loadMenu: Has categories:', !!data?.categories);
+        console.log('useMenu.loadMenu: Has dishes:', !!data?.dishes);
+      }
       
-      // Бэкенд возвращает данные в формате { menu: [...] }
-      // где каждый элемент menu содержит категорию с массивом dishes
-      const categories = [];
-      const dishes = [];
+      // Бэкенд возвращает { categories: [...], dishes: [...] }
+      let categories = [];
+      let dishes = [];
       
-      if (data && Array.isArray(data)) {
+      if (data && typeof data === 'object') {
+        // Если это объект с categories и dishes
+        if (Array.isArray(data.categories)) {
+          categories = data.categories.map(category => ({
+            id: category.id,
+            name: category.name,
+            description: category.description,
+            sort_order: category.sort_order,
+            is_active: category.is_active
+          }));
+        }
+        
+        if (Array.isArray(data.dishes)) {
+          dishes = data.dishes.map(dish => ({
+            ...dish,
+            image: dish.image_url || dish.image // Преобразуем image_url в image для совместимости
+          }));
+        }
+      } else if (Array.isArray(data)) {
+        // Старый формат - массив категорий с блюдами внутри
+        console.warn('useMenu.loadMenu: Received array format (old format)');
         data.forEach(category => {
-          // Добавляем категорию
           categories.push({
             id: category.id,
             name: category.name,
@@ -36,21 +61,23 @@ export const useMenu = () => {
             is_active: category.is_active
           });
           
-          // Добавляем блюда этой категории
           if (category.dishes && Array.isArray(category.dishes)) {
             category.dishes.forEach(dish => {
               dishes.push({
                 ...dish,
-                image: dish.image_url // Преобразуем image_url в image для совместимости
+                image: dish.image_url || dish.image
               });
             });
           }
         });
       } else {
-        console.warn('Menu data is not an array:', data);
+        console.warn('useMenu.loadMenu: Unexpected data format:', data);
       }
       
-      console.log('Processed categories:', categories.length, 'dishes:', dishes.length); // Отладка
+      const isDev = import.meta.env.DEV || import.meta.env.MODE === 'development';
+      if (isDev) {
+        console.log('useMenu.loadMenu: Processed categories:', categories.length, 'dishes:', dishes.length);
+      }
       setMenuData({ categories, dishes });
     } catch (err) {
       console.error('Error loading menu:', err);

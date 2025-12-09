@@ -122,15 +122,19 @@ class ApiClient {
   // Выполнение запроса с обработкой ошибок
   async executeRequest(url, config, endpoint, requestKey, retryCount) {
     try {
-      console.log(`apiClient.executeRequest: Making request to ${url}`);
-      console.log(`apiClient.executeRequest: Endpoint: ${endpoint}`);
-      console.log(`apiClient.executeRequest: Config:`, config);
+      const isDev = import.meta.env.DEV || import.meta.env.MODE === 'development';
+      
+      if (isDev) {
+        console.log(`apiClient.executeRequest: Making request to ${url}`);
+        console.log(`apiClient.executeRequest: Endpoint: ${endpoint}`);
+      }
       
       const response = await fetch(url, config);
       
-      console.log(`apiClient.executeRequest: Response status: ${response.status}`);
-      console.log(`apiClient.executeRequest: Response ok: ${response.ok}`);
-      console.log(`apiClient.executeRequest: Response headers:`, Object.fromEntries(response.headers.entries()));
+      if (isDev) {
+        console.log(`apiClient.executeRequest: Response status: ${response.status}`);
+        console.log(`apiClient.executeRequest: Response ok: ${response.ok}`);
+      }
       
       // Если токен истек, удаляем его
       if (response.status === 401) {
@@ -153,9 +157,13 @@ class ApiClient {
       let data;
       try {
         const text = await response.text();
-        console.log(`apiClient.executeRequest: Response text (first 500 chars):`, text.substring(0, 500));
+        if (isDev) {
+          console.log(`apiClient.executeRequest: Response text (first 500 chars):`, text.substring(0, 500));
+        }
         data = JSON.parse(text);
-        console.log(`apiClient.executeRequest: Parsed data:`, data);
+        if (isDev) {
+          console.log(`apiClient.executeRequest: Parsed data:`, data);
+        }
       } catch (parseError) {
         console.error(`apiClient.executeRequest: JSON parse error:`, parseError);
         // Если ответ не JSON (например, "Too many requests" текст)
@@ -178,7 +186,9 @@ class ApiClient {
         });
       }
 
-      console.log(`apiClient.executeRequest: Successfully returning data`);
+      if (isDev) {
+        console.log(`apiClient.executeRequest: Successfully returning data`);
+      }
       return data;
     } catch (error) {
       console.error(`apiClient.executeRequest: API Error (${endpoint}):`, error);

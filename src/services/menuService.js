@@ -90,9 +90,26 @@ export class MenuService {
   static async getFullMenu() {
     try {
       const response = await apiClient.getFullMenu();
-      console.log('API response:', response); // Отладка
-      // Бэкенд возвращает { menu: [...] }
-      return response?.menu || response || [];
+      const isDev = import.meta.env.DEV || import.meta.env.MODE === 'development';
+      if (isDev) {
+        console.log('MenuService.getFullMenu: API response:', response);
+      }
+      
+      // Бэкенд возвращает { menu: { categories: [...], dishes: [...] } }
+      if (response?.menu) {
+        // Если есть menu объект, возвращаем его
+        return response.menu;
+      } else if (response?.categories && response?.dishes) {
+        // Если categories и dishes на верхнем уровне
+        return response;
+      } else if (Array.isArray(response)) {
+        // Если массив (старый формат)
+        return { categories: [], dishes: [] };
+      } else {
+        // Fallback
+        console.warn('MenuService.getFullMenu: Unexpected response format:', response);
+        return { categories: [], dishes: [] };
+      }
     } catch (error) {
       console.error('MenuService.getFullMenu: Error details:', error);
       console.error('MenuService.getFullMenu: Error message:', error?.message);
