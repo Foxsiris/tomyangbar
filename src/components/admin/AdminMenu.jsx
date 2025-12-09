@@ -82,7 +82,14 @@ const AdminMenu = () => {
       
       // Если загружено новое изображение, загружаем его
       if (imageFile) {
-        imageUrl = await uploadImage(imageFile);
+        try {
+          imageUrl = await uploadImage(imageFile);
+          console.log('Image uploaded successfully:', imageUrl);
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          alert(`Ошибка при загрузке изображения: ${uploadError.message || 'Неизвестная ошибка'}`);
+          return; // Прерываем создание, если загрузка изображения не удалась
+        }
       }
       
       const newDish = await MenuService.createDish({
@@ -95,7 +102,7 @@ const AdminMenu = () => {
       resetForm();
     } catch (error) {
       console.error('Error creating dish:', error);
-      alert('Ошибка при создании блюда');
+      alert(`Ошибка при создании блюда: ${error.message || 'Неизвестная ошибка'}`);
     }
   };
 
@@ -105,7 +112,14 @@ const AdminMenu = () => {
       
       // Если загружено новое изображение, загружаем его
       if (imageFile) {
-        imageUrl = await uploadImage(imageFile);
+        try {
+          imageUrl = await uploadImage(imageFile);
+          console.log('Image uploaded successfully:', imageUrl);
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          alert(`Ошибка при загрузке изображения: ${uploadError.message || 'Неизвестная ошибка'}`);
+          return; // Прерываем обновление, если загрузка изображения не удалась
+        }
       }
       
       const updatedDish = await MenuService.updateDish(editingDish.id, {
@@ -121,7 +135,7 @@ const AdminMenu = () => {
       resetForm();
     } catch (error) {
       console.error('Error updating dish:', error);
-      alert('Ошибка при обновлении блюда');
+      alert(`Ошибка при обновлении блюда: ${error.message || 'Неизвестная ошибка'}`);
     }
   };
 
@@ -185,9 +199,13 @@ const AdminMenu = () => {
       const formData = new FormData();
       formData.append('image', file);
       
-      // Определяем базовый URL динамически
+      // Используем apiClient для определения правильного baseURL
+      // В продакшене baseURL будет пустой строкой (относительные пути)
+      // В разработке будет 'http://localhost:3001'
       const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development' || !import.meta.env.PROD;
       const baseURL = isDevelopment ? 'http://localhost:3001' : '';
+      
+      console.log('Uploading image to:', `${baseURL}/api/admin/upload-image`);
       
       const response = await fetch(`${baseURL}/api/admin/upload-image`, {
         method: 'POST',
@@ -198,14 +216,32 @@ const AdminMenu = () => {
       });
       
       if (!response.ok) {
-        throw new Error('Ошибка при загрузке изображения');
+        const errorText = await response.text();
+        console.error('Upload failed:', response.status, errorText);
+        throw new Error(`Ошибка при загрузке изображения: ${response.status} ${errorText}`);
       }
       
       const data = await response.json();
-      // Возвращаем относительный путь для продакшена или полный URL для разработки
-      return isDevelopment ? `${baseURL}${data.imageUrl}` : data.imageUrl;
+      console.log('Upload response:', data);
+      
+      // Бэкенд возвращает относительный путь /uploads/filename.jpg
+      // В продакшене это будет работать через nginx proxy
+      // В разработке нужно добавить baseURL
+      const imageUrl = data.imageUrl || data.image_url;
+      
+      if (!imageUrl) {
+        throw new Error('Сервер не вернул URL изображения');
+      }
+      
+      // В продакшене возвращаем относительный путь как есть
+      // В разработке добавляем baseURL
+      return isDevelopment ? `${baseURL}${imageUrl}` : imageUrl;
     } catch (error) {
       console.error('Error uploading image:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack
+      });
       throw error;
     }
   };
