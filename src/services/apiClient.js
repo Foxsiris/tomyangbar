@@ -1,9 +1,29 @@
 // API клиент для подключения к бэкэнду
 class ApiClient {
   constructor() {
-    // Используем URL бэкенда из переменных окружения
-    this.baseURL = import.meta.env.VITE_API_URL || 'https://tomyangbarnew.ru';
+    // Определяем базовый URL для API
+    // В режиме разработки используем прямой URL к бэкенду
+    // В продакшене используем относительные пути (проксируется через nginx)
+    const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development' || !import.meta.env.PROD;
+    
+    // Если указан VITE_API_URL, используем его
+    if (import.meta.env.VITE_API_URL) {
+      this.baseURL = import.meta.env.VITE_API_URL;
+    } else if (isDevelopment) {
+      // В разработке используем прямой URL к бэкенду
+      this.baseURL = 'http://localhost:3001';
+    } else {
+      // В продакшене используем относительные пути (nginx проксирует)
+      this.baseURL = '';
+    }
+    
     this.token = localStorage.getItem('tomyangbar_token');
+    
+    // Логирование для отладки
+    if (isDevelopment) {
+      console.log('🔧 API Client initialized in DEVELOPMENT mode');
+      console.log('📍 Base URL:', this.baseURL);
+    }
     
     // Request throttling and caching
     this.requestQueue = new Map(); // For deduplicating identical requests
