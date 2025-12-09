@@ -2,7 +2,7 @@
 class ApiClient {
   constructor() {
     // Используем URL бэкенда из переменных окружения
-    this.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    this.baseURL = import.meta.env.VITE_API_URL || 'https://tomyangbarnew.ru';
     this.token = localStorage.getItem('tomyangbar_token');
     
     // Request throttling and caching
