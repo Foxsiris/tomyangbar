@@ -66,9 +66,41 @@ const DishCard = ({ dish, index = 0 }) => {
           </span>
         </div>
         
-        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
           {dish.description}
         </p>
+        
+        {/* КБЖУ */}
+        {(dish.calories || dish.proteins || dish.fats || dish.carbs) && (
+          <div className="mb-3 pb-3 border-b border-gray-200">
+            <div className="grid grid-cols-4 gap-2 text-xs">
+              {dish.calories && (
+                <div className="text-center">
+                  <div className="font-semibold text-gray-900">{dish.calories}</div>
+                  <div className="text-gray-500">ккал</div>
+                </div>
+              )}
+              {dish.proteins && (
+                <div className="text-center">
+                  <div className="font-semibold text-blue-600">{dish.proteins}г</div>
+                  <div className="text-gray-500">белки</div>
+                </div>
+              )}
+              {dish.fats && (
+                <div className="text-center">
+                  <div className="font-semibold text-yellow-600">{dish.fats}г</div>
+                  <div className="text-gray-500">жиры</div>
+                </div>
+              )}
+              {dish.carbs && (
+                <div className="text-center">
+                  <div className="font-semibold text-green-600">{dish.carbs}г</div>
+                  <div className="text-gray-500">углеводы</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         
         <div className="flex justify-between items-center">
           <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">

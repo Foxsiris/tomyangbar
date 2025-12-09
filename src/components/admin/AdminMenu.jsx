@@ -28,7 +28,11 @@ const AdminMenu = () => {
     category_id: '',
     is_popular: false,
     is_active: true,
-    image_url: ''
+    image_url: '',
+    calories: '',
+    proteins: '',
+    fats: '',
+    carbs: ''
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -88,7 +92,11 @@ const AdminMenu = () => {
       const newDish = await MenuService.createDish({
         ...formData,
         price: parseInt(formData.price),
-        image_url: imageUrl || 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'
+        image_url: imageUrl || 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+        calories: formData.calories ? parseInt(formData.calories) : null,
+        proteins: formData.proteins ? parseFloat(formData.proteins) : null,
+        fats: formData.fats ? parseFloat(formData.fats) : null,
+        carbs: formData.carbs ? parseFloat(formData.carbs) : null
       });
       setDishes([...dishes, newDish]);
       setShowAddModal(false);
@@ -111,7 +119,11 @@ const AdminMenu = () => {
       const updatedDish = await MenuService.updateDish(editingDish.id, {
         ...formData,
         price: parseInt(formData.price),
-        image_url: imageUrl
+        image_url: imageUrl,
+        calories: formData.calories ? parseInt(formData.calories) : null,
+        proteins: formData.proteins ? parseFloat(formData.proteins) : null,
+        fats: formData.fats ? parseFloat(formData.fats) : null,
+        carbs: formData.carbs ? parseFloat(formData.carbs) : null
       });
       
       setDishes(dishes.map(dish => 
@@ -147,7 +159,11 @@ const AdminMenu = () => {
       category_id: dish.category_id,
       is_popular: dish.is_popular,
       is_active: dish.is_active,
-      image_url: dish.image_url || ''
+      image_url: dish.image_url || '',
+      calories: dish.calories?.toString() || '',
+      proteins: dish.proteins?.toString() || '',
+      fats: dish.fats?.toString() || '',
+      carbs: dish.carbs?.toString() || ''
     });
     setImagePreview(dish.image_url || null);
     setImageFile(null);
@@ -162,7 +178,11 @@ const AdminMenu = () => {
       category_id: '',
       is_popular: false,
       is_active: true,
-      image_url: ''
+      image_url: '',
+      calories: '',
+      proteins: '',
+      fats: '',
+      carbs: ''
     });
     setImageFile(null);
     setImagePreview(null);
@@ -476,6 +496,62 @@ const AdminMenu = () => {
                       </option>
                     ))}
                   </select>
+                </div>
+                
+                {/* КБЖУ */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    КБЖУ (калории, белки, жиры, углеводы)
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Калории (ккал)</label>
+                      <input
+                        type="number"
+                        value={formData.calories}
+                        onChange={(e) => setFormData({...formData, calories: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="0"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Белки (г)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={formData.proteins}
+                        onChange={(e) => setFormData({...formData, proteins: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="0"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Жиры (г)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={formData.fats}
+                        onChange={(e) => setFormData({...formData, fats: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="0"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Углеводы (г)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={formData.carbs}
+                        onChange={(e) => setFormData({...formData, carbs: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="0"
+                        min="0"
+                      />
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="flex items-center space-x-4">

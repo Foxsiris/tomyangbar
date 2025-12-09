@@ -61,9 +61,18 @@ const Admin = () => {
     
     try {
       const user = await UserService.authenticateAdmin(loginForm.email, loginForm.password);
-      setIsAuthenticated(true);
+      // Токен уже сохранен в apiClient.adminLogin
+      // Убеждаемся, что токен установлен
+      const token = localStorage.getItem('tomyangbar_token');
+      if (token) {
+        apiClient.setToken(token);
+        setIsAuthenticated(true);
+      } else {
+        setLoginError('Ошибка: токен не был сохранен');
+      }
     } catch (error) {
-      setLoginError('Неверный email или пароль');
+      console.error('Admin login error:', error);
+      setLoginError(error.message || 'Неверный email или пароль');
     }
   };
 

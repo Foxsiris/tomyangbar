@@ -3,6 +3,7 @@ class ApiClient {
   constructor() {
     // Используем URL бэкенда из переменных окружения
     this.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    // Загружаем токен из localStorage при инициализации
     this.token = localStorage.getItem('tomyangbar_token');
     
     // Request throttling and caching
@@ -25,6 +26,9 @@ class ApiClient {
 
   // Получение заголовков
   getHeaders() {
+    // Обновляем токен из localStorage перед каждым запросом
+    this.token = localStorage.getItem('tomyangbar_token');
+    
     const headers = {
       'Content-Type': 'application/json',
     };
