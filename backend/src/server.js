@@ -24,21 +24,53 @@ app.use(helmet({
     },
   },
 }));
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  credentials: true
-}));
+// CORS настройки для локальной разработки и продакшена
+const corsOptions = {
+  origin: function (origin, callback) {
+    // В режиме разработки разрешаем все источники
+    if (process.env.NODE_ENV === 'development' || !process.env.FRONTEND_URL) {
+      return callback(null, true);
+    }
+    
+    // В продакшене проверяем разрешенные домены
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:5174'
+    ];
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'development' ? 1000 : 100, // More generous in development
+  max: process.env.NODE_ENV === 'development' ? 5000 : 100, // Very generous in development
   message: {
     error: 'Too many requests',
     message: 'Превышен лимит запросов. Попробуйте позже.'
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Пропускаем rate limiting для menu endpoints в development
+    if (process.env.NODE_ENV === 'development' && req.path.startsWith('/api/menu/')) {
+      return true;
+    }
+    return false;
+  }
 });
 app.use(limiter);
 

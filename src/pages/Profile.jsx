@@ -495,7 +495,8 @@ const Profile = () => {
                           <h4 className="font-semibold text-gray-900 mb-4 text-lg">Статус заказа</h4>
                           <OrderStatusProgress 
                             status={order.status} 
-                            orderId={order.id}
+                            // Передаём «человеческий» номер заказа, а не внутренний UUID
+                            orderId={order.order_number || order.id}
                           />
                         </div>
                       </motion.div>

@@ -185,7 +185,11 @@ const AdminMenu = () => {
       const formData = new FormData();
       formData.append('image', file);
       
-      const response = await fetch('http://localhost:3001/api/admin/upload-image', {
+      // Определяем базовый URL динамически
+      const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development' || !import.meta.env.PROD;
+      const baseURL = isDevelopment ? 'http://localhost:3001' : '';
+      
+      const response = await fetch(`${baseURL}/api/admin/upload-image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('tomyangbar_token')}`
@@ -198,7 +202,8 @@ const AdminMenu = () => {
       }
       
       const data = await response.json();
-      return `http://localhost:3001${data.imageUrl}`;
+      // Возвращаем относительный путь для продакшена или полный URL для разработки
+      return isDevelopment ? `${baseURL}${data.imageUrl}` : data.imageUrl;
     } catch (error) {
       console.error('Error uploading image:', error);
       throw error;

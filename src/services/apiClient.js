@@ -1,8 +1,8 @@
 // API клиент для подключения к бэкэнду
 class ApiClient {
   constructor() {
-    // Используем относительные пути для продакшена
-    this.baseURL = import.meta.env.PROD ? '/api' : 'http://localhost:3001/api';
+    // Используем URL бэкенда из переменных окружения
+    this.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
     this.token = localStorage.getItem('tomyangbar_token');
     
     // Request throttling and caching
@@ -47,11 +47,12 @@ class ApiClient {
   isCacheable(endpoint, method) {
     // Кешируем только GET запросы для определенных эндпоинтов
     const cacheableEndpoints = [
-      '/menu/categories',
-      '/menu/dishes',
-      '/menu/popular',
-      '/orders/stats',
-      '/admin/stats'
+      '/api/menu/categories',
+      '/api/menu/dishes',
+      '/api/menu/full',
+      '/api/menu/popular',
+      '/api/orders/stats',
+      '/api/admin/stats'
     ];
     return method === 'GET' && cacheableEndpoints.some(ep => endpoint.includes(ep));
   }
@@ -194,11 +195,11 @@ class ApiClient {
 
   // Методы для работы с пользователями
   async registerUser(userData) {
-    return this.post('/users/register', userData);
+    return this.post('/api/users/register', userData);
   }
 
   async loginUser(credentials) {
-    const response = await this.post('/users/login', credentials);
+    const response = await this.post('/api/users/login', credentials);
     if (response.token) {
       this.setToken(response.token);
     }
@@ -206,7 +207,7 @@ class ApiClient {
   }
 
   async adminLogin(credentials) {
-    const response = await this.post('/users/admin/login', credentials);
+    const response = await this.post('/api/users/admin/login', credentials);
     if (response.token) {
       this.setToken(response.token);
     }
@@ -214,99 +215,103 @@ class ApiClient {
   }
 
   async getUserProfile() {
-    return this.get('/users/profile');
+    return this.get('/api/users/profile');
   }
 
   // Методы для работы с заказами
   async createOrder(orderData) {
-    return this.post('/orders', orderData);
+    return this.post('/api/orders', orderData);
   }
 
   async getAllOrders() {
-    return this.get('/orders');
+    return this.get('/api/orders');
   }
 
   async getOrdersByStatus(status) {
-    return this.get(`/orders?status=${status}`);
+    return this.get(`/api/orders?status=${status}`);
   }
 
   async getUserOrders() {
-    return this.get('/orders/user');
+    return this.get('/api/orders/user');
   }
 
   async updateOrderStatus(orderId, status) {
-    return this.put(`/orders/${orderId}/status`, { status });
+    return this.put(`/api/orders/${orderId}/status`, { status });
   }
 
   async getOrderStats() {
-    return this.get('/orders/stats');
+    return this.get('/api/orders/stats');
   }
 
   // Методы для работы с меню
   async getCategories() {
-    return this.get('/menu/categories');
+    return this.get('/api/menu/categories');
   }
 
   async getDishes() {
-    return this.get('/menu/dishes');
+    return this.get('/api/menu/dishes');
   }
 
   async getDishesByCategory(categoryId) {
-    return this.get(`/menu/dishes?category=${categoryId}`);
+    return this.get(`/api/menu/dishes?category=${categoryId}`);
   }
 
   async getPopularDishes() {
-    return this.get('/menu/dishes?popular=true');
+    return this.get('/api/menu/dishes?popular=true');
   }
 
   async getDishById(id) {
-    return this.get(`/menu/dishes?id=${id}`);
+    return this.get(`/api/menu/dishes?id=${id}`);
   }
 
   async searchDishes(query) {
-    return this.get(`/menu/search?q=${encodeURIComponent(query)}`);
+    return this.get(`/api/menu/search?q=${encodeURIComponent(query)}`);
+  }
+
+  async getFullMenu() {
+    return this.get('/api/menu/full');
   }
 
   // Методы для админа
   async getAdminStats() {
-    return this.get('/admin/stats');
+    return this.get('/api/admin/stats');
   }
 
   async getAdminOrders() {
-    return this.get('/admin/orders');
+    return this.get('/api/admin/orders');
   }
 
   async updateDish(dishId, updates) {
-    return this.put(`/admin/menu/dishes/${dishId}`, updates);
+    return this.put(`/api/admin/menu/dishes/${dishId}`, updates);
   }
 
   async createDish(dishData) {
-    return this.post('/admin/menu/dishes', dishData);
+    return this.post('/api/admin/menu/dishes', dishData);
   }
 
   async deleteDish(dishId) {
-    return this.delete(`/admin/menu/dishes/${dishId}`);
+    return this.delete(`/api/admin/menu/dishes/${dishId}`);
   }
 
   async createCategory(categoryData) {
-    return this.post('/admin/menu/categories', categoryData);
+    return this.post('/api/admin/menu/categories', categoryData);
   }
 
   async updateCategory(categoryId, updates) {
-    return this.put(`/admin/menu/categories/${categoryId}`, updates);
+    return this.put(`/api/admin/menu/categories/${categoryId}`, updates);
   }
 
   async deleteCategory(categoryId) {
-    return this.delete(`/admin/menu/categories/${categoryId}`);
+    return this.delete(`/api/admin/menu/categories/${categoryId}`);
   }
 
   // Методы для работы с корзиной
   async getOrCreateCart(sessionId = null) {
-    return this.post('/cart/get-or-create', { sessionId });
+    return this.post('/api/cart/get-or-create', { sessionId });
   }
 
   async addToCart(cartId, dish) {
-    return this.post('/cart/add', {
+    return this.post('/api/cart/add', {
       cartId,
       dishId: dish.id,
       dishName: dish.name,
@@ -317,15 +322,15 @@ class ApiClient {
   }
 
   async updateCartItem(itemId, quantity) {
-    return this.put(`/cart/items/${itemId}`, { quantity });
+    return this.put(`/api/cart/items/${itemId}`, { quantity });
   }
 
   async removeFromCart(itemId) {
-    return this.delete(`/cart/items/${itemId}`);
+    return this.delete(`/api/cart/items/${itemId}`);
   }
 
   async clearCart(cartId) {
-    return this.delete(`/cart/${cartId}/clear`);
+    return this.delete(`/api/cart/${cartId}/clear`);
   }
 
   // Очистка кеша

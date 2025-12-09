@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, User, Phone, Eye, EyeOff } from 'lucide-react';
@@ -20,21 +21,34 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
-    // Применяем маску для поля телефона
+    // Маска для отдельного поля телефона (регистрация)
     if (name === 'phone') {
       const maskedValue = applyPhoneMask(value);
       setFormData(prev => ({
         ...prev,
         [name]: maskedValue
       }));
-    } else if (name === 'email' && isLogin && !value.includes('@')) {
-      // Для поля входа, если вводится не email, применяем маску телефона
-      const maskedValue = applyPhoneMask(value);
-      setFormData(prev => ({
-        ...prev,
-        [name]: maskedValue
-      }));
-    } else {
+    } 
+    // Поле «Email или телефон» при входе: одновременно поддерживаем оба варианта
+    else if (name === 'email' && isLogin) {
+      const hasLetters = /[a-zA-Z]/.test(value);
+      // Если пользователь вводит email (есть буквы) — не трогаем ввод
+      if (hasLetters) {
+        setFormData(prev => ({
+          ...prev,
+          [name]: value
+        }));
+      } else {
+        // Если вводятся только цифры/символы телефона — применяем телефонную маску
+        const maskedValue = applyPhoneMask(value);
+        setFormData(prev => ({
+          ...prev,
+          [name]: maskedValue
+        }));
+      }
+    } 
+    // Остальные поля — без масок
+    else {
       setFormData(prev => ({
         ...prev,
         [name]: value
@@ -106,6 +120,11 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
     
     if (!validateForm()) return;
 
+    // На всякий случай очищаем локальное состояние перед новой попыткой входа/регистрации,
+    // чтобы не было ложного ощущения, что мы уже залогинены старыми данными
+    localStorage.removeItem('tomyangbar_user');
+    localStorage.removeItem('tomyangbar_token');
+
     setIsLoading(true);
 
     try {
@@ -164,6 +183,12 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
         setErrors({ email: 'Пользователь не найден' });
       } else if (error.message === 'Неверный пароль') {
         setErrors({ password: 'Неверный пароль' });
+      } else if (error.message === 'Неверный email или пароль') {
+        // Общая ошибка от бэка — подсвечиваем и логин, и пароль
+        setErrors({ 
+          email: 'Проверьте email/телефон',
+          password: 'Неверный пароль'
+        });
       } else if (error.message === 'Пользователь с таким email уже существует') {
         setErrors({ email: 'Пользователь с таким email уже существует' });
       } else {

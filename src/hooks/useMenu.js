@@ -18,55 +18,46 @@ export const useMenu = () => {
       
       const data = await MenuService.getFullMenu();
       
-      console.log('useMenu.loadMenu: Data received from service:', data);
-      console.log('useMenu.loadMenu: Data type:', typeof data);
-      console.log('useMenu.loadMenu: Data keys:', data ? Object.keys(data) : 'null');
+      console.log('Menu data received:', data); // Отладка
       
-      // Проверяем, что данные есть
-      if (!data) {
-        console.warn('useMenu.loadMenu: No data received');
-        setMenuData({ categories: [], dishes: [] });
-        return;
-      }
+      // Бэкенд возвращает данные в формате { menu: [...] }
+      // где каждый элемент menu содержит категорию с массивом dishes
+      const categories = [];
+      const dishes = [];
       
-      // Преобразуем данные из формата API в ожидаемый формат
-      const categories = Array.isArray(data.categories) 
-        ? data.categories.map(category => ({
+      if (data && Array.isArray(data)) {
+        data.forEach(category => {
+          // Добавляем категорию
+          categories.push({
             id: category.id,
             name: category.name,
             description: category.description,
             sort_order: category.sort_order,
             is_active: category.is_active
-          }))
-        : [];
+          });
+          
+          // Добавляем блюда этой категории
+          if (category.dishes && Array.isArray(category.dishes)) {
+            category.dishes.forEach(dish => {
+              dishes.push({
+                ...dish,
+                image: dish.image_url // Преобразуем image_url в image для совместимости
+              });
+            });
+          }
+        });
+      } else {
+        console.warn('Menu data is not an array:', data);
+      }
       
-      const dishes = Array.isArray(data.dishes)
-        ? data.dishes.map(dish => ({
-            ...dish,
-            image: dish.image_url || dish.image // Преобразуем image_url в image для совместимости
-          }))
-        : [];
-      
-      console.log('useMenu.loadMenu: Processed categories:', categories.length);
-      console.log('useMenu.loadMenu: Processed dishes:', dishes.length);
-      console.log('useMenu.loadMenu: Sample category:', categories[0]);
-      console.log('useMenu.loadMenu: Sample dish:', dishes[0]);
-      
+      console.log('Processed categories:', categories.length, 'dishes:', dishes.length); // Отладка
       setMenuData({ categories, dishes });
-      console.log('useMenu.loadMenu: Menu data set successfully');
     } catch (err) {
-      console.error('useMenu.loadMenu: Error loading menu:', err);
-      console.error('useMenu.loadMenu: Error details:', {
-        message: err.message,
-        stack: err.stack,
-        name: err.name
-      });
-      setError(err.message || 'Ошибка при загрузке меню');
-      // Устанавливаем пустые данные при ошибке
-      setMenuData({ categories: [], dishes: [] });
+      console.error('Error loading menu:', err);
+      setError(err.message || 'Ошибка загрузки меню');
+      setMenuData({ categories: [], dishes: [] }); // Устанавливаем пустые данные при ошибке
     } finally {
       setIsLoading(false);
-      console.log('useMenu.loadMenu: Loading completed');
     }
   }, []);
 

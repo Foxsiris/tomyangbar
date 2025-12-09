@@ -78,7 +78,7 @@ export class MenuService {
         }
       });
       
-      const response = await apiClient.get(`/menu/dishes/filter?${queryParams.toString()}`);
+      const response = await apiClient.get(`/api/menu/dishes/filter?${queryParams.toString()}`);
       return response.dishes;
     } catch (error) {
       console.error('Error getting dishes with filters:', error);
@@ -89,52 +89,10 @@ export class MenuService {
   // Получение полного меню (категории + блюда)
   static async getFullMenu() {
     try {
-      console.log('MenuService.getFullMenu: Starting request to /menu/full');
-      const response = await apiClient.get('/menu/full');
-      console.log('MenuService.getFullMenu: Raw response:', response);
-      console.log('MenuService.getFullMenu: Response type:', typeof response);
-      console.log('MenuService.getFullMenu: Response keys:', response ? Object.keys(response) : 'null');
-      
-      if (!response) {
-        console.warn('MenuService.getFullMenu: Response is null or undefined');
-        return {
-          categories: [],
-          dishes: []
-        };
-      }
-      
-      // Проверяем разные возможные форматы ответа
-      let menuData = null;
-      
-      if (response.menu) {
-        menuData = response.menu;
-        console.log('MenuService.getFullMenu: Found menu in response.menu');
-      } else if (response.categories && response.dishes) {
-        menuData = response;
-        console.log('MenuService.getFullMenu: Found categories and dishes directly in response');
-      } else if (Array.isArray(response)) {
-        // Если ответ - массив, возможно это старый формат
-        console.warn('MenuService.getFullMenu: Response is array, converting...');
-        menuData = {
-          categories: [],
-          dishes: []
-        };
-      } else {
-        console.warn('MenuService.getFullMenu: Unknown response format:', response);
-        return {
-          categories: [],
-          dishes: []
-        };
-      }
-      
-      console.log('MenuService.getFullMenu: Final menuData:', menuData);
-      console.log('MenuService.getFullMenu: Categories count:', menuData?.categories?.length || 0);
-      console.log('MenuService.getFullMenu: Dishes count:', menuData?.dishes?.length || 0);
-      
-      return menuData || {
-        categories: [],
-        dishes: []
-      };
+      const response = await apiClient.getFullMenu();
+      console.log('API response:', response); // Отладка
+      // Бэкенд возвращает { menu: [...] }
+      return response?.menu || response || [];
     } catch (error) {
       console.error('MenuService.getFullMenu: Error details:', error);
       console.error('MenuService.getFullMenu: Error message:', error?.message);
@@ -146,7 +104,7 @@ export class MenuService {
   // Получение статистики меню
   static async getMenuStats() {
     try {
-      const response = await apiClient.get('/menu/stats');
+      const response = await apiClient.get('/api/menu/stats');
       return response.stats;
     } catch (error) {
       console.error('Error getting menu stats:', error);
