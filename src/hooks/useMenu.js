@@ -74,7 +74,6 @@ export const useMenu = () => {
         console.warn('useMenu.loadMenu: Unexpected data format:', data);
       }
       
-      const isDev = import.meta.env.DEV || import.meta.env.MODE === 'development';
       if (isDev) {
         console.log('useMenu.loadMenu: Processed categories:', categories.length, 'dishes:', dishes.length);
       }
