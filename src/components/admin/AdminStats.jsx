@@ -215,8 +215,8 @@ const AdminStats = () => {
               <p className="text-sm font-medium text-gray-600">Общая выручка</p>
               <p className="text-2xl font-bold text-gray-900">{stats.totalRevenue.toLocaleString()} ₽</p>
             </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <DollarSign className="w-6 h-6 text-green-600" />
+            <div className="p-3 bg-green-100 rounded-full w-12 h-12 flex items-center justify-center">
+              <span className="text-green-600 font-bold text-xl">₽</span>
             </div>
           </div>
           <div className="mt-4 flex items-center text-sm text-green-600">

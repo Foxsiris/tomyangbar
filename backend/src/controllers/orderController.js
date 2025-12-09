@@ -19,14 +19,22 @@ const createOrder = async (req, res) => {
     const userId = req.user ? req.user.userId : null;
 
     // Генерируем номер заказа - получаем следующий порядковый номер
-    const { data: lastOrder } = await supabase
+    const { data: lastOrders, error: lastOrderError } = await supabase
       .from('orders')
       .select('order_number')
       .order('order_number', { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
     
-    const orderNumber = lastOrder?.order_number ? lastOrder.order_number + 1 : 1;
+    // Если заказов нет или ошибка, начинаем с 1
+    const orderNumber = (lastOrders && lastOrders.length > 0 && lastOrders[0]?.order_number) 
+      ? lastOrders[0].order_number + 1 
+      : 1;
+
+    // Валидация обязательных полей
+    if (!customerName || !phone || !email || !items || items.length === 0 || !total) {
+      console.error('Missing required fields:', { customerName, phone, email, items, total });
+      return res.status(400).json({ error: 'Неполные данные заказа' });
+    }
 
     // Создаем заказ
     const { data: newOrder, error: orderError } = await supabase
@@ -36,10 +44,10 @@ const createOrder = async (req, res) => {
           customer_name: customerName,
           phone,
           email,
-          address: address,
-          total: total,
+          address: address || (deliveryType === 'pickup' ? 'Самовывоз' : ''),
+          total: parseFloat(total),
           delivery_fee: deliveryType === 'delivery' ? 200 : 0,
-          final_total: total + (deliveryType === 'delivery' ? 200 : 0),
+          final_total: parseFloat(total) + (deliveryType === 'delivery' ? 200 : 0),
           status: 'pending',
           delivery_type: deliveryType,
           delivery_time: deliveryTime,
@@ -55,17 +63,28 @@ const createOrder = async (req, res) => {
 
     if (orderError) {
       console.error('Order creation error:', orderError);
-      return res.status(500).json({ error: 'Ошибка при создании заказа' });
+      return res.status(500).json({ 
+        error: 'Ошибка при создании заказа',
+        details: orderError.message 
+      });
     }
 
     // Создаем элементы заказа
     const orderItems = items.map(item => ({
       order_id: newOrder.id,
-      dish_id: item.dish_id,
+      dish_id: item.dish_id || item.id,
       dish_name: item.dish_name || item.name,
-      quantity: item.quantity,
-      price: item.price
+      quantity: parseInt(item.quantity) || 1,
+      price: parseFloat(item.price) || 0
     }));
+
+    // Проверяем, что все элементы валидны
+    const invalidItems = orderItems.filter(item => !item.dish_id || !item.dish_name || !item.price);
+    if (invalidItems.length > 0) {
+      console.error('Invalid order items:', invalidItems);
+      await supabase.from('orders').delete().eq('id', newOrder.id);
+      return res.status(400).json({ error: 'Некорректные данные элементов заказа' });
+    }
 
     const { error: itemsError } = await supabase
       .from('order_items')
@@ -75,7 +94,10 @@ const createOrder = async (req, res) => {
       console.error('Order items creation error:', itemsError);
       // Удаляем заказ, если не удалось создать элементы
       await supabase.from('orders').delete().eq('id', newOrder.id);
-      return res.status(500).json({ error: 'Ошибка при создании элементов заказа' });
+      return res.status(500).json({ 
+        error: 'Ошибка при создании элементов заказа',
+        details: itemsError.message 
+      });
     }
 
     res.status(201).json({

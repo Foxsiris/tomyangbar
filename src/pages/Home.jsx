@@ -65,7 +65,7 @@ const Home = () => {
             transition={{ duration: 0.8 }}
             className="mb-6"
           >
-            <div className="text-6xl mb-4">🦆</div>
+            <img src="/logo.png" alt="Tom Yang Bar" className="w-24 h-24 mb-4 object-contain mx-auto" />
             <h1 className="text-5xl md:text-7xl font-bold mb-2 font-serif">
               Tom Yang Bar
             </h1>
