@@ -49,7 +49,15 @@ const CartSidePanel = () => {
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-red-50 to-orange-50">
               <div className="flex items-center space-x-2">
-                <div className="text-2xl">🦆</div>
+                <img 
+                  src="/logo.png" 
+                  alt="Tom Yang Bar" 
+                  className="w-6 h-6 object-contain"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🦆</text></svg>';
+                  }}
+                />
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
                     Корзина ({cart.length})
@@ -69,7 +77,15 @@ const CartSidePanel = () => {
             <div className="flex-1 overflow-y-auto p-4">
               {cart.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="text-6xl mb-4">🦆</div>
+                  <img 
+                    src="/logo.png" 
+                    alt="Tom Yang Bar" 
+                    className="w-16 h-16 mx-auto mb-4 object-contain"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🦆</text></svg>';
+                    }}
+                  />
                   <p className="text-gray-600 text-lg mb-2">Корзина пуста</p>
                   <p className="text-sm text-gray-500 mb-2">空のカート</p>
                   <p className="text-sm text-gray-500">

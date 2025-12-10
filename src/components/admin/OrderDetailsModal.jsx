@@ -185,7 +185,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Адрес</p>
-                      <p className="font-medium text-gray-900">{order.delivery_address}</p>
+                      <p className="font-medium text-gray-900">{order.address || order.delivery_address || 'Не указан'}</p>
                     </div>
                   </div>
                 </div>

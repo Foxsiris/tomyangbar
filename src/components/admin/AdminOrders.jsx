@@ -91,12 +91,23 @@ const AdminOrders = () => {
       const updatedOrder = await OrderService.updateOrderStatus(orderId, newStatus);
       
       if (updatedOrder) {
-        // Обновляем локальное состояние
+        // Обновляем локальное состояние, сохраняя все данные заказа
         setOrders(prevOrders => 
           prevOrders.map(order => 
-            order.id === orderId ? updatedOrder : order
+            order.id === orderId
+              ? { ...order, status: updatedOrder.status, updated_at: updatedOrder.updated_at }
+              : order
           )
         );
+        
+        // Обновляем выбранный заказ в модалке, если он открыт
+        if (selectedOrder && selectedOrder.id === orderId) {
+          setSelectedOrder(prev => ({
+            ...prev,
+            status: updatedOrder.status,
+            updated_at: updatedOrder.updated_at
+          }));
+        }
       }
     } catch (error) {
       console.error('Ошибка при обновлении статуса заказа:', error);

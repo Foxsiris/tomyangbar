@@ -14,7 +14,15 @@ const MenuFilters = ({
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center mb-2">
-          <div className="text-2xl mr-2">🦆</div>
+          <img 
+            src="/logo.png" 
+            alt="Tom Yang Bar" 
+            className="w-8 h-8 mr-2 object-contain"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🦆</text></svg>';
+            }}
+          />
           <h3 className="text-lg font-semibold text-gray-900 flex items-center">
             <Filter className="w-5 h-5 mr-2 text-primary-600" />
             Фильтры

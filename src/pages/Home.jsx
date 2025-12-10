@@ -65,7 +65,15 @@ const Home = () => {
             transition={{ duration: 0.8 }}
             className="mb-6"
           >
-            <div className="text-6xl mb-4">🦆</div>
+            <img 
+              src="/logo.png" 
+              alt="Tom Yang Bar" 
+              className="w-20 h-20 mx-auto mb-4 object-contain"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🦆</text></svg>';
+              }}
+            />
             <h1 className="text-5xl md:text-7xl font-bold mb-2 font-serif">
               Tom Yang Bar
             </h1>

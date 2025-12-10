@@ -57,7 +57,15 @@ const Header = () => {
               whileHover={{ scale: 1.05 }}
               className="flex items-center space-x-2"
             >
-              <div className="text-3xl">🦆</div>
+              <img 
+                src="/logo.png" 
+                alt="Tom Yang Bar" 
+                className="w-8 h-8 object-contain"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🦆</text></svg>';
+                }}
+              />
               <div className="flex flex-col">
                 <div className="text-xl font-bold text-primary-600">Tom Yang Bar</div>
                 <div className="text-xs text-gray-500 tracking-wider">トムヤンバー</div>

@@ -49,8 +49,10 @@ class ApiClient {
       'Content-Type': 'application/json',
     };
     
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+    // Всегда берем актуальный токен из localStorage при каждом запросе
+    const token = localStorage.getItem('tomyangbar_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
     
     return headers;

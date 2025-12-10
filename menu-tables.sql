@@ -26,6 +26,10 @@ CREATE TABLE dishes (
     is_vegetarian BOOLEAN DEFAULT false,
     is_active BOOLEAN DEFAULT true,
     sort_order INTEGER DEFAULT 0,
+    calories INTEGER,
+    proteins DECIMAL(5,1),
+    fats DECIMAL(5,1),
+    carbs DECIMAL(5,1),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

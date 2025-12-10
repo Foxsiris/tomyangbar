@@ -19,14 +19,22 @@ const createOrder = async (req, res) => {
     const userId = req.user ? req.user.userId : null;
 
     // Генерируем номер заказа - получаем следующий порядковый номер
-    const { data: lastOrder } = await supabase
+    const { data: lastOrders, error: lastOrderError } = await supabase
       .from('orders')
       .select('order_number')
       .order('order_number', { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
     
-    const orderNumber = lastOrder?.order_number ? lastOrder.order_number + 1 : 1;
+    // Если заказов нет или ошибка, начинаем с 1
+    const orderNumber = (lastOrders && lastOrders.length > 0 && lastOrders[0]?.order_number)
+      ? lastOrders[0].order_number + 1
+      : 1;
+    
+    // Валидация обязательных полей
+    if (!customerName || !phone || !email || !items || items.length === 0 || !total) {
+      console.error('Missing required fields:', { customerName, phone, email, items, total });
+      return res.status(400).json({ error: 'Неполные данные заказа' });
+    }
 
     // Создаем заказ
     const { data: newOrder, error: orderError } = await supabase
