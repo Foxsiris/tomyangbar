@@ -19,11 +19,10 @@ class ApiClient {
     
     this.token = localStorage.getItem('tomyangbar_token');
     
-    // Логирование для отладки
-    if (isDevelopment) {
-      console.log('🔧 API Client initialized in DEVELOPMENT mode');
-      console.log('📍 Base URL:', this.baseURL);
-    }
+    // Логирование для отладки (включаем и в продакшене для диагностики)
+    console.log('🔧 API Client initialized');
+    console.log('📍 Base URL:', this.baseURL);
+    console.log('📍 Environment:', isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION');
     
     // Request throttling and caching
     this.requestQueue = new Map(); // For deduplicating identical requests
@@ -124,19 +123,21 @@ class ApiClient {
   // Выполнение запроса с обработкой ошибок
   async executeRequest(url, config, endpoint, requestKey, retryCount) {
     try {
-      const isDev = import.meta.env.DEV || import.meta.env.MODE === 'development';
+      // Логируем все запросы для диагностики
+      console.log(`🌐 apiClient.executeRequest: Making request to ${url}`);
+      console.log(`📍 apiClient.executeRequest: Endpoint: ${endpoint}`);
+      console.log(`📍 apiClient.executeRequest: Method: ${config.method || 'GET'}`);
       
-      if (isDev) {
-        console.log(`apiClient.executeRequest: Making request to ${url}`);
-        console.log(`apiClient.executeRequest: Endpoint: ${endpoint}`);
-      }
+      // Добавляем таймаут для запросов (30 секунд)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout: запрос превысил время ожидания')), 30000);
+      });
       
-      const response = await fetch(url, config);
+      const fetchPromise = fetch(url, config);
+      const response = await Promise.race([fetchPromise, timeoutPromise]);
       
-      if (isDev) {
-        console.log(`apiClient.executeRequest: Response status: ${response.status}`);
-        console.log(`apiClient.executeRequest: Response ok: ${response.ok}`);
-      }
+      console.log(`✅ apiClient.executeRequest: Response status: ${response.status}`);
+      console.log(`✅ apiClient.executeRequest: Response ok: ${response.ok}`);
       
       // Если токен истек, удаляем его
       if (response.status === 401) {
@@ -159,13 +160,9 @@ class ApiClient {
       let data;
       try {
         const text = await response.text();
-        if (isDev) {
-          console.log(`apiClient.executeRequest: Response text (first 500 chars):`, text.substring(0, 500));
-        }
+        console.log(`📄 apiClient.executeRequest: Response text (first 500 chars):`, text.substring(0, 500));
         data = JSON.parse(text);
-        if (isDev) {
-          console.log(`apiClient.executeRequest: Parsed data:`, data);
-        }
+        console.log(`✅ apiClient.executeRequest: Parsed data:`, data);
       } catch (parseError) {
         console.error(`apiClient.executeRequest: JSON parse error:`, parseError);
         // Если ответ не JSON (например, "Too many requests" текст)
@@ -188,13 +185,22 @@ class ApiClient {
         });
       }
 
-      if (isDev) {
-        console.log(`apiClient.executeRequest: Successfully returning data`);
-      }
+      console.log(`✅ apiClient.executeRequest: Successfully returning data`);
       return data;
     } catch (error) {
       console.error(`apiClient.executeRequest: API Error (${endpoint}):`, error);
+      console.error(`apiClient.executeRequest: Error message:`, error.message);
       console.error(`apiClient.executeRequest: Error stack:`, error.stack);
+      
+      // Обработка сетевых ошибок
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Ошибка сети: не удалось подключиться к серверу. Проверьте подключение к интернету.');
+      }
+      
+      if (error.message.includes('timeout')) {
+        throw new Error('Запрос превысил время ожидания. Сервер не отвечает.');
+      }
+      
       throw error;
     }
   }

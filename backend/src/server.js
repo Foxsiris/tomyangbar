@@ -55,24 +55,35 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Rate limiting
-const limiter = rateLimit({
+// Мягкий лимитер для публичных endpoints (menu, cart)
+const publicLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'development' ? 5000 : 100, // Very generous in development
+  max: 5000, // Очень мягкий лимит для публичных endpoints
   message: {
     error: 'Too many requests',
     message: 'Превышен лимит запросов. Попробуйте позже.'
   },
   standardHeaders: true,
-  legacyHeaders: false,
-  skip: (req) => {
-    // Пропускаем rate limiting для menu endpoints в development
-    if (process.env.NODE_ENV === 'development' && req.path.startsWith('/api/menu/')) {
-      return true;
-    }
-    return false;
-  }
+  legacyHeaders: false
 });
+
+// Более строгий лимитер для остальных endpoints
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === 'development' ? 5000 : 1000, // Увеличили лимит для продакшена
+  message: {
+    error: 'Too many requests',
+    message: 'Превышен лимит запросов. Попробуйте позже.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// Применяем мягкий лимитер для публичных endpoints ПЕРЕД основным
+app.use('/api/menu', publicLimiter);
+app.use('/api/cart', publicLimiter);
+
+// Применяем основной лимитер ко всем остальным путям
 app.use(limiter);
 
 app.use(express.json({ limit: '10mb' }));

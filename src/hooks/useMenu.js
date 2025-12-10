@@ -80,7 +80,21 @@ export const useMenu = () => {
       setMenuData({ categories, dishes });
     } catch (err) {
       console.error('Error loading menu:', err);
-      setError(err.message || 'Ошибка загрузки меню');
+      console.error('Error details:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name
+      });
+      
+      // Устанавливаем более понятное сообщение об ошибке
+      let errorMessage = 'Ошибка загрузки меню';
+      if (err.message) {
+        errorMessage = err.message;
+      } else if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        errorMessage = 'Не удалось подключиться к серверу. Проверьте подключение к интернету.';
+      }
+      
+      setError(errorMessage);
       setMenuData({ categories: [], dishes: [] }); // Устанавливаем пустые данные при ошибке
     } finally {
       setIsLoading(false);
