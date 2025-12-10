@@ -9,14 +9,21 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
   const [errorMessage, setErrorMessage] = useState('');
   const [countdown, setCountdown] = useState(0);
 
-  // Сброс состояния при открытии модального окна
+  // Блокируем скролл body при открытии модального окна
   useEffect(() => {
     if (isOpen) {
+      document.body.style.overflow = 'hidden';
       setPaymentStatus('idle');
       setPaymentId(null);
       setErrorMessage('');
       setCountdown(0);
+    } else {
+      document.body.style.overflow = '';
     }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isOpen]);
 
   // Обработка создания платежа
@@ -25,7 +32,24 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
       setPaymentStatus('processing');
       setErrorMessage('');
 
+      // Проверяем, что orderData содержит необходимые данные
+      if (!orderData || !orderData.orderId) {
+        throw new Error('Отсутствуют данные заказа');
+      }
+
       const payment = await createPayment(orderData);
+      
+      // Проверяем, что платеж был создан успешно
+      if (!payment) {
+        throw new Error('Не удалось создать платеж');
+      }
+
+      console.log('Payment Created:', payment);
+
+      if (!payment.id) {
+        throw new Error('Платеж создан, но отсутствует ID платежа');
+      }
+
       setPaymentId(payment.id);
 
       // Проверяем, есть ли URL для редиректа
@@ -40,8 +64,9 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
       }
 
     } catch (error) {
+      console.error('Ошибка платежа:', error);
       setPaymentStatus('error');
-      setErrorMessage(error.message);
+      setErrorMessage(error.message || 'Неизвестная ошибка при создании платежа');
       onPaymentError?.(error);
     }
   };

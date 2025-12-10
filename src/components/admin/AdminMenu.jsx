@@ -65,12 +65,38 @@ const AdminMenu = () => {
     loadMenuData();
   }, []);
 
+  // Блокируем скролл body при открытии модального окна
+  useEffect(() => {
+    if (showAddModal || editingDish) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showAddModal, editingDish]);
+
   const filteredDishes = dishes.filter(dish => {
     const matchesSearch = dish.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          dish.description?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || dish.category_id?.toString() === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  // Блокируем скролл body при открытии модального окна
+  useEffect(() => {
+    if (showAddModal || editingDish) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showAddModal, editingDish]);
 
   if (loading) {
     return (
@@ -367,14 +393,19 @@ const AdminMenu = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md"
+              className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                {editingDish ? 'Редактировать блюдо' : 'Добавить блюдо'}
-              </h3>
+              {/* Header - фиксированный */}
+              <div className="px-6 pt-6 pb-4 border-b border-gray-200 flex-shrink-0">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {editingDish ? 'Редактировать блюдо' : 'Добавить блюдо'}
+                </h3>
+              </div>
               
-              <form className="space-y-4">
+              {/* Scrollable content */}
+              <div className="flex-1 overflow-y-auto px-6 py-4">
+                <form className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Название *
@@ -575,8 +606,12 @@ const AdminMenu = () => {
                     <span className="text-sm text-gray-700">Доступно</span>
                   </label>
                 </div>
-                
-                <div className="flex space-x-3 pt-4">
+                </form>
+              </div>
+              
+              {/* Footer - фиксированный */}
+              <div className="px-6 py-4 border-t border-gray-200 flex-shrink-0">
+                <div className="flex space-x-3">
                   <button
                     type="button"
                     onClick={editingDish ? handleEditDish : handleAddDish}
@@ -596,7 +631,7 @@ const AdminMenu = () => {
                     Отмена
                   </button>
                 </div>
-              </form>
+              </div>
             </motion.div>
           </motion.div>
         )}

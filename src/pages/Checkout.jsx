@@ -125,25 +125,54 @@ const Checkout = () => {
       
       // Добавляем заказ в систему
       let newOrder;
-      if (user) {
-        // Если пользователь авторизован, используем addOrder (он сам вызовет addNewOrder)
-        newOrder = await addOrder(orderData);
-      } else {
-        // Если пользователь не авторизован, создаем заказ напрямую
-        newOrder = await OrderService.createOrder(orderData, null);
-      }
-      
-      // Если выбран онлайн-платеж, показываем модальное окно платежа
-      if (formData.paymentMethod === 'card') {
-        setCurrentOrderData({
-          ...orderData,
-          orderId: newOrder.order_number || newOrder.id
+      try {
+        console.log('Creating order:', { 
+          isAuthenticated: !!user, 
+          userId: user?.id,
+          paymentMethod: formData.paymentMethod,
+          itemsCount: cart.length 
         });
-        setIsPaymentModalOpen(true);
-      } else {
-        // Для наличных показываем обычное окно успеха
-        setOrderNumber(newOrder.order_number || newOrder.id);
-        setShowSuccessModal(true);
+        
+        if (user) {
+          // Если пользователь авторизован, используем addOrder (он сам вызовет addNewOrder)
+          console.log('Creating order for authenticated user');
+          newOrder = await addOrder(orderData);
+        } else {
+          // Если пользователь не авторизован, создаем заказ напрямую
+          console.log('Creating order for guest user');
+          newOrder = await OrderService.createOrder(orderData, null);
+        }
+        
+        console.log('Order created:', newOrder);
+        
+        // Проверяем, что заказ был создан успешно
+        if (!newOrder) {
+          throw new Error('Не удалось создать заказ');
+        }
+        
+        // Если выбран онлайн-платеж, показываем модальное окно платежа
+        if (formData.paymentMethod === 'card') {
+          const orderId = newOrder.order_number || newOrder.id;
+          if (!orderId) {
+            throw new Error('Не удалось получить номер заказа');
+          }
+          setCurrentOrderData({
+            ...orderData,
+            orderId: orderId
+          });
+          setIsPaymentModalOpen(true);
+        } else {
+          // Для наличных показываем обычное окно успеха
+          const orderId = newOrder.order_number || newOrder.id;
+          if (!orderId) {
+            throw new Error('Не удалось получить номер заказа');
+          }
+          setOrderNumber(orderId);
+          setShowSuccessModal(true);
+        }
+      } catch (error) {
+        console.error('Error creating order:', error);
+        alert(`Ошибка при создании заказа: ${error.message || 'Неизвестная ошибка'}`);
       }
     }
   };

@@ -50,7 +50,7 @@ const Home = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: "url('https://masterpiecer-images.s3.yandex.net/8f9d6039a42e11ee84a3d20dae950626:upscaled')"
+            backgroundImage: "url('/main_phone.jpg')"
           }}
         >
           {/* Gradient mask with blur effect */}

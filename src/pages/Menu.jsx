@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Filter, X } from 'lucide-react';
 import { useMenu } from '../hooks/useMenu';
@@ -13,6 +13,19 @@ const Menu = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   
   const { menuData, isLoading, error, getDishesByCategory } = useMenu();
+
+  // Блокируем скролл body при открытии мобильных фильтров
+  useEffect(() => {
+    if (showMobileFilters) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showMobileFilters]);
 
   const filteredDishes = useMemo(() => {
     let filtered = menuData.dishes || [];
@@ -80,7 +93,7 @@ const Menu = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Header */}
       <section className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -126,10 +139,11 @@ const Menu = () => {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="absolute left-0 top-0 h-full w-80 bg-white shadow-2xl"
+              className="absolute left-0 top-0 h-full w-full max-w-sm bg-white shadow-2xl flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-4 border-b border-gray-200">
+              {/* Header - фиксированный */}
+              <div className="p-4 border-b border-gray-200 flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-900">Фильтры</h3>
                   <button
@@ -140,7 +154,8 @@ const Menu = () => {
                   </button>
                 </div>
               </div>
-              <div className="p-4">
+              {/* Scrollable content */}
+              <div className="flex-1 overflow-y-auto p-4">
                 <MenuFilters
                   searchQuery={searchQuery}
                   setSearchQuery={setSearchQuery}

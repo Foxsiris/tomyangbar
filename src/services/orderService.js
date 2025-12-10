@@ -9,7 +9,20 @@ export class OrderService {
         ...orderData,
         userId
       });
-      return response.order;
+      
+      // Проверяем, что ответ содержит заказ
+      if (!response) {
+        throw new Error('Пустой ответ от сервера');
+      }
+      
+      // Бэкенд возвращает { message, order } или просто order
+      const order = response.order || response;
+      
+      if (!order) {
+        throw new Error('Заказ не был создан');
+      }
+      
+      return order;
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;

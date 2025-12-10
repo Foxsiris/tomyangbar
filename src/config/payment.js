@@ -150,6 +150,13 @@ export const createPayment = async (orderData) => {
 
     const result = await response.json();
     console.log('Payment Created:', result.payment);
+    
+    // Проверяем, что платеж был создан успешно
+    if (!result || !result.payment) {
+      console.error('Invalid payment response:', result);
+      throw new Error('Неверный ответ от сервера при создании платежа');
+    }
+    
     return result.payment;
     
   } catch (error) {

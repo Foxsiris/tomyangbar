@@ -17,6 +17,16 @@ const createOrder = async (req, res) => {
     } = req.body;
 
     const userId = req.user ? req.user.userId : null;
+    
+    // Логируем для отладки (включая неавторизованных пользователей)
+    console.log('Creating order:', {
+      hasUser: !!req.user,
+      userId: userId,
+      customerName,
+      email,
+      itemsCount: items?.length || 0,
+      total
+    });
 
     // Генерируем номер заказа - получаем следующий порядковый номер
     const { data: lastOrders, error: lastOrderError } = await supabase
@@ -63,27 +73,75 @@ const createOrder = async (req, res) => {
 
     if (orderError) {
       console.error('Order creation error:', orderError);
+      console.error('Order data:', {
+        customer_name: customerName,
+        phone,
+        email,
+        address: address || (deliveryType === 'pickup' ? 'Самовывоз' : ''),
+        total: parseFloat(total),
+        delivery_fee: deliveryType === 'delivery' ? 200 : 0,
+        final_total: parseFloat(total) + (deliveryType === 'delivery' ? 200 : 0),
+        status: 'pending',
+        delivery_type: deliveryType,
+        delivery_time: deliveryTime,
+        payment_method: paymentMethod,
+        notes: notes || '',
+        user_id: userId,
+        order_number: orderNumber
+      });
       return res.status(500).json({ 
         error: 'Ошибка при создании заказа',
-        details: orderError.message 
+        details: orderError.message,
+        code: orderError.code,
+        hint: orderError.hint
       });
     }
 
-    // Создаем элементы заказа
-    const orderItems = items.map(item => ({
-      order_id: newOrder.id,
-      dish_id: item.dish_id || item.id,
-      dish_name: item.dish_name || item.name,
-      quantity: parseInt(item.quantity) || 1,
-      price: parseFloat(item.price) || 0
-    }));
+    // Создаем элементы заказа с более детальной обработкой
+    const orderItems = items.map((item, index) => {
+      const dishId = item.dish_id || item.id;
+      const dishName = item.dish_name || item.name;
+      const quantity = parseInt(item.quantity) || 1;
+      const price = parseFloat(item.price) || 0;
+
+      // Логируем каждый элемент для отладки
+      if (!dishId || !dishName || !price || price <= 0) {
+        console.error(`Invalid item at index ${index}:`, {
+          original: item,
+          processed: { dishId, dishName, quantity, price }
+        });
+      }
+
+      return {
+        order_id: newOrder.id,
+        dish_id: dishId,
+        dish_name: dishName,
+        quantity: quantity,
+        price: price
+      };
+    });
+
+    // Логируем для отладки
+    console.log('Order items to insert:', JSON.stringify(orderItems, null, 2));
+    console.log('Original items:', JSON.stringify(items, null, 2));
 
     // Проверяем, что все элементы валидны
-    const invalidItems = orderItems.filter(item => !item.dish_id || !item.dish_name || !item.price);
+    const invalidItems = orderItems.filter(item => {
+      const isInvalid = !item.dish_id || !item.dish_name || !item.price || item.price <= 0;
+      if (isInvalid) {
+        console.error('Invalid item found:', item);
+      }
+      return isInvalid;
+    });
+    
     if (invalidItems.length > 0) {
       console.error('Invalid order items:', invalidItems);
       await supabase.from('orders').delete().eq('id', newOrder.id);
-      return res.status(400).json({ error: 'Некорректные данные элементов заказа' });
+      return res.status(400).json({ 
+        error: 'Некорректные данные элементов заказа',
+        details: `Найдено ${invalidItems.length} невалидных элементов`,
+        invalidItems: invalidItems
+      });
     }
 
     const { error: itemsError } = await supabase
