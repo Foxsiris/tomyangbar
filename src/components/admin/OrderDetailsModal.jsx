@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getDisplayOrderNumber } from '../../utils/orderUtils';
 import { 
@@ -18,6 +19,19 @@ import {
 } from 'lucide-react';
 
 const OrderDetailsModal = ({ order, isOpen, onClose }) => {
+  // Блокируем скролл body при открытии модального окна
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   if (!order || !isOpen) return null;
 
   const getStatusColor = (status) => {

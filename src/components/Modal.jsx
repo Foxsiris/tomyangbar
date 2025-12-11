@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
@@ -10,6 +11,19 @@ const Modal = ({
   showCloseButton = true,
   closeOnBackdrop = true 
 }) => {
+  // Блокируем скролл body при открытии модального окна
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   const sizeClasses = {
     sm: 'sm:max-w-sm',
     md: 'sm:max-w-lg',

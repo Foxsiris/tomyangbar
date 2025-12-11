@@ -16,6 +16,19 @@ const SBPModal = ({
   const [countdown, setCountdown] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Блокируем скролл body при открытии модального окна
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   // Создание СБП платежа
   const handleCreateSBPayment = async () => {
     try {

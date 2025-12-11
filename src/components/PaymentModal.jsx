@@ -9,14 +9,21 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
   const [errorMessage, setErrorMessage] = useState('');
   const [countdown, setCountdown] = useState(0);
 
-  // Сброс состояния при открытии модального окна
+  // Блокируем скролл body при открытии модального окна
   useEffect(() => {
     if (isOpen) {
+      document.body.style.overflow = 'hidden';
       setPaymentStatus('idle');
       setPaymentId(null);
       setErrorMessage('');
       setCountdown(0);
+    } else {
+      document.body.style.overflow = '';
     }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isOpen]);
 
   // Обработка создания платежа

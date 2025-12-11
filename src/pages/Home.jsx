@@ -50,7 +50,7 @@ const Home = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: "url('https://masterpiecer-images.s3.yandex.net/8f9d6039a42e11ee84a3d20dae950626:upscaled')"
+            backgroundImage: "url('/main_phone.jpg')"
           }}
         >
           {/* Gradient mask with blur effect */}
@@ -278,6 +278,15 @@ const Home = () => {
               className="relative"
             >
               <div className="h-96 bg-gray-200 rounded-lg overflow-hidden">
+                <img 
+                  src="/main_phone.jpg" 
+                  alt="Интерьер ресторана Tom Yang Bar" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/vite.svg';
+                  }}
+                />
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-transparent"></div>
               </div>
             </motion.div>

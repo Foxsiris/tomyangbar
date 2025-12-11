@@ -94,6 +94,15 @@ const About = () => {
               className="relative"
             >
               <div className="h-96 bg-gray-200 rounded-lg overflow-hidden">
+                <img 
+                  src="/main_phone.jpg" 
+                  alt="Интерьер ресторана Tom Yang Bar" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/vite.svg';
+                  }}
+                />
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-transparent"></div>
               </div>
             </motion.div>
