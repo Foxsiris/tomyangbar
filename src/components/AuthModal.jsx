@@ -1,11 +1,24 @@
 /* eslint-disable no-unused-vars */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, User, Phone, Eye, EyeOff } from 'lucide-react';
 import { UserService } from '../services/userService.js';
 import { applyPhoneMask, validateRussianPhone } from '../utils/phoneMask';
 
 const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
+  // Блокируем скролл body при открытии модального окна
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, Plus, Minus, Phone } from 'lucide-react';
 import { useCartContext } from '../context/CartContext';
@@ -13,8 +14,21 @@ const CartSidePanel = () => {
     removeFromCart, 
     updateQuantity, 
     totalPrice, 
-    clearCart 
+    clearCart
   } = useCartContext();
+
+  // Блокируем скролл body при открытии корзины
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   const handleCheckout = () => {
     if (totalPrice < 1000) {

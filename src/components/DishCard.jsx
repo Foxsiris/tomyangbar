@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Star, Flame, Leaf } from 'lucide-react';
 import { useCartContext } from '../context/CartContext';
+import DishDetailModal from './DishDetailModal';
 
 const DishCard = ({ dish, index = 0 }) => {
   const { addToCart } = useCartContext();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const getCategoryName = (categoryId) => {
     // Если категория уже загружена в dish.categories
@@ -14,12 +17,14 @@ const DishCard = ({ dish, index = 0 }) => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: index * 0.05 }}
-      className="card overflow-hidden group"
-    >
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: index * 0.05 }}
+        className="card overflow-hidden group cursor-pointer"
+        onClick={() => setIsModalOpen(true)}
+      >
       <div className="h-48 bg-gray-200 relative overflow-hidden">
         <img
           src={dish.image || '/vite.svg'}
@@ -66,48 +71,15 @@ const DishCard = ({ dish, index = 0 }) => {
           </span>
         </div>
         
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-          {dish.description}
-        </p>
-        
-        {/* КБЖУ */}
-        {(dish.calories || dish.proteins || dish.fats || dish.carbs) && (
-          <div className="mb-3 pb-3 border-b border-gray-200">
-            <div className="grid grid-cols-4 gap-2 text-xs">
-              {dish.calories && (
-                <div className="text-center">
-                  <div className="font-semibold text-gray-900">{dish.calories}</div>
-                  <div className="text-gray-500">ккал</div>
-                </div>
-              )}
-              {dish.proteins && (
-                <div className="text-center">
-                  <div className="font-semibold text-blue-600">{dish.proteins}г</div>
-                  <div className="text-gray-500">белки</div>
-                </div>
-              )}
-              {dish.fats && (
-                <div className="text-center">
-                  <div className="font-semibold text-yellow-600">{dish.fats}г</div>
-                  <div className="text-gray-500">жиры</div>
-                </div>
-              )}
-              {dish.carbs && (
-                <div className="text-center">
-                  <div className="font-semibold text-green-600">{dish.carbs}г</div>
-                  <div className="text-gray-500">углеводы</div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-        
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mt-4">
           <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
             {getCategoryName(dish.category_id)}
           </span>
           <button
-            onClick={() => addToCart(dish)}
+            onClick={(e) => {
+              e.stopPropagation();
+              addToCart(dish);
+            }}
             className="btn-primary text-sm py-2 px-4"
           >
             В корзину
@@ -115,6 +87,13 @@ const DishCard = ({ dish, index = 0 }) => {
         </div>
       </div>
     </motion.div>
+
+    <DishDetailModal
+      dish={dish}
+      isOpen={isModalOpen}
+      onClose={() => setIsModalOpen(false)}
+    />
+    </>
   );
 };
 
