@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Star, Flame, Leaf } from 'lucide-react';
+import { Star, Flame, Leaf, Droplet } from 'lucide-react';
 import { useCartContext } from '../context/CartContext';
 import DishDetailModal from './DishDetailModal';
 
@@ -36,7 +36,7 @@ const DishCard = ({ dish, index = 0 }) => {
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-        <div className="absolute top-3 left-3 flex gap-2">
+        <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
           {dish.is_popular && (
             <div className="bg-primary-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
               <Star className="w-3 h-3 mr-1" />
@@ -53,6 +53,12 @@ const DishCard = ({ dish, index = 0 }) => {
             <div className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
               <Leaf className="w-3 h-3 mr-1" />
               Вегетарианское
+            </div>
+          )}
+          {dish.is_carbonated !== null && dish.is_carbonated !== undefined && (
+            <div className={`${dish.is_carbonated ? 'bg-blue-600' : 'bg-cyan-600'} text-white px-2 py-1 rounded-full text-xs font-medium flex items-center`}>
+              <Droplet className="w-3 h-3 mr-1" />
+              {dish.is_carbonated ? 'Газированный' : 'Негазированный'}
             </div>
           )}
         </div>

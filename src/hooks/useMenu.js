@@ -18,34 +18,75 @@ export const useMenu = () => {
       
       console.log('Menu data received:', data); // Отладка
       
-      // Бэкенд возвращает данные в формате { menu: [...] }
-      // где каждый элемент menu содержит категорию с массивом dishes
-      const categories = [];
-      const dishes = [];
+      // Бэкенд может возвращать данные в разных форматах:
+      // 1. { menu: { categories: [], dishes: [] } }
+      // 2. { menu: [...] } где каждый элемент - категория с dishes
+      // 3. Массив категорий
+      let categories = [];
+      let dishes = [];
       
-      if (data && Array.isArray(data)) {
-        data.forEach(category => {
-          // Добавляем категорию
-          categories.push({
-            id: category.id,
-            name: category.name,
-            description: category.description,
-            sort_order: category.sort_order,
-            is_active: category.is_active
-          });
-          
-          // Добавляем блюда этой категории
-          if (category.dishes && Array.isArray(category.dishes)) {
-            category.dishes.forEach(dish => {
-              dishes.push({
-                ...dish,
-                image: dish.image_url // Преобразуем image_url в image для совместимости
-              });
+      if (data && typeof data === 'object') {
+        // Формат { menu: { categories: [], dishes: [] } }
+        if (data.menu && data.menu.categories && Array.isArray(data.menu.categories)) {
+          categories = data.menu.categories.map(cat => ({
+            id: cat.id,
+            name: cat.name,
+            description: cat.description,
+            sort_order: cat.sort_order,
+            is_active: cat.is_active
+          }));
+        }
+        
+        if (data.menu && data.menu.dishes && Array.isArray(data.menu.dishes)) {
+          dishes = data.menu.dishes.map(dish => ({
+            ...dish,
+            image: dish.image_url || dish.image // Преобразуем image_url в image для совместимости
+          }));
+        }
+        
+        // Формат { menu: [...] } где каждый элемент - категория с dishes
+        if (data.menu && Array.isArray(data.menu) && !data.menu.categories) {
+          data.menu.forEach(category => {
+            categories.push({
+              id: category.id,
+              name: category.name,
+              description: category.description,
+              sort_order: category.sort_order,
+              is_active: category.is_active
             });
-          }
-        });
-      } else {
-        console.warn('Menu data is not an array:', data);
+            
+            if (category.dishes && Array.isArray(category.dishes)) {
+              category.dishes.forEach(dish => {
+                dishes.push({
+                  ...dish,
+                  image: dish.image_url || dish.image
+                });
+              });
+            }
+          });
+        }
+        
+        // Если data - массив категорий
+        if (Array.isArray(data)) {
+          data.forEach(category => {
+            categories.push({
+              id: category.id,
+              name: category.name,
+              description: category.description,
+              sort_order: category.sort_order,
+              is_active: category.is_active
+            });
+            
+            if (category.dishes && Array.isArray(category.dishes)) {
+              category.dishes.forEach(dish => {
+                dishes.push({
+                  ...dish,
+                  image: dish.image_url || dish.image
+                });
+              });
+            }
+          });
+        }
       }
       
       console.log('Processed categories:', categories.length, 'dishes:', dishes.length); // Отладка

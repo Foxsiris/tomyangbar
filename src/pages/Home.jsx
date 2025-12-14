@@ -1,5 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Clock, Truck, Utensils } from 'lucide-react';
 import { useMenu } from '../hooks/useMenu';
@@ -13,6 +14,31 @@ import DishGallery from '../components/DishGallery';
 const Home = () => {
   const { getPopularDishes, isLoading } = useMenu();
   const popularDishes = getPopularDishes().slice(0, 6);
+
+  // Массив изображений для слайдера
+  const heroImages = [
+    '/main_phone.jpg',
+    '/main_phone2.jpg',
+    'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80',
+    'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80',
+    'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80'
+  ];
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Автоматическое переключение изображений каждые 10 секунд
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
+    }, 10000); // 10 секунд
+
+    return () => clearInterval(interval);
+  }, [heroImages.length]);
+
+  // Функция для переключения на конкретное изображение
+  const goToSlide = (index) => {
+    setCurrentImageIndex(index);
+  };
 
   const features = [
     {
@@ -44,18 +70,46 @@ const Home = () => {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        {/* Background Images Slider */}
+        <div className="absolute inset-0">
+          {heroImages.map((image, index) => (
+            <motion.div
+              key={index}
+              initial={false}
+              animate={{
+                opacity: index === currentImageIndex ? 1 : 0,
+                scale: index === currentImageIndex ? 1 : 1.05
+              }}
+              transition={{
+                duration: 1.5,
+                ease: [0.4, 0, 0.2, 1]
+              }}
+              className="absolute inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage: `url('${image}')`,
+                zIndex: index === currentImageIndex ? 1 : 0
+              }}
+            >
+              {/* Gradient mask with blur effect */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-transparent" style={{ backdropFilter: 'blur(2px)' }}></div>
+            </motion.div>
+          ))}
+        </div>
 
-        
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: "url('/main_phone.jpg')"
-          }}
-        >
-          {/* Gradient mask with blur effect */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-transparent backdrop-blur-sm"></div>
-
+        {/* Slider Indicators */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30 flex gap-2">
+          {heroImages.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                index === currentImageIndex
+                  ? 'w-8 bg-white'
+                  : 'w-2 bg-white/50 hover:bg-white/75'
+              }`}
+              aria-label={`Перейти к изображению ${index + 1}`}
+            />
+          ))}
         </div>
         
         <div className="relative z-20 text-center text-white max-w-4xl mx-auto px-4">
