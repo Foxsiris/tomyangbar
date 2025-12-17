@@ -161,4 +161,37 @@ export class MenuService {
       throw error;
     }
   }
+
+  // Создание категории (для админа)
+  static async createCategory(categoryData) {
+    try {
+      const response = await apiClient.createCategory(categoryData);
+      return response.category;
+    } catch (error) {
+      console.error('Error creating category:', error);
+      throw error;
+    }
+  }
+
+  // Обновление категории (для админа)
+  static async updateCategory(categoryId, updates) {
+    try {
+      const response = await apiClient.updateCategory(categoryId, updates);
+      return response.category;
+    } catch (error) {
+      console.error('Error updating category:', error);
+      throw error;
+    }
+  }
+
+  // Удаление категории (для админа)
+  static async deleteCategory(categoryId) {
+    try {
+      const response = await apiClient.deleteCategory(categoryId);
+      return response;
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      throw error;
+    }
+  }
 }

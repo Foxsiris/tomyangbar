@@ -340,6 +340,9 @@ class ApiClient {
   }
 
   async deleteCategory(categoryId) {
+    if (!categoryId) {
+      throw new Error('Category ID is required');
+    }
     return this.delete(`/api/admin/menu/categories/${categoryId}`);
   }
 
@@ -389,3 +392,8 @@ class ApiClient {
 // Создаем единственный экземпляр API клиента
 export const apiClient = new ApiClient();
 export default apiClient;
+
+// Делаем apiClient доступным глобально для очистки кеша
+if (typeof window !== 'undefined') {
+  window.apiClient = apiClient;
+}

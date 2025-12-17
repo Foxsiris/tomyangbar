@@ -27,12 +27,35 @@ export const useMenu = () => {
         console.log('useMenu.loadMenu: Has dishes:', !!data?.dishes);
       }
       
-      // Бэкенд возвращает { categories: [...], dishes: [...] }
+      // Бэкенд может возвращать данные в разных форматах:
+      // 1) { categories: [...], dishes: [...] }
+      // 2) { menu: { categories: [...], dishes: [...] } }
+      // 3) { menu: [...] } где каждый элемент - категория с dishes
+      // 4) [...] (массив категорий с dishes)
       let categories = [];
       let dishes = [];
       
       if (data && typeof data === 'object') {
-        // Если это объект с categories и dishes
+        // 2) { menu: { categories: [...], dishes: [...] } }
+        if (data.menu && typeof data.menu === 'object' && !Array.isArray(data.menu)) {
+          if (Array.isArray(data.menu.categories)) {
+            categories = data.menu.categories.map(category => ({
+              id: category.id,
+              name: category.name,
+              description: category.description,
+              sort_order: category.sort_order,
+              is_active: category.is_active
+            }));
+          }
+          if (Array.isArray(data.menu.dishes)) {
+            dishes = data.menu.dishes.map(dish => ({
+              ...dish,
+              image: dish.image_url || dish.image
+            }));
+          }
+        }
+
+        // 1) { categories: [...], dishes: [...] }
         if (Array.isArray(data.categories)) {
           categories = data.categories.map(category => ({
             id: category.id,
@@ -42,12 +65,34 @@ export const useMenu = () => {
             is_active: category.is_active
           }));
         }
-        
         if (Array.isArray(data.dishes)) {
           dishes = data.dishes.map(dish => ({
             ...dish,
-            image: dish.image_url || dish.image // Преобразуем image_url в image для совместимости
+            image: dish.image_url || dish.image
           }));
+        }
+
+        // 3) { menu: [...] } где каждый элемент - категория с dishes
+        if (data.menu && Array.isArray(data.menu)) {
+          categories = [];
+          dishes = [];
+          data.menu.forEach(category => {
+            categories.push({
+              id: category.id,
+              name: category.name,
+              description: category.description,
+              sort_order: category.sort_order,
+              is_active: category.is_active
+            });
+            if (category.dishes && Array.isArray(category.dishes)) {
+              category.dishes.forEach(dish => {
+                dishes.push({
+                  ...dish,
+                  image: dish.image_url || dish.image
+                });
+              });
+            }
+          });
         }
       } else if (Array.isArray(data)) {
         // Старый формат - массив категорий с блюдами внутри

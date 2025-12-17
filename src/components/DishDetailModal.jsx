@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Star, Flame, Leaf, Plus } from 'lucide-react';
+import { X, Star, Flame, Leaf, Plus, Droplet } from 'lucide-react';
 import { useCartContext } from '../context/CartContext';
 
 const DishDetailModal = ({ dish, isOpen, onClose }) => {
@@ -64,7 +64,7 @@ const DishDetailModal = ({ dish, isOpen, onClose }) => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
             
             {/* Badges */}
-            <div className="absolute top-4 left-4 flex gap-2">
+            <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
               {dish.is_popular && (
                 <div className="bg-primary-600 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center">
                   <Star className="w-3 h-3 mr-1" />
@@ -81,6 +81,12 @@ const DishDetailModal = ({ dish, isOpen, onClose }) => {
                 <div className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center">
                   <Leaf className="w-3 h-3 mr-1" />
                   Вегетарианское
+                </div>
+              )}
+              {dish.is_carbonated !== null && dish.is_carbonated !== undefined && (
+                <div className={`${dish.is_carbonated ? 'bg-blue-600' : 'bg-cyan-600'} text-white px-3 py-1 rounded-full text-xs font-medium flex items-center`}>
+                  <Droplet className="w-3 h-3 mr-1" />
+                  {dish.is_carbonated ? 'Газированный' : 'Негазированный'}
                 </div>
               )}
             </div>

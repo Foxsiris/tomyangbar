@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Star } from 'lucide-react';
+import { Star, Droplet } from 'lucide-react';
 import { useCartContext } from '../context/CartContext';
 
 const PopularDishCard = ({ dish, index = 0 }) => {
@@ -23,12 +23,20 @@ const PopularDishCard = ({ dish, index = 0 }) => {
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-        {dish.is_popular && (
-          <div className="absolute top-3 left-3 bg-primary-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
-            <Star className="w-3 h-3 mr-1" />
-            Популярное
-          </div>
-        )}
+        <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
+          {dish.is_popular && (
+            <div className="bg-primary-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
+              <Star className="w-3 h-3 mr-1" />
+              Популярное
+            </div>
+          )}
+          {dish.is_carbonated !== null && dish.is_carbonated !== undefined && (
+            <div className={`${dish.is_carbonated ? 'bg-blue-600' : 'bg-cyan-600'} text-white px-2 py-1 rounded-full text-xs font-medium flex items-center`}>
+              <Droplet className="w-3 h-3 mr-1" />
+              {dish.is_carbonated ? 'Газированный' : 'Негазированный'}
+            </div>
+          )}
+        </div>
       </div>
       <div className="p-6">
         <div className="flex justify-between items-start mb-2">

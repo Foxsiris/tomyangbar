@@ -32,7 +32,16 @@ const AdminMenu = () => {
     calories: '',
     proteins: '',
     fats: '',
-    carbs: ''
+    carbs: '',
+    is_carbonated: null
+  });
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [categoryFormData, setCategoryFormData] = useState({
+    name: '',
+    description: '',
+    sort_order: 0,
+    is_active: true
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -54,7 +63,17 @@ const AdminMenu = () => {
           MenuService.getCategories()
         ]);
         setDishes(dishesData);
-        setCategories(categoriesData);
+        // Фильтруем категории с валидным ID
+        const validCategories = categoriesData.filter(cat => cat.id && cat.id.trim() !== '');
+        const invalidCategories = categoriesData.filter(cat => !cat.id || cat.id.trim() === '');
+        
+        if (invalidCategories.length > 0) {
+          console.warn(`Found ${invalidCategories.length} categories without ID:`, invalidCategories);
+          // Показываем предупреждение пользователю
+          alert(`Обнаружено ${invalidCategories.length} категорий без ID. Они не будут отображаться. Пожалуйста, удалите их из базы данных вручную или пересоздайте.`);
+        }
+        
+        setCategories(validCategories);
       } catch (error) {
         console.error('Ошибка при загрузке меню:', error);
       } finally {
@@ -103,7 +122,8 @@ const AdminMenu = () => {
         calories: formData.calories ? parseInt(formData.calories) : null,
         proteins: formData.proteins ? parseFloat(formData.proteins) : null,
         fats: formData.fats ? parseFloat(formData.fats) : null,
-        carbs: formData.carbs ? parseFloat(formData.carbs) : null
+        carbs: formData.carbs ? parseFloat(formData.carbs) : null,
+        is_carbonated: formData.is_carbonated === '' ? null : formData.is_carbonated
       });
       setDishes([...dishes, newDish]);
       setShowAddModal(false);
@@ -137,7 +157,8 @@ const AdminMenu = () => {
         calories: formData.calories ? parseInt(formData.calories) : null,
         proteins: formData.proteins ? parseFloat(formData.proteins) : null,
         fats: formData.fats ? parseFloat(formData.fats) : null,
-        carbs: formData.carbs ? parseFloat(formData.carbs) : null
+        carbs: formData.carbs ? parseFloat(formData.carbs) : null,
+        is_carbonated: formData.is_carbonated === '' ? null : formData.is_carbonated
       });
       
       setDishes(dishes.map(dish => 
@@ -177,7 +198,8 @@ const AdminMenu = () => {
       calories: dish.calories ? dish.calories.toString() : '',
       proteins: dish.proteins ? dish.proteins.toString() : '',
       fats: dish.fats ? dish.fats.toString() : '',
-      carbs: dish.carbs ? dish.carbs.toString() : ''
+      carbs: dish.carbs ? dish.carbs.toString() : '',
+      is_carbonated: dish.is_carbonated !== undefined ? dish.is_carbonated : null
     });
     setImagePreview(dish.image_url || null);
     setImageFile(null);
@@ -196,10 +218,106 @@ const AdminMenu = () => {
       calories: '',
       proteins: '',
       fats: '',
-      carbs: ''
+      carbs: '',
+      is_carbonated: null
     });
     setImageFile(null);
     setImagePreview(null);
+  };
+
+  const resetCategoryForm = () => {
+    setCategoryFormData({
+      name: '',
+      description: '',
+      sort_order: 0,
+      is_active: true
+    });
+  };
+
+  const handleAddCategory = async () => {
+    try {
+      const newCategory = await MenuService.createCategory(categoryFormData);
+      console.log('Category created:', newCategory);
+      
+      // Проверяем, что ID присутствует
+      if (!newCategory || !newCategory.id || newCategory.id.trim() === '') {
+        console.error('Category created without ID:', newCategory);
+        alert('Категория создана, но ID не был получен. Пожалуйста, перезагрузите страницу.');
+        // Перезагружаем категории
+        const categoriesData = await MenuService.getCategories();
+        setCategories(categoriesData);
+        setShowCategoryModal(false);
+        resetCategoryForm();
+        return;
+      }
+      
+      setCategories([...categories, newCategory].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)));
+      setShowCategoryModal(false);
+      resetCategoryForm();
+      // Очищаем кеш для обновления категорий на главной странице
+      if (window.apiClient) {
+        window.apiClient.clearCacheForEndpoint('/api/menu');
+      }
+    } catch (error) {
+      console.error('Error creating category:', error);
+      alert(`Ошибка при создании категории: ${error.message || error}`);
+    }
+  };
+
+  const handleEditCategory = async () => {
+    try {
+      const updatedCategory = await MenuService.updateCategory(editingCategory.id, categoryFormData);
+      setCategories(categories.map(cat => 
+        cat.id === editingCategory.id ? updatedCategory : cat
+      ).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)));
+      setEditingCategory(null);
+      setShowCategoryModal(false);
+      resetCategoryForm();
+      // Очищаем кеш для обновления категорий на главной странице
+      if (window.apiClient) {
+        window.apiClient.clearCacheForEndpoint('/api/menu');
+      }
+    } catch (error) {
+      console.error('Error updating category:', error);
+      alert('Ошибка при обновлении категории');
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId) => {
+    if (!categoryId) {
+      console.error('Category ID is missing');
+      alert('Ошибка: не указан ID категории');
+      return;
+    }
+
+    if (window.confirm('Вы уверены, что хотите удалить эту категорию? Блюда в этой категории не будут удалены, но останутся без категории.')) {
+      try {
+        await MenuService.deleteCategory(categoryId);
+        setCategories(categories.filter(cat => cat.id !== categoryId));
+        // Обновляем блюда, которые были в этой категории
+        setDishes(dishes.map(dish => 
+          dish.category_id === categoryId ? {...dish, category_id: null} : dish
+        ));
+        // Очищаем кеш для обновления категорий на главной странице
+        if (window.apiClient) {
+          window.apiClient.clearCacheForEndpoint('/api/menu');
+        }
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        alert(error.message || 'Ошибка при удалении категории');
+      }
+    }
+  };
+
+  const handleEditCategoryClick = (category) => {
+    setEditingCategory(category);
+    setCategoryFormData({
+      name: category.name,
+      description: category.description || '',
+      sort_order: category.sort_order || 0,
+      is_active: category.is_active !== undefined ? category.is_active : true
+    });
+    setShowCategoryModal(true);
   };
 
   const handleImageChange = (e) => {
@@ -277,15 +395,113 @@ const AdminMenu = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Управление меню</h2>
-          <p className="text-gray-600">Добавляйте, редактируйте и удаляйте блюда</p>
+          <p className="text-gray-600">Добавляйте, редактируйте и удаляйте блюда и категории</p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="mt-4 sm:mt-0 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Добавить блюдо
-        </button>
+        <div className="flex gap-2 mt-4 sm:mt-0">
+          <button
+            onClick={() => {
+              setShowCategoryModal(true);
+              setEditingCategory(null);
+              resetCategoryForm();
+            }}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Категории
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Добавить блюдо
+          </button>
+        </div>
+      </div>
+
+      {/* Categories Section */}
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Категории</h3>
+        </div>
+        {categories.some(cat => !cat.id || cat.id.trim() === '') && (
+          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-800">
+              ⚠️ Обнаружены категории без ID. Они могут работать некорректно. 
+              Удалите их через SQL или пересоздайте заново.
+            </p>
+            <p className="text-xs text-yellow-600 mt-2">
+              SQL запрос для удаления: <code className="bg-yellow-100 px-1 rounded">DELETE FROM categories WHERE id = '' OR id IS NULL;</code>
+            </p>
+          </div>
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categories.map((category) => {
+            // Проверяем наличие ID
+            const categoryId = category.id;
+            if (!categoryId) {
+              console.warn('Category without ID:', category);
+            }
+            return (
+              <motion.div
+                key={categoryId || category.name}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-gray-50 rounded-lg p-4 border border-gray-200 flex items-center justify-between"
+              >
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900">{category.name}</h4>
+                  {category.description && (
+                    <p className="text-sm text-gray-600 mt-1">{category.description}</p>
+                  )}
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      category.is_active 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-red-100 text-red-700'
+                    }`}>
+                      {category.is_active ? 'Активна' : 'Неактивна'}
+                    </span>
+                    <span className="text-xs text-gray-500">Сорт: {category.sort_order || 0}</span>
+                    {!categoryId && (
+                      <span className="text-xs text-red-500">(нет ID)</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-1 ml-2">
+                  <button
+                    onClick={() => {
+                      if (!categoryId) {
+                        alert('Ошибка: категория не имеет ID. Попробуйте перезагрузить страницу.');
+                        return;
+                      }
+                      handleEditCategoryClick(category);
+                    }}
+                    className="p-2 text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                    title="Редактировать"
+                    disabled={!categoryId}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!categoryId) {
+                        alert('Ошибка: категория не имеет ID. Попробуйте перезагрузить страницу.');
+                        return;
+                      }
+                      handleDeleteCategory(categoryId);
+                    }}
+                    className="p-2 text-red-600 hover:bg-red-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={categoryId ? "Удалить" : "Нельзя удалить - нет ID"}
+                    disabled={!categoryId}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Filters */}
@@ -579,7 +795,18 @@ const AdminMenu = () => {
                   </label>
                   <select
                     value={formData.category_id}
-                    onChange={(e) => setFormData({...formData, category_id: e.target.value})}
+                    onChange={(e) => {
+                      const selectedCategoryId = e.target.value;
+                      const selectedCategory = categories.find(c => c.id === selectedCategoryId);
+                      // Если выбрана категория "Напитки" и is_carbonated еще не установлен, оставляем null
+                      // Иначе, если выбрана не "Напитки", сбрасываем is_carbonated
+                      const isDrinks = selectedCategory?.name?.toLowerCase().includes('напитк') || selectedCategory?.id === 'drinks';
+                      setFormData({
+                        ...formData, 
+                        category_id: selectedCategoryId,
+                        is_carbonated: isDrinks ? formData.is_carbonated : null
+                      });
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
                     <option value="">Выберите категорию</option>
@@ -590,6 +817,34 @@ const AdminMenu = () => {
                     ))}
                   </select>
                 </div>
+
+                {/* Поле для газированности напитков */}
+                {(() => {
+                  const selectedCategory = categories.find(c => c.id === formData.category_id);
+                  const isDrinks = selectedCategory?.name?.toLowerCase().includes('напитк') || selectedCategory?.id === 'drinks';
+
+                  if (!isDrinks) return null;
+
+                  return (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Тип напитка
+                      </label>
+                      <select
+                        value={formData.is_carbonated === null ? '' : formData.is_carbonated ? 'true' : 'false'}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          is_carbonated: e.target.value === '' ? null : e.target.value === 'true'
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      >
+                        <option value="">Не указано</option>
+                        <option value="false">Негазированный</option>
+                        <option value="true">Газированный</option>
+                      </select>
+                    </div>
+                  );
+                })()}
                 
                 <div className="flex items-center space-x-4">
                   <label className="flex items-center">
@@ -634,6 +889,120 @@ const AdminMenu = () => {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Category Modal */}
+      <AnimatePresence>
+        {showCategoryModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            onClick={() => {
+              setShowCategoryModal(false);
+              setEditingCategory(null);
+              resetCategoryForm();
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-lg shadow-xl w-full max-w-md flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="px-6 pt-6 pb-4 border-b border-gray-200 flex-shrink-0">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {editingCategory ? 'Редактировать категорию' : 'Добавить категорию'}
+                </h3>
+              </div>
+              
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto px-6 py-4">
+                <form className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Название *
+                    </label>
+                    <input
+                      type="text"
+                      value={categoryFormData.name}
+                      onChange={(e) => setCategoryFormData({...categoryFormData, name: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="Название категории"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Описание
+                    </label>
+                    <textarea
+                      value={categoryFormData.description}
+                      onChange={(e) => setCategoryFormData({...categoryFormData, description: e.target.value})}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="Описание категории"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Порядок сортировки
+                      </label>
+                      <input
+                        type="number"
+                        value={categoryFormData.sort_order}
+                        onChange={(e) => setCategoryFormData({...categoryFormData, sort_order: parseInt(e.target.value) || 0})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="0"
+                      />
+                    </div>
+                    
+                    <div className="flex items-end">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={categoryFormData.is_active}
+                          onChange={(e) => setCategoryFormData({...categoryFormData, is_active: e.target.checked})}
+                          className="mr-2"
+                        />
+                        <span className="text-sm text-gray-700">Активна</span>
+                      </label>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              
+              {/* Footer */}
+              <div className="px-6 py-4 border-t border-gray-200 flex-shrink-0">
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={editingCategory ? handleEditCategory : handleAddCategory}
+                    className="flex-1 bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 transition-colors"
+                  >
+                    {editingCategory ? 'Сохранить' : 'Добавить'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCategoryModal(false);
+                      setEditingCategory(null);
+                      resetCategoryForm();
+                    }}
+                    className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
+                  >
+                    Отмена
+                  </button>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         )}

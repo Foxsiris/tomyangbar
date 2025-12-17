@@ -1,5 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Clock, Truck, Utensils } from 'lucide-react';
 import { useMenu } from '../hooks/useMenu';
@@ -13,6 +14,31 @@ import DishGallery from '../components/DishGallery';
 const Home = () => {
   const { getPopularDishes, isLoading } = useMenu();
   const popularDishes = getPopularDishes().slice(0, 6);
+
+  // Массив изображений для слайдера
+  const heroImages = [
+    '/main_phone.jpg',
+    '/mainPhone2.jpg',
+    '/mainPhone3.jpg',
+    '/mainPhone4.jpg',
+    '/mainPhone5.jpg'
+  ];
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Автоматическое переключение изображений каждые 10 секунд
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
+    }, 5000); // 5 секунд
+
+    return () => clearInterval(interval);
+  }, [heroImages.length]);
+
+  // Функция для переключения на конкретное изображение
+  const goToSlide = (index) => {
+    setCurrentImageIndex(index);
+  };
 
   const features = [
     {
@@ -44,18 +70,46 @@ const Home = () => {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        {/* Background Images Slider */}
+        <div className="absolute inset-0">
+          {heroImages.map((image, index) => (
+            <motion.div
+              key={index}
+              initial={false}
+              animate={{
+                opacity: index === currentImageIndex ? 1 : 0,
+                scale: index === currentImageIndex ? 1 : 1.05
+              }}
+              transition={{
+                duration: 1.5,
+                ease: [0.4, 0, 0.2, 1]
+              }}
+              className="absolute inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage: `url('${image}')`,
+                zIndex: index === currentImageIndex ? 1 : 0
+              }}
+            >
+              {/* Gradient mask with blur effect */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-transparent" style={{ backdropFilter: 'blur(2px)' }}></div>
+            </motion.div>
+          ))}
+        </div>
 
-        
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: "url('/main_phone.jpg')"
-          }}
-        >
-          {/* Gradient mask with blur effect */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-transparent backdrop-blur-sm"></div>
-
+        {/* Slider Indicators */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30 flex gap-2">
+          {heroImages.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                index === currentImageIndex
+                  ? 'w-8 bg-white'
+                  : 'w-2 bg-white/50 hover:bg-white/75'
+              }`}
+              aria-label={`Перейти к изображению ${index + 1}`}
+            />
+          ))}
         </div>
         
         <div className="relative z-20 text-center text-white max-w-4xl mx-auto px-4">
@@ -77,7 +131,7 @@ const Home = () => {
             <h1 className="text-5xl md:text-7xl font-bold mb-2 font-serif">
               Tom Yang Bar
             </h1>
-            <p className="text-lg text-gray-300 tracking-wider">トムヤンバー</p>
+            <p className="text-lg text-gray-300 tracking-wider">Саратов</p>
           </motion.div>
           <motion.p
             initial={{ opacity: 0, y: 30 }}
@@ -85,7 +139,7 @@ const Home = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-xl md:text-2xl mb-8 text-gray-200"
           >
-            Аутентичная азиатская кухня в современной атмосфере
+            Ресторан паназиатской кухни со своей атмосферой
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 30 }}
