@@ -11,6 +11,7 @@ const menuRoutes = require('./routes/menuRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const iikoRoutes = require('./routes/iikoRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -110,6 +111,7 @@ app.use('/api/menu', menuRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/iiko', iikoRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

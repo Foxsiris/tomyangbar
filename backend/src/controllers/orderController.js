@@ -1,4 +1,5 @@
 const supabase = require('../config/supabase');
+const iikoService = require('../services/iikoService');
 
 // Создание заказа
 const createOrder = async (req, res) => {
@@ -155,9 +156,45 @@ const createOrder = async (req, res) => {
       return res.status(500).json({ error: 'Ошибка при создании элементов заказа' });
     }
 
+    // === Отправка заказа в iiko ===
+    let iikoOrderId = null;
+    if (process.env.IIKO_API_LOGIN) {
+      try {
+        console.log('📤 Отправка заказа в iiko...');
+        const orderData = {
+          id: newOrder.id,
+          order_number: newOrder.order_number,
+          customer_name: customerName,
+          phone: phone,
+          email: email,
+          address: address,
+          delivery_type: deliveryType,
+          payment_method: paymentMethod,
+          notes: notes,
+          final_total: total + (deliveryType === 'delivery' ? 200 : 0)
+        };
+        
+        const iikoResult = await iikoService.createDeliveryOrder(orderData, orderItems);
+        iikoOrderId = iikoResult?.orderInfo?.id;
+        
+        // Сохраняем iiko order id в нашу базу
+        if (iikoOrderId) {
+          await supabase
+            .from('orders')
+            .update({ iiko_order_id: iikoOrderId })
+            .eq('id', newOrder.id);
+          console.log('✅ Заказ отправлен в iiko:', iikoOrderId);
+        }
+      } catch (iikoError) {
+        // Логируем ошибку, но не блокируем создание заказа
+        console.error('⚠️ Ошибка отправки в iiko (заказ всё равно создан):', iikoError.message);
+      }
+    }
+
     res.status(201).json({
       message: 'Заказ успешно создан',
-      order: newOrder
+      order: newOrder,
+      iikoOrderId: iikoOrderId
     });
 
   } catch (error) {
