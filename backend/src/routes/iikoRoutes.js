@@ -34,11 +34,21 @@ router.get('/terminal-groups', authenticateToken, requireAdmin, async (req, res)
   }
 });
 
-// Получение меню из iiko - только для админа
-router.get('/menu', authenticateToken, requireAdmin, async (req, res) => {
+// Получение меню из iiko - временно публичный для настройки
+router.get('/menu', async (req, res) => {
   try {
     const menu = await iikoService.getMenu();
     res.json(menu);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Получение типов оплаты - временно публичный для настройки
+router.get('/payment-types', async (req, res) => {
+  try {
+    const paymentTypes = await iikoService.getPaymentTypes();
+    res.json(paymentTypes);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

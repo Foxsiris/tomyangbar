@@ -1,0 +1,622 @@
+﻿[
+    {
+        "id":  116,
+        "name":  "BonAqua",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  89,
+        "name":  "Абури ошидзуси с креветкой",
+        "iiko_product_id":  "fd1bc939-ccd1-44ea-ab89-9b0183f64775"
+    },
+    {
+        "id":  90,
+        "name":  "Абури ошидзуси с лососем",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  88,
+        "name":  "Абури ошидзуси с тунцом",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  91,
+        "name":  "Абури ошидзуси с угрем",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  5,
+        "name":  "Американский",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  118,
+        "name":  "Байкал",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  23,
+        "name":  "Банановый нама",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  141,
+        "name":  "Бао ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  40,
+        "name":  "Бао с говяжьей щековиной ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  21,
+        "name":  "Бао с креветками ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  43,
+        "name":  "Бао с тунцом ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  41,
+        "name":  "Бао с уткой ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  44,
+        "name":  "Бао со свининой ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  46,
+        "name":  "Баоцзы с курицей креветкой и кальмаром ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  137,
+        "name":  "Блинчики ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  4,
+        "name":  "Бостон",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  108,
+        "name":  "Боул с татаки из тунца",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  122,
+        "name":  "Буррата классическая ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  143,
+        "name":  "Васаби ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  49,
+        "name":  "Гедза с бараниной ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  51,
+        "name":  "Гедза с курицей ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  50,
+        "name":  "Гедза с курицей ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  48,
+        "name":  "Гедза со свининой жареные ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  45,
+        "name":  "Дим- самы с креветкой ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  20,
+        "name":  "Дим-самы с угрем и грибами",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  66,
+        "name":  "Жаренное молоко ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  100,
+        "name":  "Жареные Онигири Калифорния",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  101,
+        "name":  "Жареные Онигири Магуро",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  103,
+        "name":  "Жареные Онигири Унаги",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  102,
+        "name":  "Жареные Онигири Филадельфия",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  33,
+        "name":  "Зеленый салат с авокадо и кинзой",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  142,
+        "name":  "Имбирь ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  14,
+        "name":  "Итальянский",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  17,
+        "name":  "Канадский ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  52,
+        "name":  "Картофель фри ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  125,
+        "name":  "Кетчуп ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  120,
+        "name":  "Кока-Кола в стекле",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  139,
+        "name":  "Кокосовое молоко ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  140,
+        "name":  "Лепешка ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  24,
+        "name":  "Лимонад \"Клубника/Бузина\"",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  113,
+        "name":  "Лимонад \"Манго/Гуанабана\"",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  115,
+        "name":  "Лимонад \"Маракуйя/Персик\"",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  114,
+        "name":  "Лимонад \"Персик/Груша\"",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  62,
+        "name":  "Лунные пряники ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  85,
+        "name":  "Мидии блю чиз с манго",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  86,
+        "name":  "Мидии в соусе сливочный трюфель",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  87,
+        "name":  "Мидии в соусе том ям",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  112,
+        "name":  "Морс ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  61,
+        "name":  "Моти Дубай ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  60,
+        "name":  "Моти с карамелью ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  59,
+        "name":  "Моти с клубникой ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  123,
+        "name":  "Моцарелла ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  110,
+        "name":  "Облепихово-вишневый компо",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  1,
+        "name":  "Огурец кимчи",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  99,
+        "name":  "Онигири Калифорния",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  98,
+        "name":  "Онигири Магуро",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  97,
+        "name":  "Онигири Унаги ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  96,
+        "name":  "Онигири Филадельфия",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  95,
+        "name":  "Ошидзуси с креветкой",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  92,
+        "name":  "Ошидзуси с лососем",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  93,
+        "name":  "Ошидзуси с тунцом",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  94,
+        "name":  "Ошидзуси с угрем",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  58,
+        "name":  "Пирожки с бараниной ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  134,
+        "name":  "Подарочная карта номиналом 1000 рублей ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  135,
+        "name":  "Подарочная карта номиналом 2000 рублей ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  136,
+        "name":  "Подарочная карта номиналом 5000 рублей ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  70,
+        "name":  "Рамен крем-чиз с говяжьей щековиной ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  68,
+        "name":  "Рамен с креветочными пончиками ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  27,
+        "name":  "Рамен с куриными вонтонами ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  28,
+        "name":  "Рамен с угрем в сливочном бульоне  ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  8,
+        "name":  "Рамен с уткой и арахисовым бульоном",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  7,
+        "name":  "Рамен со свининой ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  69,
+        "name":  "Рамен со свининой тясю ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  138,
+        "name":  "Рис отварной на пару ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  19,
+        "name":  "Ролл Калифорния",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  18,
+        "name":  "Ролл Филадельфия",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  81,
+        "name":  "Рулька в китайском соусе",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  106,
+        "name":  "Салат с креветками и кальмарами",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  107,
+        "name":  "Салат с креветочными пончиками сыром страчателла и рукколой",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  105,
+        "name":  "Салат с лососем, авокадо и огурцом",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  32,
+        "name":  "Салат с уткой и манго",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  82,
+        "name":  "Свинина в азиатском соусе BBQ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  132,
+        "name":  "Соевый Соус ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  119,
+        "name":  "Сок Rich в ассортименте",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  130,
+        "name":  "Соус Кисло-сладкий ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  126,
+        "name":  "Соус Сливовый ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  131,
+        "name":  "Соус Сливочный ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  127,
+        "name":  "Соус Сливочный Васаби ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  129,
+        "name":  "Соус Сливочный Спайси ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  128,
+        "name":  "Соус Сливочный-кунжутный ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  124,
+        "name":  "Страчателла ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  54,
+        "name":  "Сырные шарики ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  6,
+        "name":  "Тайга",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  30,
+        "name":  "Телячьи щечки с токпокки в соусе тонкацу",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  109,
+        "name":  "Теплый салат с ростбифом ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  144,
+        "name":  "Тестовое Блюдо для оторбажения в IIKO",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  64,
+        "name":  "Тирамису с шоколадным моти ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  80,
+        "name":  "Токпокки мак \u0026 чиз",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  63,
+        "name":  "Токпокки соленая карамель ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  29,
+        "name":  "Том ям рамен с курицей ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  9,
+        "name":  "Том ям с морепродуктами ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  2,
+        "name":  "Томаты кимчи ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  77,
+        "name":  "Удон с кальмаром в перечном соусе ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  35,
+        "name":  "Удон с креветками в соусе том ям",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  71,
+        "name":  "Удон с татаки из тунца в соусе тамаринд",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  76,
+        "name":  "Удон с угрем и сыром страчателла",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  34,
+        "name":  "Удон с уткой, грибами и трюфельным маслом",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  75,
+        "name":  "Удон со свининой в кисло-сладком соусе",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  22,
+        "name":  "Утенок Манго",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  84,
+        "name":  "Утка по-азиатски",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  83,
+        "name":  "Утка по-азиатски 1/2",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  55,
+        "name":  "Фило с курицей и грибами ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  56,
+        "name":  "Фило с морепродуктами ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  37,
+        "name":  "Харумаки со снежным крабом ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  104,
+        "name":  "Хрустящие баклажаны с томатами ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  36,
+        "name":  "Хрустящие креветки ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  31,
+        "name":  "Цыпленок в кисло-сладком соусе с рисом",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  65,
+        "name":  "Шао Май ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  79,
+        "name":  "Яичная лапша с кальмаром в перечном соусе ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  74,
+        "name":  "Яичная лапша с креветками в соусе том ям",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  73,
+        "name":  "Яичная лапша с татаки из тунца в соусе тамаринд",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  78,
+        "name":  "Яичная лапша с угрем и сыром страчателла ",
+        "iiko_product_id":  null
+    },
+    {
+        "id":  72,
+        "name":  "Яичная лапша с уткой, грибами и трюфельным маслом",
+        "iiko_product_id":  null
+    }
+]

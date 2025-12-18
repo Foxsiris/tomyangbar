@@ -134,6 +134,32 @@ class IikoService {
   }
 
   /**
+   * Получение типов оплаты из iiko
+   */
+  async getPaymentTypes() {
+    const token = await this.getAccessToken();
+    
+    const response = await fetch(`${IIKO_API_URL}/payment_types`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        organizationIds: [this.organizationId]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Ошибка получения типов оплаты: ${await response.text()}`);
+    }
+
+    const data = await response.json();
+    console.log('📋 iiko: Типы оплаты:', JSON.stringify(data, null, 2));
+    return data;
+  }
+
+  /**
    * Создание заказа на доставку в iiko
    * @param {Object} order - Заказ из нашей системы
    * @param {Array} orderItems - Элементы заказа
@@ -152,20 +178,28 @@ class IikoService {
           name: order.customer_name,
           // Можно добавить email, если iiko поддерживает
         },
-        // Тип заказа
-        orderServiceType: order.delivery_type === 'delivery' ? 'DeliveryByClient' : 'DeliveryPickUp',
-        // Позиции заказа
-        items: orderItems.map(item => ({
-          productId: item.iiko_product_id || item.dish_id.toString(), // ID продукта в iiko
-          type: 'Product',
-          amount: item.quantity,
-          // comment: item.comment || '',
-        })),
+        // Тип заказа: DeliveryByCourier = доставка, DeliveryByClient = самовывоз
+        orderServiceType: order.delivery_type === 'delivery' ? 'DeliveryByCourier' : 'DeliveryByClient',
+        // Позиции заказа (только с валидным iiko_product_id)
+        items: orderItems
+          .filter(item => {
+            if (!item.iiko_product_id) {
+              console.warn(`⚠️ iiko: Пропущено блюдо "${item.dish_name}" (нет iiko_product_id)`);
+              return false;
+            }
+            return true;
+          })
+          .map(item => ({
+            productId: item.iiko_product_id, // UUID продукта в iiko
+            type: 'Product',
+            amount: item.quantity,
+          })),
         // Комментарий к заказу
         comment: order.notes || '',
-        // Способ оплаты
+        // Оплата с paymentTypeId
         payments: [{
           paymentTypeKind: this.mapPaymentMethod(order.payment_method),
+          paymentTypeId: this.getPaymentTypeId(order.payment_method),
           sum: order.final_total,
           isProcessedExternally: order.payment_method !== 'cash'
         }]
@@ -182,6 +216,13 @@ class IikoService {
           house: ''
         }
       };
+    }
+
+    // Проверяем, есть ли позиции для отправки
+    if (iikoOrder.order.items.length === 0) {
+      console.warn('⚠️ iiko: Нет позиций с iiko_product_id - заказ не будет отправлен в iiko');
+      console.warn('   Добавьте iiko_product_id для блюд в таблице dishes (UUID из номенклатуры iiko)');
+      return { skipped: true, reason: 'Нет позиций с iiko_product_id' };
     }
 
     console.log('📤 iiko: Отправка заказа:', JSON.stringify(iikoOrder, null, 2));
@@ -227,16 +268,43 @@ class IikoService {
   }
 
   /**
-   * Маппинг способа оплаты
+   * Маппинг способа оплаты (код)
    */
   mapPaymentMethod(paymentMethod) {
     const mapping = {
       'cash': 'Cash',
       'card': 'Card',
-      'sbp': 'Card', // SBP обычно маппится как карта
+      'sbp': 'Card',
       'online': 'Card'
     };
     return mapping[paymentMethod] || 'Cash';
+  }
+
+  /**
+   * Маппинг способа оплаты (название для комментария)
+   */
+  mapPaymentMethodName(paymentMethod) {
+    const mapping = {
+      'cash': 'Наличными при получении',
+      'card': 'Картой при получении',
+      'sbp': 'СБП',
+      'online': 'Онлайн оплата'
+    };
+    return mapping[paymentMethod] || 'Наличными';
+  }
+
+  /**
+   * Получение paymentTypeId для iiko
+   * ID взяты из /api/iiko/payment-types
+   */
+  getPaymentTypeId(paymentMethod) {
+    const mapping = {
+      'cash': '09322f46-578a-d210-add7-eec222a08871',    // CASH - Наличные
+      'card': '6e0221ad-6143-4007-99b5-33a6c131a6af',    // SCARD - Карта сайт
+      'sbp': '6e0221ad-6143-4007-99b5-33a6c131a6af',     // SCARD - Карта сайт (для СБП тоже)
+      'online': '6e0221ad-6143-4007-99b5-33a6c131a6af'   // SCARD - Карта сайт
+    };
+    return mapping[paymentMethod] || '09322f46-578a-d210-add7-eec222a08871'; // По умолчанию наличные
   }
 
   /**

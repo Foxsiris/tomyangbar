@@ -17,7 +17,21 @@ const createOrder = async (req, res) => {
       notes
     } = req.body;
 
-    const userId = req.user ? req.user.userId : null;
+    let userId = req.user ? req.user.userId : null;
+
+    // Проверяем, существует ли пользователь в таблице users (для foreign key)
+    if (userId) {
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .single();
+      
+      if (!existingUser) {
+        console.log('User not found in users table, setting userId to null:', userId);
+        userId = null; // Пользователь не найден в таблице users, создаём заказ без привязки
+      }
+    }
 
     // Логируем для отладки (включая неавторизованных пользователей)
     console.log('Creating order:', {
@@ -98,6 +112,25 @@ const createOrder = async (req, res) => {
       });
     }
 
+    // Получаем iiko_product_id для всех блюд в заказе
+    const dishIds = items.map(item => item.dish_id || item.id).filter(Boolean);
+    let iikoProductIds = {};
+    
+    if (dishIds.length > 0) {
+      const { data: dishesWithIiko } = await supabase
+        .from('dishes')
+        .select('id, iiko_product_id')
+        .in('id', dishIds);
+      
+      if (dishesWithIiko) {
+        dishesWithIiko.forEach(dish => {
+          if (dish.iiko_product_id) {
+            iikoProductIds[dish.id] = dish.iiko_product_id;
+          }
+        });
+      }
+    }
+
     // Создаем элементы заказа с более детальной обработкой
     const orderItems = items.map((item, index) => {
       const dishId = item.dish_id || item.id;
@@ -118,12 +151,13 @@ const createOrder = async (req, res) => {
         dish_id: dishId,
         dish_name: dishName,
         quantity: quantity,
-        price: price
+        price: price,
+        iiko_product_id: iikoProductIds[dishId] || null
       };
     });
 
     // Логируем для отладки
-    console.log('Order items to insert:', JSON.stringify(orderItems, null, 2));
+    console.log('Order items:', JSON.stringify(orderItems, null, 2));
     console.log('Original items:', JSON.stringify(items, null, 2));
 
     // Проверяем, что все элементы валидны
@@ -145,9 +179,12 @@ const createOrder = async (req, res) => {
       });
     }
 
+    // Для вставки в БД убираем iiko_product_id (этой колонки нет в order_items)
+    const orderItemsForDb = orderItems.map(({ iiko_product_id, ...rest }) => rest);
+    
     const { error: itemsError } = await supabase
       .from('order_items')
-      .insert(orderItems);
+      .insert(orderItemsForDb);
 
     if (itemsError) {
       console.error('Order items creation error:', itemsError);
@@ -160,7 +197,6 @@ const createOrder = async (req, res) => {
     let iikoOrderId = null;
     if (process.env.IIKO_API_LOGIN) {
       try {
-        console.log('📤 Отправка заказа в iiko...');
         const orderData = {
           id: newOrder.id,
           order_number: newOrder.order_number,
@@ -174,6 +210,27 @@ const createOrder = async (req, res) => {
           final_total: total + (deliveryType === 'delivery' ? 200 : 0)
         };
         
+        console.log('');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('📤 ОТПРАВКА ЗАКАЗА В IIKO');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('📋 Номер заказа:', newOrder.order_number);
+        console.log('👤 Клиент:', customerName);
+        console.log('📞 Телефон:', phone);
+        console.log('📧 Email:', email);
+        console.log('📍 Адрес:', address || 'Самовывоз');
+        console.log('🚚 Тип доставки:', deliveryType === 'delivery' ? 'Доставка' : 'Самовывоз');
+        console.log('💳 Оплата:', paymentMethod === 'cash' ? 'Наличные' : paymentMethod === 'card' ? 'Картой' : 'СБП');
+        console.log('💰 Сумма:', orderData.final_total, '₽');
+        console.log('📝 Комментарий:', notes || '—');
+        console.log('───────────────────────────────────────────────────────────');
+        console.log('🍽️  Позиции заказа:');
+        orderItems.forEach((item, index) => {
+          console.log(`   ${index + 1}. ${item.dish_name} x${item.quantity} — ${item.price * item.quantity}₽`);
+        });
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('');
+        
         const iikoResult = await iikoService.createDeliveryOrder(orderData, orderItems);
         iikoOrderId = iikoResult?.orderInfo?.id;
         
@@ -183,11 +240,16 @@ const createOrder = async (req, res) => {
             .from('orders')
             .update({ iiko_order_id: iikoOrderId })
             .eq('id', newOrder.id);
-          console.log('✅ Заказ отправлен в iiko:', iikoOrderId);
+          console.log('✅ ЗАКАЗ УСПЕШНО ОТПРАВЛЕН В IIKO!');
+          console.log('   iiko Order ID:', iikoOrderId);
+          console.log('');
         }
       } catch (iikoError) {
         // Логируем ошибку, но не блокируем создание заказа
-        console.error('⚠️ Ошибка отправки в iiko (заказ всё равно создан):', iikoError.message);
+        console.error('');
+        console.error('⚠️ ОШИБКА ОТПРАВКИ В IIKO (заказ всё равно создан в нашей системе)');
+        console.error('   Причина:', iikoError.message);
+        console.error('');
       }
     }
 

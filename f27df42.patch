@@ -1,0 +1,1082 @@
+From f27df426eb64e363fc73da928672c6007a8dc54f Mon Sep 17 00:00:00 2001
+From: "cyplakov.daniil" <cyplakov.daniil@wb.ru>
+Date: Sun, 14 Dec 2025 04:40:31 +0400
+Subject: [PATCH] =?UTF-8?q?=D0=94=D0=BE=D0=B1=D0=B0=D0=B2=D0=BB=D0=B5?=
+ =?UTF-8?q?=D0=BD=D0=BE=20=D1=83=D0=BF=D1=80=D0=B0=D0=B2=D0=BB=D0=B5=D0=BD?=
+ =?UTF-8?q?=D0=B8=D0=B5=20=D0=BA=D0=B0=D1=82=D0=B5=D0=B3=D0=BE=D1=80=D0=B8?=
+ =?UTF-8?q?=D1=8F=D0=BC=D0=B8,=20=D0=BF=D0=BE=D0=BB=D0=B5=20is=5Fcarbonate?=
+ =?UTF-8?q?d=20=D0=B4=D0=BB=D1=8F=20=D0=BD=D0=B0=D0=BF=D0=B8=D1=82=D0=BA?=
+ =?UTF-8?q?=D0=BE=D0=B2,=20=D1=81=D0=BB=D0=B0=D0=B9=D0=B4=D0=B5=D1=80=20?=
+ =?UTF-8?q?=D0=BD=D0=B0=20=D0=B3=D0=BB=D0=B0=D0=B2=D0=BD=D0=BE=D0=B9=20?=
+ =?UTF-8?q?=D1=81=D1=82=D1=80=D0=B0=D0=BD=D0=B8=D1=86=D0=B5=20=D0=B8=20?=
+ =?UTF-8?q?=D1=83=D0=BB=D1=83=D1=87=D1=88=D0=B5=D0=BD=D0=B8=D1=8F=20UI?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ backend/src/routes/adminRoutes.js          | 170 +++++++++
+ migrations/add-is-carbonated-to-dishes.sql |   9 +
+ src/components/DishCard.jsx                |  10 +-
+ src/components/DishDetailModal.jsx         |  10 +-
+ src/components/PopularDishCard.jsx         |  22 +-
+ src/components/admin/AdminMenu.jsx         | 400 ++++++++++++++++++++-
+ src/hooks/useMenu.js                       |  91 +++--
+ src/pages/Home.jsx                         |  76 +++-
+ src/services/apiClient.js                  |   8 +
+ src/services/menuService.js                |  33 ++
+ 10 files changed, 767 insertions(+), 62 deletions(-)
+ create mode 100644 migrations/add-is-carbonated-to-dishes.sql
+
+diff --git a/backend/src/routes/adminRoutes.js b/backend/src/routes/adminRoutes.js
+index de2906f..8dee4f5 100644
+--- a/backend/src/routes/adminRoutes.js
++++ b/backend/src/routes/adminRoutes.js
+@@ -154,4 +154,174 @@ router.delete('/menu/dishes/:dishId', async (req, res) => {
+   }
+ });
+ 
++// Создание категории
++router.post('/menu/categories', async (req, res) => {
++  try {
++    const categoryData = req.body;
++
++    // Проверяем обязательные поля
++    if (!categoryData.name) {
++      return res.status(400).json({ error: 'Название категории обязательно' });
++    }
++
++    // Генерируем ID, если не указан или пустой
++    let categoryId = categoryData.id;
++    // Убираем пробелы и проверяем на пустоту
++    if (categoryId) {
++      categoryId = categoryId.trim();
++    }
++    if (!categoryId || categoryId === '') {
++      // Генерируем ID из названия
++      categoryId = categoryData.name.toLowerCase()
++        .replace(/\s+/g, '-')
++        .replace(/[^a-z0-9-]/g, '')
++        .substring(0, 50); // Ограничиваем длину
++      
++      // Проверяем уникальность ID
++      let finalId = categoryId;
++      let counter = 1;
++      let exists = true;
++      
++      while (exists && counter < 100) {
++        const { data: existing } = await supabase
++          .from('categories')
++          .select('id')
++          .eq('id', finalId)
++          .single();
++        
++        if (existing) {
++          finalId = `${categoryId}-${counter}`;
++          counter++;
++        } else {
++          exists = false;
++        }
++      }
++      
++      categoryId = finalId;
++    }
++
++    // Устанавливаем sort_order, если не указан
++    let sortOrder = categoryData.sort_order;
++    if (sortOrder === undefined || sortOrder === null) {
++      const { data: maxCategory } = await supabase
++        .from('categories')
++        .select('sort_order')
++        .order('sort_order', { ascending: false })
++        .limit(1)
++        .single();
++      
++      sortOrder = maxCategory ? (maxCategory.sort_order + 1) : 0;
++    }
++
++    const insertData = {
++      id: categoryId,
++      name: categoryData.name,
++      description: categoryData.description || null,
++      sort_order: sortOrder,
++      is_active: categoryData.is_active !== undefined ? categoryData.is_active : true,
++      created_at: new Date().toISOString(),
++      updated_at: new Date().toISOString()
++    };
++
++    const { data: newCategory, error } = await supabase
++      .from('categories')
++      .insert([insertData])
++      .select()
++      .single();
++
++    if (error) {
++      console.error('Create category error:', error);
++      return res.status(500).json({ error: `Ошибка при создании категории: ${error.message}` });
++    }
++
++    // Убеждаемся, что ID присутствует в ответе
++    if (!newCategory || !newCategory.id) {
++      console.error('Category created but no ID returned:', newCategory);
++      return res.status(500).json({ error: 'Категория создана, но ID не был возвращен' });
++    }
++
++    res.status(201).json({ 
++      message: 'Категория успешно создана',
++      category: newCategory 
++    });
++
++  } catch (error) {
++    console.error('Create category error:', error);
++    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
++  }
++});
++
++// Обновление категории
++router.put('/menu/categories/:categoryId', async (req, res) => {
++  try {
++    const { categoryId } = req.params;
++    const updates = req.body;
++
++    const { data: updatedCategory, error } = await supabase
++      .from('categories')
++      .update({
++        ...updates,
++        updated_at: new Date().toISOString()
++      })
++      .eq('id', categoryId)
++      .select()
++      .single();
++
++    if (error) {
++      console.error('Update category error:', error);
++      return res.status(500).json({ error: 'Ошибка при обновлении категории' });
++    }
++
++    res.json({ 
++      message: 'Категория успешно обновлена',
++      category: updatedCategory 
++    });
++
++  } catch (error) {
++    console.error('Update category error:', error);
++    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
++  }
++});
++
++// Удаление категории
++router.delete('/menu/categories/:categoryId', async (req, res) => {
++  try {
++    const { categoryId } = req.params;
++
++    // Проверяем, есть ли блюда в этой категории
++    const { data: dishes, error: dishesError } = await supabase
++      .from('dishes')
++      .select('id')
++      .eq('category_id', categoryId)
++      .limit(1);
++
++    if (dishesError) {
++      console.error('Check dishes error:', dishesError);
++      return res.status(500).json({ error: 'Ошибка при проверке блюд' });
++    }
++
++    if (dishes && dishes.length > 0) {
++      return res.status(400).json({ 
++        error: 'Невозможно удалить категорию, так как в ней есть блюда. Сначала удалите или переместите блюда.' 
++      });
++    }
++
++    const { error } = await supabase
++      .from('categories')
++      .delete()
++      .eq('id', categoryId);
++
++    if (error) {
++      console.error('Delete category error:', error);
++      return res.status(500).json({ error: 'Ошибка при удалении категории' });
++    }
++
++    res.json({ message: 'Категория успешно удалена' });
++
++  } catch (error) {
++    console.error('Delete category error:', error);
++    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
++  }
++});
++
+ module.exports = router;
+diff --git a/migrations/add-is-carbonated-to-dishes.sql b/migrations/add-is-carbonated-to-dishes.sql
+new file mode 100644
+index 0000000..1e8d29b
+--- /dev/null
++++ b/migrations/add-is-carbonated-to-dishes.sql
+@@ -0,0 +1,9 @@
++-- Миграция: добавление поля is_carbonated для напитков
++-- Выполните в Supabase SQL Editor
++
++-- Добавляем поле is_carbonated в таблицу dishes
++ALTER TABLE dishes 
++ADD COLUMN IF NOT EXISTS is_carbonated BOOLEAN DEFAULT NULL;
++
++-- Добавляем комментарий к полю для документации
++COMMENT ON COLUMN dishes.is_carbonated IS 'Для напитков: true - газированный, false - негазированный, NULL - не напиток';
+diff --git a/src/components/DishCard.jsx b/src/components/DishCard.jsx
+index b54bae9..0057a9b 100644
+--- a/src/components/DishCard.jsx
++++ b/src/components/DishCard.jsx
+@@ -1,6 +1,6 @@
+ import { useState } from 'react';
+ import { motion } from 'framer-motion';
+-import { Star, Flame, Leaf } from 'lucide-react';
++import { Star, Flame, Leaf, Droplet } from 'lucide-react';
+ import { useCartContext } from '../context/CartContext';
+ import DishDetailModal from './DishDetailModal';
+ 
+@@ -36,7 +36,7 @@ const DishCard = ({ dish, index = 0 }) => {
+           }}
+         />
+         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+-        <div className="absolute top-3 left-3 flex gap-2">
++        <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
+           {dish.is_popular && (
+             <div className="bg-primary-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
+               <Star className="w-3 h-3 mr-1" />
+@@ -55,6 +55,12 @@ const DishCard = ({ dish, index = 0 }) => {
+               Вегетарианское
+             </div>
+           )}
++          {dish.is_carbonated !== null && dish.is_carbonated !== undefined && (
++            <div className={`${dish.is_carbonated ? 'bg-blue-600' : 'bg-cyan-600'} text-white px-2 py-1 rounded-full text-xs font-medium flex items-center`}>
++              <Droplet className="w-3 h-3 mr-1" />
++              {dish.is_carbonated ? 'Газированный' : 'Негазированный'}
++            </div>
++          )}
+         </div>
+         <div className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium text-gray-700">
+           {dish.weight}
+diff --git a/src/components/DishDetailModal.jsx b/src/components/DishDetailModal.jsx
+index b633656..973410e 100644
+--- a/src/components/DishDetailModal.jsx
++++ b/src/components/DishDetailModal.jsx
+@@ -1,6 +1,6 @@
+ import { useEffect } from 'react';
+ import { motion, AnimatePresence } from 'framer-motion';
+-import { X, Star, Flame, Leaf } from 'lucide-react';
++import { X, Star, Flame, Leaf, Droplet } from 'lucide-react';
+ import { useCartContext } from '../context/CartContext';
+ 
+ const DishDetailModal = ({ dish, isOpen, onClose }) => {
+@@ -69,7 +69,7 @@ const DishDetailModal = ({ dish, isOpen, onClose }) => {
+               }}
+             />
+             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+-            <div className="absolute top-4 left-4 flex gap-2">
++            <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
+               {dish.is_popular && (
+                 <div className="bg-primary-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
+                   <Star className="w-3 h-3 mr-1" />
+@@ -88,6 +88,12 @@ const DishDetailModal = ({ dish, isOpen, onClose }) => {
+                   Вегетарианское
+                 </div>
+               )}
++              {dish.is_carbonated !== null && dish.is_carbonated !== undefined && (
++                <div className={`${dish.is_carbonated ? 'bg-blue-600' : 'bg-cyan-600'} text-white px-2 py-1 rounded-full text-xs font-medium flex items-center`}>
++                  <Droplet className="w-3 h-3 mr-1" />
++                  {dish.is_carbonated ? 'Газированный' : 'Негазированный'}
++                </div>
++              )}
+             </div>
+           </div>
+ 
+diff --git a/src/components/PopularDishCard.jsx b/src/components/PopularDishCard.jsx
+index 53318da..b57f954 100644
+--- a/src/components/PopularDishCard.jsx
++++ b/src/components/PopularDishCard.jsx
+@@ -1,6 +1,6 @@
+ import { useState } from 'react';
+ import { motion } from 'framer-motion';
+-import { Star } from 'lucide-react';
++import { Star, Droplet } from 'lucide-react';
+ import { useCartContext } from '../context/CartContext';
+ import DishDetailModal from './DishDetailModal';
+ 
+@@ -28,12 +28,20 @@ const PopularDishCard = ({ dish, index = 0 }) => {
+           }}
+         />
+         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+-        {dish.is_popular && (
+-          <div className="absolute top-3 left-3 bg-primary-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
+-            <Star className="w-3 h-3 mr-1" />
+-            Популярное
+-          </div>
+-        )}
++        <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
++          {dish.is_popular && (
++            <div className="bg-primary-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
++              <Star className="w-3 h-3 mr-1" />
++              Популярное
++            </div>
++          )}
++          {dish.is_carbonated !== null && dish.is_carbonated !== undefined && (
++            <div className={`${dish.is_carbonated ? 'bg-blue-600' : 'bg-cyan-600'} text-white px-2 py-1 rounded-full text-xs font-medium flex items-center`}>
++              <Droplet className="w-3 h-3 mr-1" />
++              {dish.is_carbonated ? 'Газированный' : 'Негазированный'}
++            </div>
++          )}
++        </div>
+       </div>
+       <div className="p-6">
+         <div className="flex justify-between items-start mb-2">
+diff --git a/src/components/admin/AdminMenu.jsx b/src/components/admin/AdminMenu.jsx
+index f90d29a..203ff55 100644
+--- a/src/components/admin/AdminMenu.jsx
++++ b/src/components/admin/AdminMenu.jsx
+@@ -32,7 +32,16 @@ const AdminMenu = () => {
+     calories: '',
+     proteins: '',
+     fats: '',
+-    carbs: ''
++    carbs: '',
++    is_carbonated: null
++  });
++  const [showCategoryModal, setShowCategoryModal] = useState(false);
++  const [editingCategory, setEditingCategory] = useState(null);
++  const [categoryFormData, setCategoryFormData] = useState({
++    name: '',
++    description: '',
++    sort_order: 0,
++    is_active: true
+   });
+   const [imageFile, setImageFile] = useState(null);
+   const [imagePreview, setImagePreview] = useState(null);
+@@ -54,7 +63,17 @@ const AdminMenu = () => {
+           MenuService.getCategories()
+         ]);
+         setDishes(dishesData);
+-        setCategories(categoriesData);
++        // Фильтруем категории с валидным ID
++        const validCategories = categoriesData.filter(cat => cat.id && cat.id.trim() !== '');
++        const invalidCategories = categoriesData.filter(cat => !cat.id || cat.id.trim() === '');
++        
++        if (invalidCategories.length > 0) {
++          console.warn(`Found ${invalidCategories.length} categories without ID:`, invalidCategories);
++          // Показываем предупреждение пользователю
++          alert(`Обнаружено ${invalidCategories.length} категорий без ID. Они не будут отображаться. Пожалуйста, удалите их из базы данных вручную или пересоздайте.`);
++        }
++        
++        setCategories(validCategories);
+       } catch (error) {
+         console.error('Ошибка при загрузке меню:', error);
+       } finally {
+@@ -122,7 +141,8 @@ const AdminMenu = () => {
+         calories: formData.calories ? parseInt(formData.calories) : null,
+         proteins: formData.proteins ? parseFloat(formData.proteins) : null,
+         fats: formData.fats ? parseFloat(formData.fats) : null,
+-        carbs: formData.carbs ? parseFloat(formData.carbs) : null
++        carbs: formData.carbs ? parseFloat(formData.carbs) : null,
++        is_carbonated: formData.is_carbonated === '' ? null : formData.is_carbonated
+       });
+       setDishes([...dishes, newDish]);
+       setShowAddModal(false);
+@@ -149,7 +169,8 @@ const AdminMenu = () => {
+         calories: formData.calories ? parseInt(formData.calories) : null,
+         proteins: formData.proteins ? parseFloat(formData.proteins) : null,
+         fats: formData.fats ? parseFloat(formData.fats) : null,
+-        carbs: formData.carbs ? parseFloat(formData.carbs) : null
++        carbs: formData.carbs ? parseFloat(formData.carbs) : null,
++        is_carbonated: formData.is_carbonated === '' ? null : formData.is_carbonated
+       });
+       
+       setDishes(dishes.map(dish => 
+@@ -189,7 +210,8 @@ const AdminMenu = () => {
+       calories: dish.calories?.toString() || '',
+       proteins: dish.proteins?.toString() || '',
+       fats: dish.fats?.toString() || '',
+-      carbs: dish.carbs?.toString() || ''
++      carbs: dish.carbs?.toString() || '',
++      is_carbonated: dish.is_carbonated !== undefined ? dish.is_carbonated : null
+     });
+     setImagePreview(dish.image_url || null);
+     setImageFile(null);
+@@ -208,12 +230,108 @@ const AdminMenu = () => {
+       calories: '',
+       proteins: '',
+       fats: '',
+-      carbs: ''
++      carbs: '',
++      is_carbonated: null
+     });
+     setImageFile(null);
+     setImagePreview(null);
+   };
+ 
++  const resetCategoryForm = () => {
++    setCategoryFormData({
++      name: '',
++      description: '',
++      sort_order: 0,
++      is_active: true
++    });
++  };
++
++  const handleAddCategory = async () => {
++    try {
++      const newCategory = await MenuService.createCategory(categoryFormData);
++      console.log('Category created:', newCategory);
++      
++      // Проверяем, что ID присутствует
++      if (!newCategory || !newCategory.id || newCategory.id.trim() === '') {
++        console.error('Category created without ID:', newCategory);
++        alert('Категория создана, но ID не был получен. Пожалуйста, перезагрузите страницу.');
++        // Перезагружаем категории
++        const categoriesData = await MenuService.getCategories();
++        setCategories(categoriesData);
++        setShowCategoryModal(false);
++        resetCategoryForm();
++        return;
++      }
++      
++      setCategories([...categories, newCategory].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)));
++      setShowCategoryModal(false);
++      resetCategoryForm();
++      // Очищаем кеш для обновления категорий на главной странице
++      if (window.apiClient) {
++        window.apiClient.clearCacheForEndpoint('/api/menu');
++      }
++    } catch (error) {
++      console.error('Error creating category:', error);
++      alert(`Ошибка при создании категории: ${error.message || error}`);
++    }
++  };
++
++  const handleEditCategory = async () => {
++    try {
++      const updatedCategory = await MenuService.updateCategory(editingCategory.id, categoryFormData);
++      setCategories(categories.map(cat => 
++        cat.id === editingCategory.id ? updatedCategory : cat
++      ).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)));
++      setEditingCategory(null);
++      setShowCategoryModal(false);
++      resetCategoryForm();
++      // Очищаем кеш для обновления категорий на главной странице
++      if (window.apiClient) {
++        window.apiClient.clearCacheForEndpoint('/api/menu');
++      }
++    } catch (error) {
++      console.error('Error updating category:', error);
++      alert('Ошибка при обновлении категории');
++    }
++  };
++
++  const handleDeleteCategory = async (categoryId) => {
++    if (!categoryId) {
++      console.error('Category ID is missing');
++      alert('Ошибка: не указан ID категории');
++      return;
++    }
++
++    if (window.confirm('Вы уверены, что хотите удалить эту категорию? Блюда в этой категории не будут удалены, но останутся без категории.')) {
++      try {
++        await MenuService.deleteCategory(categoryId);
++        setCategories(categories.filter(cat => cat.id !== categoryId));
++        // Обновляем блюда, которые были в этой категории
++        setDishes(dishes.map(dish => 
++          dish.category_id === categoryId ? {...dish, category_id: null} : dish
++        ));
++        // Очищаем кеш для обновления категорий на главной странице
++        if (window.apiClient) {
++          window.apiClient.clearCacheForEndpoint('/api/menu');
++        }
++      } catch (error) {
++        console.error('Error deleting category:', error);
++        alert(error.message || 'Ошибка при удалении категории');
++      }
++    }
++  };
++
++  const handleEditCategoryClick = (category) => {
++    setEditingCategory(category);
++    setCategoryFormData({
++      name: category.name,
++      description: category.description || '',
++      sort_order: category.sort_order || 0,
++      is_active: category.is_active !== undefined ? category.is_active : true
++    });
++    setShowCategoryModal(true);
++  };
++
+   const handleImageChange = (e) => {
+     const file = e.target.files[0];
+     if (file) {
+@@ -262,15 +380,113 @@ const AdminMenu = () => {
+       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+         <div>
+           <h2 className="text-2xl font-bold text-gray-900 mb-2">Управление меню</h2>
+-          <p className="text-gray-600">Добавляйте, редактируйте и удаляйте блюда</p>
++          <p className="text-gray-600">Добавляйте, редактируйте и удаляйте блюда и категории</p>
++        </div>
++        <div className="flex gap-2 mt-4 sm:mt-0">
++          <button
++            onClick={() => {
++              setShowCategoryModal(true);
++              setEditingCategory(null);
++              resetCategoryForm();
++            }}
++            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center"
++          >
++            <Plus className="w-4 h-4 mr-2" />
++            Категории
++          </button>
++          <button
++            onClick={() => setShowAddModal(true)}
++            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center"
++          >
++            <Plus className="w-4 h-4 mr-2" />
++            Добавить блюдо
++          </button>
++        </div>
++      </div>
++
++      {/* Categories Section */}
++      <div className="bg-white rounded-lg shadow-lg p-6">
++        <div className="flex items-center justify-between mb-4">
++          <h3 className="text-lg font-semibold text-gray-900">Категории</h3>
++        </div>
++        {categories.some(cat => !cat.id || cat.id.trim() === '') && (
++          <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
++            <p className="text-sm text-yellow-800">
++              ⚠️ Обнаружены категории без ID. Они могут работать некорректно. 
++              Удалите их через SQL или пересоздайте заново.
++            </p>
++            <p className="text-xs text-yellow-600 mt-2">
++              SQL запрос для удаления: <code className="bg-yellow-100 px-1 rounded">DELETE FROM categories WHERE id = '' OR id IS NULL;</code>
++            </p>
++          </div>
++        )}
++        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
++          {categories.map((category) => {
++            // Проверяем наличие ID
++            const categoryId = category.id;
++            if (!categoryId) {
++              console.warn('Category without ID:', category);
++            }
++            return (
++              <motion.div
++                key={categoryId || category.name}
++                initial={{ opacity: 0, scale: 0.9 }}
++                animate={{ opacity: 1, scale: 1 }}
++                className="bg-gray-50 rounded-lg p-4 border border-gray-200 flex items-center justify-between"
++              >
++                <div className="flex-1">
++                  <h4 className="font-medium text-gray-900">{category.name}</h4>
++                  {category.description && (
++                    <p className="text-sm text-gray-600 mt-1">{category.description}</p>
++                  )}
++                  <div className="flex items-center gap-2 mt-2">
++                    <span className={`px-2 py-1 rounded-full text-xs ${
++                      category.is_active 
++                        ? 'bg-green-100 text-green-700' 
++                        : 'bg-red-100 text-red-700'
++                    }`}>
++                      {category.is_active ? 'Активна' : 'Неактивна'}
++                    </span>
++                    <span className="text-xs text-gray-500">Сорт: {category.sort_order || 0}</span>
++                    {!categoryId && (
++                      <span className="text-xs text-red-500">(нет ID)</span>
++                    )}
++                  </div>
++                </div>
++                <div className="flex gap-1 ml-2">
++                  <button
++                    onClick={() => {
++                      if (!categoryId) {
++                        alert('Ошибка: категория не имеет ID. Попробуйте перезагрузить страницу.');
++                        return;
++                      }
++                      handleEditCategoryClick(category);
++                    }}
++                    className="p-2 text-blue-600 hover:bg-blue-100 rounded transition-colors"
++                    title="Редактировать"
++                    disabled={!categoryId}
++                  >
++                    <Edit className="w-4 h-4" />
++                  </button>
++                  <button
++                    onClick={() => {
++                      if (!categoryId) {
++                        alert('Ошибка: категория не имеет ID. Попробуйте перезагрузить страницу.');
++                        return;
++                      }
++                      handleDeleteCategory(categoryId);
++                    }}
++                    className="p-2 text-red-600 hover:bg-red-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
++                    title={categoryId ? "Удалить" : "Нельзя удалить - нет ID"}
++                    disabled={!categoryId}
++                  >
++                    <Trash2 className="w-4 h-4" />
++                  </button>
++                </div>
++              </motion.div>
++            );
++          })}
+         </div>
+-        <button
+-          onClick={() => setShowAddModal(true)}
+-          className="mt-4 sm:mt-0 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center"
+-        >
+-          <Plus className="w-4 h-4 mr-2" />
+-          Добавить блюдо
+-        </button>
+       </div>
+ 
+       {/* Filters */}
+@@ -517,7 +733,18 @@ const AdminMenu = () => {
+                   </label>
+                   <select
+                     value={formData.category_id}
+-                    onChange={(e) => setFormData({...formData, category_id: e.target.value})}
++                    onChange={(e) => {
++                      const selectedCategoryId = e.target.value;
++                      const selectedCategory = categories.find(c => c.id === selectedCategoryId);
++                      // Если выбрана категория "Напитки" и is_carbonated еще не установлен, оставляем null
++                      // Иначе, если выбрана не "Напитки", сбрасываем is_carbonated
++                      const isDrinks = selectedCategory?.name?.toLowerCase().includes('напитк') || selectedCategory?.id === 'drinks';
++                      setFormData({
++                        ...formData, 
++                        category_id: selectedCategoryId,
++                        is_carbonated: isDrinks ? formData.is_carbonated : null
++                      });
++                    }}
+                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                   >
+                     <option value="">Выберите категорию</option>
+@@ -528,6 +755,35 @@ const AdminMenu = () => {
+                     ))}
+                   </select>
+                 </div>
++
++                {/* Поле для газированности напитков */}
++                {(() => {
++                  const selectedCategory = categories.find(c => c.id === formData.category_id);
++                  const isDrinks = selectedCategory?.name?.toLowerCase().includes('напитк') || selectedCategory?.id === 'drinks';
++                  
++                  if (isDrinks) {
++                    return (
++                      <div>
++                        <label className="block text-sm font-medium text-gray-700 mb-1">
++                          Тип напитка
++                        </label>
++                        <select
++                          value={formData.is_carbonated === null ? '' : formData.is_carbonated ? 'true' : 'false'}
++                          onChange={(e) => setFormData({
++                            ...formData, 
++                            is_carbonated: e.target.value === '' ? null : e.target.value === 'true'
++                          })}
++                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
++                        >
++                          <option value="">Не указано</option>
++                          <option value="false">Негазированный</option>
++                          <option value="true">Газированный</option>
++                        </select>
++                      </div>
++                    );
++                  }
++                  return null;
++                })()}
+                 
+                 {/* КБЖУ */}
+                 <div>
+@@ -636,6 +892,120 @@ const AdminMenu = () => {
+           </motion.div>
+         )}
+       </AnimatePresence>
++
++      {/* Category Modal */}
++      <AnimatePresence>
++        {showCategoryModal && (
++          <motion.div
++            initial={{ opacity: 0 }}
++            animate={{ opacity: 1 }}
++            exit={{ opacity: 0 }}
++            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
++            onClick={() => {
++              setShowCategoryModal(false);
++              setEditingCategory(null);
++              resetCategoryForm();
++            }}
++          >
++            <motion.div
++              initial={{ scale: 0.9, opacity: 0 }}
++              animate={{ scale: 1, opacity: 1 }}
++              exit={{ scale: 0.9, opacity: 0 }}
++              className="bg-white rounded-lg shadow-xl w-full max-w-md flex flex-col"
++              onClick={(e) => e.stopPropagation()}
++            >
++              {/* Header */}
++              <div className="px-6 pt-6 pb-4 border-b border-gray-200 flex-shrink-0">
++                <h3 className="text-lg font-semibold text-gray-900">
++                  {editingCategory ? 'Редактировать категорию' : 'Добавить категорию'}
++                </h3>
++              </div>
++              
++              {/* Content */}
++              <div className="flex-1 overflow-y-auto px-6 py-4">
++                <form className="space-y-4">
++                  <div>
++                    <label className="block text-sm font-medium text-gray-700 mb-1">
++                      Название *
++                    </label>
++                    <input
++                      type="text"
++                      value={categoryFormData.name}
++                      onChange={(e) => setCategoryFormData({...categoryFormData, name: e.target.value})}
++                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
++                      placeholder="Название категории"
++                    />
++                  </div>
++                  
++                  <div>
++                    <label className="block text-sm font-medium text-gray-700 mb-1">
++                      Описание
++                    </label>
++                    <textarea
++                      value={categoryFormData.description}
++                      onChange={(e) => setCategoryFormData({...categoryFormData, description: e.target.value})}
++                      rows={3}
++                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
++                      placeholder="Описание категории"
++                    />
++                  </div>
++
++                  <div className="grid grid-cols-2 gap-4">
++                    <div>
++                      <label className="block text-sm font-medium text-gray-700 mb-1">
++                        Порядок сортировки
++                      </label>
++                      <input
++                        type="number"
++                        value={categoryFormData.sort_order}
++                        onChange={(e) => setCategoryFormData({...categoryFormData, sort_order: parseInt(e.target.value) || 0})}
++                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
++                        placeholder="0"
++                      />
++                    </div>
++                    
++                    <div className="flex items-end">
++                      <label className="flex items-center">
++                        <input
++                          type="checkbox"
++                          checked={categoryFormData.is_active}
++                          onChange={(e) => setCategoryFormData({...categoryFormData, is_active: e.target.checked})}
++                          className="mr-2"
++                        />
++                        <span className="text-sm text-gray-700">Активна</span>
++                      </label>
++                    </div>
++                  </div>
++                </form>
++              </div>
++              
++              {/* Footer */}
++              <div className="px-6 py-4 border-t border-gray-200 flex-shrink-0">
++                <div className="flex space-x-3">
++                  <button
++                    type="button"
++                    onClick={editingCategory ? handleEditCategory : handleAddCategory}
++                    className="flex-1 bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 transition-colors"
++                  >
++                    {editingCategory ? 'Сохранить' : 'Добавить'}
++                  </button>
++                  <button
++                    type="button"
++                    onClick={() => {
++                      setShowCategoryModal(false);
++                      setEditingCategory(null);
++                      resetCategoryForm();
++                    }}
++                    className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
++                  >
++                    Отмена
++                  </button>
++                </div>
++              </div>
++            </motion.div>
++          </motion.div>
++        )}
++      </AnimatePresence>
+     </div>
+   );
+ };
+diff --git a/src/hooks/useMenu.js b/src/hooks/useMenu.js
+index 429d4bb..693fc22 100644
+--- a/src/hooks/useMenu.js
++++ b/src/hooks/useMenu.js
+@@ -18,34 +18,75 @@ export const useMenu = () => {
+       
+       console.log('Menu data received:', data); // Отладка
+       
+-      // Бэкенд возвращает данные в формате { menu: [...] }
+-      // где каждый элемент menu содержит категорию с массивом dishes
+-      const categories = [];
+-      const dishes = [];
++      // Бэкенд может возвращать данные в разных форматах:
++      // 1. { menu: { categories: [], dishes: [] } }
++      // 2. { menu: [...] } где каждый элемент - категория с dishes
++      // 3. Массив категорий
++      let categories = [];
++      let dishes = [];
+       
+-      if (data && Array.isArray(data)) {
+-        data.forEach(category => {
+-          // Добавляем категорию
+-          categories.push({
+-            id: category.id,
+-            name: category.name,
+-            description: category.description,
+-            sort_order: category.sort_order,
+-            is_active: category.is_active
+-          });
+-          
+-          // Добавляем блюда этой категории
+-          if (category.dishes && Array.isArray(category.dishes)) {
+-            category.dishes.forEach(dish => {
+-              dishes.push({
+-                ...dish,
+-                image: dish.image_url // Преобразуем image_url в image для совместимости
++      if (data && typeof data === 'object') {
++        // Формат { menu: { categories: [], dishes: [] } }
++        if (data.menu && data.menu.categories && Array.isArray(data.menu.categories)) {
++          categories = data.menu.categories.map(cat => ({
++            id: cat.id,
++            name: cat.name,
++            description: cat.description,
++            sort_order: cat.sort_order,
++            is_active: cat.is_active
++          }));
++        }
++        
++        if (data.menu && data.menu.dishes && Array.isArray(data.menu.dishes)) {
++          dishes = data.menu.dishes.map(dish => ({
++            ...dish,
++            image: dish.image_url || dish.image // Преобразуем image_url в image для совместимости
++          }));
++        }
++        
++        // Формат { menu: [...] } где каждый элемент - категория с dishes
++        if (data.menu && Array.isArray(data.menu) && !data.menu.categories) {
++          data.menu.forEach(category => {
++            categories.push({
++              id: category.id,
++              name: category.name,
++              description: category.description,
++              sort_order: category.sort_order,
++              is_active: category.is_active
++            });
++            
++            if (category.dishes && Array.isArray(category.dishes)) {
++              category.dishes.forEach(dish => {
++                dishes.push({
++                  ...dish,
++                  image: dish.image_url || dish.image
++                });
+               });
++            }
++          });
++        }
++        
++        // Если data - массив категорий
++        if (Array.isArray(data)) {
++          data.forEach(category => {
++            categories.push({
++              id: category.id,
++              name: category.name,
++              description: category.description,
++              sort_order: category.sort_order,
++              is_active: category.is_active
+             });
+-          }
+-        });
+-      } else {
+-        console.warn('Menu data is not an array:', data);
++            
++            if (category.dishes && Array.isArray(category.dishes)) {
++              category.dishes.forEach(dish => {
++                dishes.push({
++                  ...dish,
++                  image: dish.image_url || dish.image
++                });
++              });
++            }
++          });
++        }
+       }
+       
+       console.log('Processed categories:', categories.length, 'dishes:', dishes.length); // Отладка
+diff --git a/src/pages/Home.jsx b/src/pages/Home.jsx
+index dbf4a59..10fe595 100644
+--- a/src/pages/Home.jsx
++++ b/src/pages/Home.jsx
+@@ -1,5 +1,6 @@
+ // eslint-disable-next-line no-unused-vars
+ import { motion } from 'framer-motion';
++import { useState, useEffect } from 'react';
+ import { Link } from 'react-router-dom';
+ import { ArrowRight, Clock, Truck, Utensils } from 'lucide-react';
+ import { useMenu } from '../hooks/useMenu';
+@@ -14,6 +15,31 @@ const Home = () => {
+   const { getPopularDishes, isLoading } = useMenu();
+   const popularDishes = getPopularDishes().slice(0, 6);
+ 
++  // Массив изображений для слайдера
++  const heroImages = [
++    '/main_phone.jpg',
++    '/main_phone2.jpg',
++    'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80',
++    'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80',
++    'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80'
++  ];
++
++  const [currentImageIndex, setCurrentImageIndex] = useState(0);
++
++  // Автоматическое переключение изображений каждые 10 секунд
++  useEffect(() => {
++    const interval = setInterval(() => {
++      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
++    }, 10000); // 10 секунд
++
++    return () => clearInterval(interval);
++  }, [heroImages.length]);
++
++  // Функция для переключения на конкретное изображение
++  const goToSlide = (index) => {
++    setCurrentImageIndex(index);
++  };
++
+   const features = [
+     {
+       icon: <Clock className="w-6 h-6" />,
+@@ -44,18 +70,46 @@ const Home = () => {
+     <div className="min-h-screen">
+       {/* Hero Section */}
+       <section className="relative h-screen flex items-center justify-center overflow-hidden">
++        {/* Background Images Slider */}
++        <div className="absolute inset-0">
++          {heroImages.map((image, index) => (
++            <motion.div
++              key={index}
++              initial={false}
++              animate={{
++                opacity: index === currentImageIndex ? 1 : 0,
++                scale: index === currentImageIndex ? 1 : 1.05
++              }}
++              transition={{
++                duration: 1.5,
++                ease: [0.4, 0, 0.2, 1]
++              }}
++              className="absolute inset-0 bg-cover bg-center"
++              style={{
++                backgroundImage: `url('${image}')`,
++                zIndex: index === currentImageIndex ? 1 : 0
++              }}
++            >
++              {/* Gradient mask with blur effect */}
++              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-transparent" style={{ backdropFilter: 'blur(2px)' }}></div>
++            </motion.div>
++          ))}
++        </div>
+ 
+-        
+-        {/* Background Image */}
+-        <div 
+-          className="absolute inset-0 bg-cover bg-center"
+-          style={{
+-            backgroundImage: "url('/main_phone.jpg')"
+-          }}
+-        >
+-          {/* Gradient mask with blur effect */}
+-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-transparent backdrop-blur-sm"></div>
+-
++        {/* Slider Indicators */}
++        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30 flex gap-2">
++          {heroImages.map((_, index) => (
++            <button
++              key={index}
++              onClick={() => goToSlide(index)}
++              className={`h-2 rounded-full transition-all duration-300 ${
++                index === currentImageIndex
++                  ? 'w-8 bg-white'
++                  : 'w-2 bg-white/50 hover:bg-white/75'
++              }`}
++              aria-label={`Перейти к изображению ${index + 1}`}
++            />
++          ))}
+         </div>
+         
+         <div className="relative z-20 text-center text-white max-w-4xl mx-auto px-4">
+diff --git a/src/services/apiClient.js b/src/services/apiClient.js
+index f1c9e94..e837604 100644
+--- a/src/services/apiClient.js
++++ b/src/services/apiClient.js
+@@ -291,6 +291,9 @@ class ApiClient {
+   }
+ 
+   async deleteCategory(categoryId) {
++    if (!categoryId) {
++      throw new Error('Category ID is required');
++    }
+     return this.delete(`/api/admin/menu/categories/${categoryId}`);
+   }
+ 
+@@ -340,3 +343,8 @@ class ApiClient {
+ // Создаем единственный экземпляр API клиента
+ export const apiClient = new ApiClient();
+ export default apiClient;
++
++// Делаем apiClient доступным глобально для очистки кеша
++if (typeof window !== 'undefined') {
++  window.apiClient = apiClient;
++}
+diff --git a/src/services/menuService.js b/src/services/menuService.js
+index 24693e6..1274dc4 100644
+--- a/src/services/menuService.js
++++ b/src/services/menuService.js
+@@ -142,4 +142,37 @@ export class MenuService {
+       throw error;
+     }
+   }
++
++  // Создание категории (для админа)
++  static async createCategory(categoryData) {
++    try {
++      const response = await apiClient.createCategory(categoryData);
++      return response.category;
++    } catch (error) {
++      console.error('Error creating category:', error);
++      throw error;
++    }
++  }
++
++  // Обновление категории (для админа)
++  static async updateCategory(categoryId, updates) {
++    try {
++      const response = await apiClient.updateCategory(categoryId, updates);
++      return response.category;
++    } catch (error) {
++      console.error('Error updating category:', error);
++      throw error;
++    }
++  }
++
++  // Удаление категории (для админа)
++  static async deleteCategory(categoryId) {
++    try {
++      const response = await apiClient.deleteCategory(categoryId);
++      return response;
++    } catch (error) {
++      console.error('Error deleting category:', error);
++      throw error;
++    }
++  }
+ }

@@ -33,7 +33,8 @@ const AdminMenu = () => {
     proteins: '',
     fats: '',
     carbs: '',
-    is_carbonated: null
+    is_carbonated: null,
+    iiko_product_id: ''
   });
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
@@ -63,6 +64,18 @@ const AdminMenu = () => {
           MenuService.getCategories()
         ]);
         setDishes(dishesData);
+        
+        // Выводим в консоль блюда с их iiko_product_id для удобства настройки
+        console.log('📋 БЛЮДА И ИХ iiko_product_id:');
+        console.table(dishesData.map(d => ({
+          id: d.id,
+          name: d.name,
+          iiko_product_id: d.iiko_product_id || '❌ НЕ УКАЗАН'
+        })));
+        console.log('Для копирования (JSON):', JSON.stringify(
+          dishesData.map(d => ({ id: d.id, name: d.name, iiko_product_id: d.iiko_product_id })),
+          null, 2
+        ));
         // Фильтруем категории с валидным ID
         const validCategories = categoriesData.filter(cat => cat.id && cat.id.trim() !== '');
         const invalidCategories = categoriesData.filter(cat => !cat.id || cat.id.trim() === '');
@@ -123,7 +136,8 @@ const AdminMenu = () => {
         proteins: formData.proteins ? parseFloat(formData.proteins) : null,
         fats: formData.fats ? parseFloat(formData.fats) : null,
         carbs: formData.carbs ? parseFloat(formData.carbs) : null,
-        is_carbonated: formData.is_carbonated === '' ? null : formData.is_carbonated
+        is_carbonated: formData.is_carbonated === '' ? null : formData.is_carbonated,
+        iiko_product_id: formData.iiko_product_id || null
       });
       setDishes([...dishes, newDish]);
       setShowAddModal(false);
@@ -158,7 +172,8 @@ const AdminMenu = () => {
         proteins: formData.proteins ? parseFloat(formData.proteins) : null,
         fats: formData.fats ? parseFloat(formData.fats) : null,
         carbs: formData.carbs ? parseFloat(formData.carbs) : null,
-        is_carbonated: formData.is_carbonated === '' ? null : formData.is_carbonated
+        is_carbonated: formData.is_carbonated === '' ? null : formData.is_carbonated,
+        iiko_product_id: formData.iiko_product_id || null
       });
       
       setDishes(dishes.map(dish => 
@@ -199,7 +214,8 @@ const AdminMenu = () => {
       proteins: dish.proteins ? dish.proteins.toString() : '',
       fats: dish.fats ? dish.fats.toString() : '',
       carbs: dish.carbs ? dish.carbs.toString() : '',
-      is_carbonated: dish.is_carbonated !== undefined ? dish.is_carbonated : null
+      is_carbonated: dish.is_carbonated !== undefined ? dish.is_carbonated : null,
+      iiko_product_id: dish.iiko_product_id || ''
     });
     setImagePreview(dish.image_url || null);
     setImageFile(null);
@@ -219,7 +235,8 @@ const AdminMenu = () => {
       proteins: '',
       fats: '',
       carbs: '',
-      is_carbonated: null
+      is_carbonated: null,
+      iiko_product_id: ''
     });
     setImageFile(null);
     setImagePreview(null);
@@ -581,9 +598,22 @@ const AdminMenu = () => {
               
               <p className="text-sm text-gray-600 mb-3 line-clamp-2">{dish.description}</p>
               
-              <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+              <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
                 <span>{dish.weight}</span>
                 <span>{getCategoryName(dish.category_id)}</span>
+              </div>
+              
+              {/* iiko ID indicator */}
+              <div className="mb-4">
+                {dish.iiko_product_id ? (
+                  <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-green-100 text-green-700">
+                    ✓ iiko: {dish.iiko_product_id.substring(0, 8)}...
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-yellow-100 text-yellow-700">
+                    ⚠ iiko ID не указан
+                  </span>
+                )}
               </div>
               
               <div className="flex space-x-2">
@@ -845,6 +875,23 @@ const AdminMenu = () => {
                     </div>
                   );
                 })()}
+
+                {/* iiko Product ID */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    iiko Product ID (UUID)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.iiko_product_id}
+                    onChange={(e) => setFormData({...formData, iiko_product_id: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
+                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    UUID продукта из iiko для синхронизации заказов
+                  </p>
+                </div>
                 
                 <div className="flex items-center space-x-4">
                   <label className="flex items-center">
