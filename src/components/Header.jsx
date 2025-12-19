@@ -18,7 +18,7 @@ const Header = () => {
 
   const navItems = [
     { path: '/', label: 'Главная', kanji: 'ホーム' },
-    { path: '/menu', label: 'Меню', kanji: 'メニュー' },
+    { path: '/menu', label: 'Доставка', kanji: '配達' },
     { path: '/about', label: 'О нас', kanji: '私たち' },
     { path: '/contact', label: 'Контакты', kanji: '連絡先' }
   ];

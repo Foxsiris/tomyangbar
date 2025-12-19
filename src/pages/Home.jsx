@@ -20,7 +20,6 @@ const Home = () => {
     '/main_phone.jpg',
     '/mainPhone2.jpg',
     '/mainPhone3.jpg',
-    '/mainPhone4.jpg',
     '/mainPhone5.jpg'
   ];
 

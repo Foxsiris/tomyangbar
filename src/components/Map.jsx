@@ -6,22 +6,28 @@ const Map = () => {
   // Зоны доставки для отображения в левой части
   const deliveryZones = [
     {
-      name: 'Центральная зона',
-      color: '#4CAF50',
+      name: 'Зелёная зона',
+      color: '#56db40',
       minOrder: 1000,
       deliveryTime: '45-60 мин'
     },
     {
-      name: 'Расширенная зона',
-      color: '#2196F3', 
-      minOrder: 1500,
+      name: 'Синяя зона',
+      color: '#1e98ff', 
+      minOrder: 1700,
       deliveryTime: '60-90 мин'
     },
     {
-      name: 'Дальняя зона',
-      color: '#FF9800',
+      name: 'Оранжевая зона',
+      color: '#ff931e',
       minOrder: 2000,
       deliveryTime: '90-120 мин'
+    },
+    {
+      name: 'Красная зона',
+      color: '#ed4543',
+      minOrder: 3000,
+      deliveryTime: '120+ мин'
     }
   ];
 
