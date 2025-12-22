@@ -17,10 +17,11 @@ const Header = () => {
   const hoverTimeoutRef = useRef(null);
 
   const navItems = [
-    { path: '/', label: 'Главная', kanji: 'ホーム' },
-    { path: '/menu', label: 'Доставка', kanji: '配達' },
-    { path: '/about', label: 'О нас', kanji: '私たち' },
-    { path: '/contact', label: 'Контакты', kanji: '連絡先' }
+    { path: '/', label: 'Главная' },
+    { path: '/menu', label: 'Доставка' },
+    { path: '/menu-pdf', label: 'Меню', isPdf: true },
+    { path: '/about', label: 'О нас' },
+    { path: '/contact', label: 'Контакты' }
   ];
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -66,32 +67,36 @@ const Header = () => {
                   e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🦆</text></svg>';
                 }}
               />
-              <div className="flex flex-col">
-                <div className="text-xl font-bold text-primary-600">Tom Yang Bar</div>
-                <div className="text-xs text-gray-500 tracking-wider">トムヤンバー</div>
-              </div>
+              <div className="text-xl font-bold text-primary-600">Tom Yang Bar</div>
             </motion.div>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
             {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors group ${
-                  location.pathname === item.path
-                    ? 'text-primary-600 bg-primary-50'
-                    : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
-                }`}
-              >
-                <div className="flex flex-col items-center">
-                  <span>{item.label}</span>
-                  <span className="text-xs text-gray-400 group-hover:text-primary-400 transition-colors">
-                    {item.kanji}
-                  </span>
-                </div>
-              </Link>
+              item.isPdf ? (
+                <a
+                  key={item.path}
+                  href="/menu_pdf.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-2 rounded-md text-sm font-medium transition-colors text-gray-700 hover:text-primary-600 hover:bg-gray-50"
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    location.pathname === item.path
+                      ? 'text-primary-600 bg-primary-50'
+                      : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              )
             ))}
           </nav>
 
@@ -207,20 +212,22 @@ const Header = () => {
               </motion.button>
             )}
 
-            {/* Cart Button */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={openCart}
-              className="relative p-2 text-gray-700 hover:text-primary-600 transition-colors"
-            >
-              <ShoppingCart size={24} />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {totalItems}
-                </span>
-              )}
-            </motion.button>
+            {/* Cart Button - показываем только в разделе доставки */}
+            {location.pathname === '/menu' && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={openCart}
+                className="relative p-2 text-gray-700 hover:text-primary-600 transition-colors"
+              >
+                <ShoppingCart size={24} />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {totalItems}
+                  </span>
+                )}
+              </motion.button>
+            )}
 
             {/* Mobile Menu Button */}
             <button
@@ -242,21 +249,31 @@ const Header = () => {
           >
             <div className="px-2 pt-2 pb-3 space-y-1">
               {navItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                    location.pathname === item.path
-                      ? 'text-primary-600 bg-primary-50'
-                      : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex justify-between items-center">
-                    <span>{item.label}</span>
-                    <span className="text-sm text-gray-400">{item.kanji}</span>
-                  </div>
-                </Link>
+                item.isPdf ? (
+                  <a
+                    key={item.path}
+                    href="/menu_pdf.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-3 py-2 rounded-md text-base font-medium transition-colors text-gray-700 hover:text-primary-600 hover:bg-gray-50"
+                  >
+                    {item.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                      location.pathname === item.path
+                        ? 'text-primary-600 bg-primary-50'
+                        : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                )
               ))}
               <a
                 href="tel:+79271126500"

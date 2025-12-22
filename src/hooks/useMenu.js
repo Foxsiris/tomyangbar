@@ -119,10 +119,17 @@ export const useMenu = () => {
         console.warn('useMenu.loadMenu: Unexpected data format:', data);
       }
       
+      // Фильтруем блюда - показываем только те, которые в наличии (is_active: true)
+      const availableDishes = dishes.filter(dish => dish.is_active !== false);
+      
+      // Фильтруем категории - показываем только активные
+      const activeCategories = categories.filter(cat => cat.is_active !== false);
+      
       if (isDev) {
-        console.log('useMenu.loadMenu: Processed categories:', categories.length, 'dishes:', dishes.length);
+        console.log('useMenu.loadMenu: Processed categories:', activeCategories.length, 'dishes:', availableDishes.length);
+        console.log('useMenu.loadMenu: Hidden dishes (not in stock):', dishes.length - availableDishes.length);
       }
-      setMenuData({ categories, dishes });
+      setMenuData({ categories: activeCategories, dishes: availableDishes });
     } catch (err) {
       console.error('Error loading menu:', err);
       console.error('Error details:', {

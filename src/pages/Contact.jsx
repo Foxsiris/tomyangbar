@@ -41,7 +41,7 @@ const Contact = () => {
     {
       icon: <MapPin className="w-6 h-6" />,
       title: 'Адрес',
-      value: 'ул. Чапаева, 89, Саратов',
+      value: 'г. Саратов, ул. Чапаева, д. 89',
       link: null
     },
     {

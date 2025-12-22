@@ -3,7 +3,7 @@ import { Clock, MapPin, Phone, Mail, Star } from 'lucide-react';
 
 const About = () => {
   const stats = [
-    { number: '5+', label: 'Лет опыта' },
+    { number: '2+', label: 'Лет опыта' },
     { number: '1000+', label: 'Довольных клиентов' },
     { number: '50+', label: 'Блюд в меню' },
     { number: '45', label: 'Минут доставка' }
@@ -251,7 +251,7 @@ const About = () => {
                 <MapPin className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Адрес</h3>
-              <p className="text-gray-600">г. Москва, ул. Примерная, 123</p>
+              <p className="text-gray-600">г. Саратов, ул. Чапаева, д. 89</p>
             </motion.div>
           </div>
         </div>

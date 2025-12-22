@@ -41,6 +41,48 @@ const upload = multer({
 router.use(authenticateToken);
 router.use(requireAdmin);
 
+// Получение ВСЕХ блюд для админа (включая неактивные)
+router.get('/menu/dishes', async (req, res) => {
+  try {
+    const { data: dishes, error } = await supabase
+      .from('dishes')
+      .select('*')
+      .order('name');
+
+    if (error) {
+      console.error('Get all dishes error:', error);
+      return res.status(500).json({ error: 'Ошибка при получении блюд' });
+    }
+
+    res.json({ dishes });
+
+  } catch (error) {
+    console.error('Get all dishes error:', error);
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+  }
+});
+
+// Получение ВСЕХ категорий для админа (включая неактивные)
+router.get('/menu/categories', async (req, res) => {
+  try {
+    const { data: categories, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('sort_order', { ascending: true });
+
+    if (error) {
+      console.error('Get all categories error:', error);
+      return res.status(500).json({ error: 'Ошибка при получении категорий' });
+    }
+
+    res.json({ categories });
+
+  } catch (error) {
+    console.error('Get all categories error:', error);
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+  }
+});
+
 // Получение всех заказов
 router.get('/orders', getAllOrders);
 

@@ -18,7 +18,7 @@ const AdminSettings = () => {
         name: 'Tom Yang Bar',
         phone: '+7 (927) 112-65-00',
         email: 'info@tomyangbar.ru',
-        address: 'ул. Чапаева, 89, Саратов, Саратовская обл., Россия, 410012',
+        address: 'г. Саратов, ул. Чапаева, д. 89',
       workingHours: {
         monday: { open: '11:00', close: '23:00', closed: false },
         tuesday: { open: '11:00', close: '23:00', closed: false },

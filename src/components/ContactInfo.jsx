@@ -12,7 +12,7 @@ const ContactInfo = () => {
     {
       icon: <MapPin className="w-5 h-5" />,
       title: 'Адрес',
-      value: 'г. Москва, ул. Примерная, 123',
+      value: 'г. Саратов, ул. Чапаева, д. 89',
       link: 'https://maps.google.com'
     },
     {

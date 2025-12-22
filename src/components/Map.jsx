@@ -67,8 +67,8 @@ const Map = () => {
                 <MapPin className="w-5 h-5 text-primary-600 mt-1 flex-shrink-0" />
                 <div>
                   <h4 className="font-semibold text-gray-900">Tom Yang Bar</h4>
-                  <p className="text-gray-600">ул. Чапаева, 89</p>
-                  <p className="text-gray-600">Саратов, Саратовская обл.</p>
+                  <p className="text-gray-600">г. Саратов, ул. Чапаева, д. 89</p>
+                  <p className="text-gray-600">Саратовская обл.</p>
                   <p className="text-gray-600">Россия, 410012</p>
                 </div>
               </div>

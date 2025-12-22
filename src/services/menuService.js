@@ -13,13 +13,35 @@ export class MenuService {
     }
   }
 
-  // Получение всех блюд
+  // Получение всех блюд (только активные для публичного меню)
   static async getDishes() {
     try {
       const response = await apiClient.getDishes();
       return response.dishes;
     } catch (error) {
       console.error('Error getting dishes:', error);
+      throw error;
+    }
+  }
+
+  // Получение ВСЕХ блюд для админа (включая неактивные)
+  static async getAdminDishes() {
+    try {
+      const response = await apiClient.getAdminDishes();
+      return response.dishes;
+    } catch (error) {
+      console.error('Error getting admin dishes:', error);
+      throw error;
+    }
+  }
+
+  // Получение ВСЕХ категорий для админа (включая неактивные)
+  static async getAdminCategories() {
+    try {
+      const response = await apiClient.getAdminCategories();
+      return response.categories;
+    } catch (error) {
+      console.error('Error getting admin categories:', error);
       throw error;
     }
   }

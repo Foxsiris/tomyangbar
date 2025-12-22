@@ -127,9 +127,11 @@ const Home = () => {
                 e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🦆</text></svg>';
               }}
             />
-            <h1 className="text-5xl md:text-7xl font-bold mb-2 font-serif">
-              Tom Yang Bar
-            </h1>
+            <img 
+              src="/main_text.png" 
+              alt="Tom Yang Bar" 
+              className="h-16 md:h-24 mx-auto mb-2 object-contain"
+            />
             <p className="text-lg text-gray-300 tracking-wider">Саратов</p>
           </motion.div>
           <motion.p
@@ -147,17 +149,11 @@ const Home = () => {
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
             <Link to="/menu" className="btn-primary inline-flex items-center">
-              <div className="flex flex-col items-center">
-                <span>Смотреть меню</span>
-                <span className="text-xs opacity-75">メニューを見る</span>
-              </div>
+              Смотреть меню
               <ArrowRight className="ml-2 w-5 h-5" />
             </Link>
             <a href="tel:+79271126500" className="btn-secondary inline-flex items-center">
-              <div className="flex flex-col items-center">
-                <span>Заказать по телефону</span>
-                <span className="text-xs opacity-75">電話で注文</span>
-              </div>
+              Заказать по телефону
               <ArrowRight className="ml-2 w-5 h-5" />
             </a>
           </motion.div>

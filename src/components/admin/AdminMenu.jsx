@@ -47,6 +47,20 @@ const AdminMenu = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
 
+  // Управление скроллом при открытии/закрытии модальных окон
+  useEffect(() => {
+    if (showAddModal || editingDish || showCategoryModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    // Cleanup при размонтировании компонента
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showAddModal, editingDish, showCategoryModal]);
+
   // Загружаем данные из Supabase
   useEffect(() => {
     const loadMenuData = async () => {
@@ -59,9 +73,10 @@ const AdminMenu = () => {
 
       try {
         setLoading(true);
+        // Используем админские методы для получения ВСЕХ блюд и категорий (включая неактивные)
         const [dishesData, categoriesData] = await Promise.all([
-          MenuService.getDishes(),
-          MenuService.getCategories()
+          MenuService.getAdminDishes(),
+          MenuService.getAdminCategories()
         ]);
         setDishes(dishesData);
         
@@ -585,7 +600,7 @@ const AdminMenu = () => {
                     ? 'bg-green-500 text-white' 
                     : 'bg-red-500 text-white'
                 }`}>
-                  {dish.is_active ? 'Доступно' : 'Недоступно'}
+                  {dish.is_active ? 'В наличии' : 'Нет в наличии'}
                 </span>
               </div>
             </div>
@@ -649,10 +664,6 @@ const AdminMenu = () => {
               setShowAddModal(false);
               setEditingDish(null);
               resetForm();
-              document.body.style.overflow = '';
-            }}
-            onAnimationStart={() => {
-              document.body.style.overflow = 'hidden';
             }}
           >
             <motion.div
@@ -921,7 +932,7 @@ const AdminMenu = () => {
                     onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
                       className="mr-2"
                     />
-                    <span className="text-sm text-gray-700">Доступно</span>
+                    <span className="text-sm text-gray-700">В наличии</span>
                   </label>
                 </div>
               </form>
@@ -943,7 +954,6 @@ const AdminMenu = () => {
                       setShowAddModal(false);
                       setEditingDish(null);
                       resetForm();
-                      document.body.style.overflow = '';
                     }}
                     className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
                   >

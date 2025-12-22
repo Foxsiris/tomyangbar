@@ -305,7 +305,7 @@ const AddressChecker = ({ address, onZoneFound, onZoneNotFound }) => {
           balloonContent: `
             <div>
               <h3>Tom Yang Bar</h3>
-              <p>ул. Чапаева, 89</p>
+              <p>г. Саратов, ул. Чапаева, д. 89</p>
               <p>Саратов</p>
               <p>+7 (927) 112-65-00</p>
             </div>

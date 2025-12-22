@@ -13,7 +13,7 @@ const QuickActions = () => {
     {
       icon: <MapPin className="w-5 h-5" />,
       title: 'Найти нас',
-      description: 'г. Москва, ул. Примерная, 123',
+      description: 'г. Саратов, ул. Чапаева, д. 89',
       action: () => window.open('https://maps.google.com'),
       color: 'bg-blue-500 hover:bg-blue-600'
     },

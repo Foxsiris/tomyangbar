@@ -319,6 +319,16 @@ class ApiClient {
     return this.get('/api/admin/orders');
   }
 
+  // Получение ВСЕХ блюд для админа (включая неактивные)
+  async getAdminDishes() {
+    return this.get('/api/admin/menu/dishes');
+  }
+
+  // Получение ВСЕХ категорий для админа (включая неактивные)
+  async getAdminCategories() {
+    return this.get('/api/admin/menu/categories');
+  }
+
   async updateDish(dishId, updates) {
     return this.put(`/api/admin/menu/dishes/${dishId}`, updates);
   }

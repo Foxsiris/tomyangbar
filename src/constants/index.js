@@ -2,7 +2,7 @@ export const RESTAURANT_INFO = {
   name: 'Tom Yang Bar',
   phone: '+7 (927) 112-65-00',
   email: 'info@tomyangbar.ru',
-  address: 'г. Саратов, ул. Чапаева, 89',
+  address: 'г. Саратов, ул. Чапаева, д. 89',
   workingHours: 'Пн-Вс: 11:00 - 23:00',
   deliveryHours: '11:00 - 22:00',
 };
