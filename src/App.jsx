@@ -7,6 +7,7 @@ import Footer from './components/Footer';
 import CartSidePanel from './components/CartSidePanel';
 import CartNotification from './components/CartNotification';
 import FloatingCart from './components/FloatingCart';
+import TelegramPopup from './components/TelegramPopup';
 import Home from './pages/Home';
 import Menu from './pages/Menu';
 import About from './pages/About';
@@ -51,6 +52,7 @@ function App() {
             <CartSidePanel />
             <CartNotification />
             <FloatingCart />
+            <TelegramPopup />
           </div>
         </Router>
       </CartProvider>

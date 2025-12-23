@@ -141,20 +141,20 @@ const DishDetailModal = ({ dish, isOpen, onClose }) => {
                     </div>
                   )}
                   {dish.proteins && (
-                    <div className="text-center bg-blue-50 rounded-lg p-3">
-                      <div className="font-semibold text-blue-600 text-lg">{dish.proteins}г</div>
+                    <div className="text-center bg-gray-50 rounded-lg p-3">
+                      <div className="font-semibold text-gray-900 text-lg">{dish.proteins}г</div>
                       <div className="text-gray-500 text-sm">белки</div>
                     </div>
                   )}
                   {dish.fats && (
-                    <div className="text-center bg-yellow-50 rounded-lg p-3">
-                      <div className="font-semibold text-yellow-600 text-lg">{dish.fats}г</div>
+                    <div className="text-center bg-gray-50 rounded-lg p-3">
+                      <div className="font-semibold text-gray-900 text-lg">{dish.fats}г</div>
                       <div className="text-gray-500 text-sm">жиры</div>
                     </div>
                   )}
                   {dish.carbs && (
-                    <div className="text-center bg-green-50 rounded-lg p-3">
-                      <div className="font-semibold text-green-600 text-lg">{dish.carbs}г</div>
+                    <div className="text-center bg-gray-50 rounded-lg p-3">
+                      <div className="font-semibold text-gray-900 text-lg">{dish.carbs}г</div>
                       <div className="text-gray-500 text-sm">углеводы</div>
                     </div>
                   )}

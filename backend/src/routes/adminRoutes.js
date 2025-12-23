@@ -276,6 +276,7 @@ router.post('/menu/categories', async (req, res) => {
       id: categoryId,
       name: categoryData.name,
       description: categoryData.description || null,
+      image_url: categoryData.image_url || null,
       sort_order: sortOrder,
       is_active: categoryData.is_active !== undefined ? categoryData.is_active : true,
       created_at: new Date().toISOString(),

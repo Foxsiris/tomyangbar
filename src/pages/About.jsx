@@ -1,7 +1,50 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, MapPin, Phone, Mail, Star } from 'lucide-react';
+import { Clock, MapPin, Phone, Mail, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const About = () => {
+  // Массив изображений для слайдера (те же что на главной)
+  const heroImages = [
+    '/main_phone.jpg',
+    '/mainPhone2.jpg',
+    '/mainPhone3.jpg',
+    '/mainPhone5.jpg'
+  ];
+
+  // Храним индексы трех видимых фотографий
+  const [visibleIndices, setVisibleIndices] = useState([0, 1, 2]);
+
+  // Функции для переключения слайдов (меняем только одну фотографию)
+  const goToPrevious = () => {
+    setVisibleIndices((prev) => {
+      const newIndices = [...prev];
+      // Сдвигаем влево: первая фотография уходит, добавляем новую слева
+      newIndices[0] = newIndices[1];
+      newIndices[1] = newIndices[2];
+      newIndices[2] = (newIndices[2] - 1 + heroImages.length) % heroImages.length;
+      return newIndices;
+    });
+  };
+
+  const goToNext = () => {
+    setVisibleIndices((prev) => {
+      const newIndices = [...prev];
+      // Сдвигаем вправо: последняя фотография уходит, добавляем новую справа
+      newIndices[2] = newIndices[1];
+      newIndices[1] = newIndices[0];
+      newIndices[0] = (newIndices[0] + 1) % heroImages.length;
+      return newIndices;
+    });
+  };
+
+  // Получаем 3 видимых изображения
+  const getVisibleImages = () => {
+    return visibleIndices.map((index) => ({
+      src: heroImages[index],
+      index
+    }));
+  };
+
   const stats = [
     { number: '2+', label: 'Лет опыта' },
     { number: '1000+', label: 'Довольных клиентов' },
@@ -26,33 +69,97 @@ const About = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <section className="relative h-96 flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/50 z-10"></div>
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')"
-          }}
-        ></div>
+      {/* Hero Section with 3 Images */}
+      <section className="relative h-[600px] overflow-hidden bg-white">
+        {/* Three Images Grid with Gaps */}
+        <div className="absolute inset-0 flex gap-4 px-4 py-4">
+          {getVisibleImages().map((item, idx) => (
+            <motion.div
+              key={`${item.index}-${idx}`}
+              initial={{ opacity: 0, x: idx === 0 ? -30 : idx === 2 ? 30 : 0, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ 
+                duration: 0.8, 
+                ease: [0.25, 0.1, 0.25, 1],
+                opacity: { duration: 0.6 },
+                scale: { duration: 0.8 }
+              }}
+              className="flex-1 h-full rounded-lg overflow-hidden shadow-xl"
+            >
+              <div
+                className="w-full h-full bg-cover bg-center"
+                style={{ backgroundImage: `url('${item.src}')` }}
+              />
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Navigation Arrows */}
+        <button
+          onClick={goToPrevious}
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-3 bg-gray-800/80 hover:bg-gray-900/90 rounded-full transition-all duration-300 backdrop-blur-sm shadow-lg"
+          aria-label="Предыдущее изображение"
+        >
+          <ChevronLeft className="w-8 h-8 text-white" />
+        </button>
+        <button
+          onClick={goToNext}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-3 bg-gray-800/80 hover:bg-gray-900/90 rounded-full transition-all duration-300 backdrop-blur-sm shadow-lg"
+          aria-label="Следующее изображение"
+        >
+          <ChevronRight className="w-8 h-8 text-white" />
+        </button>
+
+        {/* Slider Indicators */}
+        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex gap-2">
+          {heroImages.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => {
+                // Устанавливаем среднюю фотографию на выбранный индекс
+                const middleIndex = visibleIndices[1];
+                const diff = index - middleIndex;
+                if (diff !== 0) {
+                  setVisibleIndices((prev) => {
+                    const newIndices = [...prev];
+                    newIndices[0] = (index - 1 + heroImages.length) % heroImages.length;
+                    newIndices[1] = index;
+                    newIndices[2] = (index + 1) % heroImages.length;
+                    return newIndices;
+                  });
+                }
+              }}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                index === visibleIndices[1]
+                  ? 'w-8 bg-gray-800'
+                  : 'w-2 bg-gray-400 hover:bg-gray-600'
+              }`}
+              aria-label={`Перейти к слайду ${index + 1}`}
+            />
+          ))}
+        </div>
         
-        <div className="relative z-20 text-center text-white">
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-4xl md:text-6xl font-bold mb-4 font-serif"
-          >
-            О нас
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-xl text-gray-200"
-          >
-            История нашего ресторана
-          </motion.p>
+        {/* Text Content */}
+        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+          <div className="text-center">
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="text-4xl md:text-6xl font-bold mb-4 font-serif text-white"
+            >
+              О нас
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-xl text-white"
+            >
+              История нашего ресторана
+            </motion.p>
+          </div>
         </div>
       </section>
 

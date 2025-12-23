@@ -63,19 +63,19 @@ const PopularDishCard = ({ dish, index = 0 }) => {
               )}
               {dish.proteins && (
                 <div className="text-center">
-                  <div className="font-semibold text-blue-600">{dish.proteins}г</div>
+                  <div className="font-semibold text-gray-900">{dish.proteins}г</div>
                   <div className="text-gray-500">белки</div>
                 </div>
               )}
               {dish.fats && (
                 <div className="text-center">
-                  <div className="font-semibold text-yellow-600">{dish.fats}г</div>
+                  <div className="font-semibold text-gray-900">{dish.fats}г</div>
                   <div className="text-gray-500">жиры</div>
                 </div>
               )}
               {dish.carbs && (
                 <div className="text-center">
-                  <div className="font-semibold text-green-600">{dish.carbs}г</div>
+                  <div className="font-semibold text-gray-900">{dish.carbs}г</div>
                   <div className="text-gray-500">углеводы</div>
                 </div>
               )}

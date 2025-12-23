@@ -148,6 +148,10 @@ const Home = () => {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
+            <Link to="/about" className="btn-secondary inline-flex items-center">
+              О нас
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Link>
             <Link to="/menu" className="btn-primary inline-flex items-center">
               Смотреть меню
               <ArrowRight className="ml-2 w-5 h-5" />
@@ -275,11 +279,8 @@ const Home = () => {
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Специальные предложения
+              Акции и спец предложения
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Выгодные условия для наших клиентов
-            </p>
           </motion.div>
           
           <SpecialOffers />

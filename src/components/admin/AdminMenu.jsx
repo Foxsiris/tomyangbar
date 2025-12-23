@@ -42,10 +42,13 @@ const AdminMenu = () => {
     name: '',
     description: '',
     sort_order: 0,
-    is_active: true
+    is_active: true,
+    image_url: ''
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [categoryImageFile, setCategoryImageFile] = useState(null);
+  const [categoryImagePreview, setCategoryImagePreview] = useState(null);
 
   // Управление скроллом при открытии/закрытии модальных окон
   useEffect(() => {
@@ -262,13 +265,33 @@ const AdminMenu = () => {
       name: '',
       description: '',
       sort_order: 0,
-      is_active: true
+      is_active: true,
+      image_url: ''
     });
+    setCategoryImageFile(null);
+    setCategoryImagePreview(null);
   };
 
   const handleAddCategory = async () => {
     try {
-      const newCategory = await MenuService.createCategory(categoryFormData);
+      let imageUrl = categoryFormData.image_url;
+      
+      // Если загружено новое изображение, загружаем его
+      if (categoryImageFile) {
+        try {
+          imageUrl = await uploadImage(categoryImageFile);
+          console.log('Category image uploaded successfully:', imageUrl);
+        } catch (uploadError) {
+          console.error('Error uploading category image:', uploadError);
+          alert(`Ошибка при загрузке изображения: ${uploadError.message || 'Неизвестная ошибка'}`);
+          return;
+        }
+      }
+      
+      const newCategory = await MenuService.createCategory({
+        ...categoryFormData,
+        image_url: imageUrl || null
+      });
       console.log('Category created:', newCategory);
       
       // Проверяем, что ID присутствует
@@ -276,7 +299,7 @@ const AdminMenu = () => {
         console.error('Category created without ID:', newCategory);
         alert('Категория создана, но ID не был получен. Пожалуйста, перезагрузите страницу.');
         // Перезагружаем категории
-        const categoriesData = await MenuService.getCategories();
+        const categoriesData = await MenuService.getAdminCategories();
         setCategories(categoriesData);
         setShowCategoryModal(false);
         resetCategoryForm();
@@ -298,7 +321,24 @@ const AdminMenu = () => {
 
   const handleEditCategory = async () => {
     try {
-      const updatedCategory = await MenuService.updateCategory(editingCategory.id, categoryFormData);
+      let imageUrl = categoryFormData.image_url;
+      
+      // Если загружено новое изображение, загружаем его
+      if (categoryImageFile) {
+        try {
+          imageUrl = await uploadImage(categoryImageFile);
+          console.log('Category image uploaded successfully:', imageUrl);
+        } catch (uploadError) {
+          console.error('Error uploading category image:', uploadError);
+          alert(`Ошибка при загрузке изображения: ${uploadError.message || 'Неизвестная ошибка'}`);
+          return;
+        }
+      }
+      
+      const updatedCategory = await MenuService.updateCategory(editingCategory.id, {
+        ...categoryFormData,
+        image_url: imageUrl || null
+      });
       setCategories(categories.map(cat => 
         cat.id === editingCategory.id ? updatedCategory : cat
       ).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)));
@@ -347,9 +387,24 @@ const AdminMenu = () => {
       name: category.name,
       description: category.description || '',
       sort_order: category.sort_order || 0,
-      is_active: category.is_active !== undefined ? category.is_active : true
+      is_active: category.is_active !== undefined ? category.is_active : true,
+      image_url: category.image_url || ''
     });
+    setCategoryImagePreview(category.image_url || null);
+    setCategoryImageFile(null);
     setShowCategoryModal(true);
+  };
+
+  const handleCategoryImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setCategoryImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setCategoryImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleImageChange = (e) => {
@@ -1021,6 +1076,47 @@ const AdminMenu = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="Описание категории"
                     />
+                  </div>
+
+                  {/* Image Upload */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Изображение категории
+                    </label>
+                    <div className="space-y-3">
+                      {/* Image Preview */}
+                      {categoryImagePreview && (
+                        <div className="relative inline-block">
+                          <img
+                            src={categoryImagePreview}
+                            alt="Preview"
+                            className="w-32 h-24 object-cover rounded-lg border border-gray-300"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCategoryImagePreview(null);
+                              setCategoryImageFile(null);
+                              setCategoryFormData({...categoryFormData, image_url: ''});
+                            }}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
+                      
+                      {/* File Input */}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleCategoryImageChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                      />
+                      <p className="text-xs text-gray-500">
+                        Рекомендуемый размер: 400x300 пикселей
+                      </p>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
