@@ -12,6 +12,8 @@ const adminRoutes = require('./routes/adminRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const iikoRoutes = require('./routes/iikoRoutes');
+const vacancyRoutes = require('./routes/vacancyRoutes');
+const newsRoutes = require('./routes/newsRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -50,7 +52,7 @@ const corsOptions = {
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 
@@ -112,6 +114,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/iiko', iikoRoutes);
+app.use('/api/vacancies', vacancyRoutes);
+app.use('/api/news', newsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

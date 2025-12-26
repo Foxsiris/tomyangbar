@@ -356,6 +356,51 @@ class ApiClient {
     return this.delete(`/api/admin/menu/categories/${categoryId}`);
   }
 
+  // Методы для работы с вакансиями
+  async submitVacancy(vacancyData) {
+    return this.post('/api/vacancies', vacancyData);
+  }
+
+  async getVacancies(status = null) {
+    const endpoint = status ? `/api/vacancies?status=${status}` : '/api/vacancies';
+    return this.get(endpoint);
+  }
+
+  async updateVacancyStatus(vacancyId, status, notes = '') {
+    return this.request(`/api/vacancies/${vacancyId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, notes })
+    });
+  }
+
+  // Методы для работы с новостями
+  async getNews(type = null, limit = null) {
+    let endpoint = '/api/news';
+    const params = [];
+    if (type) params.push(`type=${type}`);
+    if (limit) params.push(`limit=${limit}`);
+    if (params.length > 0) endpoint += '?' + params.join('&');
+    return this.get(endpoint);
+  }
+
+  async getAllNews(type = null) {
+    let endpoint = '/api/news/admin/all';
+    if (type) endpoint += `?type=${type}`;
+    return this.get(endpoint);
+  }
+
+  async createNews(newsData) {
+    return this.post('/api/news', newsData);
+  }
+
+  async updateNews(newsId, updates) {
+    return this.put(`/api/news/${newsId}`, updates);
+  }
+
+  async deleteNews(newsId) {
+    return this.delete(`/api/news/${newsId}`);
+  }
+
   // Методы для работы с корзиной
   async getOrCreateCart(sessionId = null) {
     return this.post('/api/cart/get-or-create', { sessionId });

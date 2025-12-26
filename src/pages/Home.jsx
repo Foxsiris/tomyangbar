@@ -10,6 +10,7 @@ import QuickActions from '../components/QuickActions';
 import SpecialOffers from '../components/SpecialOffers';
 import RestaurantStats from '../components/RestaurantStats';
 import DishGallery from '../components/DishGallery';
+import NewsBlock from '../components/NewsBlock';
 
 const Home = () => {
   const { getPopularDishes, isLoading } = useMenu();
@@ -163,6 +164,9 @@ const Home = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* News Block Section */}
+      <NewsBlock />
 
       {/* Features Section */}
       <section className="section-padding bg-white">

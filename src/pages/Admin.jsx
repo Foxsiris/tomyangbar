@@ -12,13 +12,16 @@ import {
   Mail,
   Lock,
   Eye,
-  EyeOff
+  EyeOff,
+  Sparkles
 } from 'lucide-react';
 import AdminDashboard from '../components/admin/AdminDashboard';
 import AdminMenu from '../components/admin/AdminMenu';
 import AdminOrders from '../components/admin/AdminOrders';
 import AdminStats from '../components/admin/AdminStats';
 import AdminSettings from '../components/admin/AdminSettings';
+import AdminVacancies from '../components/admin/AdminVacancies';
+import AdminNews from '../components/admin/AdminNews';
 import { UserService } from '../services/userService';
 import { apiClient } from '../services/apiClient';
 
@@ -37,6 +40,8 @@ const Admin = () => {
     { id: 'dashboard', label: 'Панель управления', icon: Home, kanji: 'ダッシュボード' },
     { id: 'menu', label: 'Управление меню', icon: Package, kanji: 'メニュー管理' },
     { id: 'orders', label: 'Заказы', icon: ShoppingCart, kanji: '注文' },
+    { id: 'vacancies', label: 'Вакансии', icon: Mail, kanji: '求人' },
+    { id: 'news', label: 'Новости', icon: Sparkles, kanji: 'ニュース' },
     { id: 'stats', label: 'Статистика', icon: BarChart3, kanji: '統計' },
     { id: 'settings', label: 'Настройки', icon: Settings, kanji: '設定' }
   ];
@@ -93,6 +98,10 @@ const Admin = () => {
         return <AdminMenu />;
       case 'orders':
         return <AdminOrders />;
+      case 'vacancies':
+        return <AdminVacancies />;
+      case 'news':
+        return <AdminNews />;
       case 'stats':
         return <AdminStats />;
       case 'settings':
