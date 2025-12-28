@@ -1,20 +1,12 @@
 // Конфигурация для YooKassa (бывший Яндекс.Касса)
 
-// ВНИМАНИЕ: В продакшене эти данные должны быть на сервере!
-// Для демонстрации используем тестовые данные
-
 export const PAYMENT_CONFIG = {
-  // Тестовые данные для демонстрации
-  // В реальном проекте shopId и secretKey должны быть на сервере
-  shopId: '1158814', // Замените на ваш реальный shopId
-  secretKey: 'test_oa3ugm0nFNCbbN-fIuWXtY_GiLVkLL5DgCbyZSwNVA8', // Замените на ваш реальный secretKey
+  // Продакшн данные YooKassa
+  shopId: '328740',
+  secretKey: 'live_s0PMrd9HNq2B09Qy22PCbkl3w6zDQCENcJuEYF-rYTk',
   
-  // Настройки для тестового режима
-  isTestMode: true,
-  
-  // ВАЖНО: В тестовом режиме YooKassa доступны не все методы оплаты
-  // Доступны: банковские карты, ЮMoney
-  // НЕ доступны: СБП, SberPay, QIWI, WebMoney (требуют активации в продакшене)
+  // Продакшн режим
+  isTestMode: false,
   
   // Валюта
   currency: 'RUB',
@@ -45,39 +37,39 @@ export const PAYMENT_CONFIG = {
       availableInTest: true // Доступно в тестовом режиме
     },
     qiwi: {
-      enabled: false, // Отключено в тестовом режиме
+      enabled: true, // Включено в продакшене
       name: 'QIWI',
-      description: 'Оплата через QIWI (только в продакшене)',
+      description: 'Оплата через QIWI',
       availableInTest: false
     },
     webmoney: {
-      enabled: false, // Отключено в тестовом режиме
+      enabled: true, // Включено в продакшене
       name: 'WebMoney',
-      description: 'Оплата через WebMoney (только в продакшене)',
+      description: 'Оплата через WebMoney',
       availableInTest: false
     },
     alfabank: {
-      enabled: false, // Отключено в тестовом режиме
+      enabled: true, // Включено в продакшене
       name: 'Альфа-Клик',
-      description: 'Оплата через Альфа-Клик (только в продакшене)',
+      description: 'Оплата через Альфа-Клик',
       availableInTest: false
     },
     sberbank: {
-      enabled: false, // Отключено в тестовом режиме
+      enabled: true, // Включено в продакшене
       name: 'Сбербанк Онлайн',
-      description: 'Оплата через Сбербанк Онлайн (только в продакшене)',
+      description: 'Оплата через Сбербанк Онлайн',
       availableInTest: false
     },
     sbp: {
-      enabled: false, // Отключено в тестовом режиме
+      enabled: true, // Включено в продакшене
       name: 'СБП (Система быстрых платежей)',
-      description: 'Оплата через СБП (только в продакшене)',
+      description: 'Оплата через СБП',
       availableInTest: false
     },
     sberpay: {
-      enabled: false, // Отключено в тестовом режиме
+      enabled: true, // Включено в продакшене
       name: 'SberPay',
-      description: 'Оплата через SberPay (только в продакшене)',
+      description: 'Оплата через SberPay',
       availableInTest: false
     }
   }
@@ -137,7 +129,15 @@ export const createPayment = async (orderData) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        // Если не удалось распарсить JSON, используем текст ответа
+        const text = await response.text();
+        throw new Error(`Ошибка сервера (${response.status}): ${text || 'Неизвестная ошибка'}`);
+      }
+      
       console.error('Payment API Error:', errorData);
       
       // Специальная обработка для недоступных методов оплаты
@@ -148,8 +148,123 @@ export const createPayment = async (orderData) => {
       throw new Error(`Ошибка создания платежа: ${errorData.details || errorData.error || 'Неизвестная ошибка'}`);
     }
 
-    const result = await response.json();
-    console.log('Payment Created:', result.payment);
+    let result;
+    try {
+      result = await response.json();
+    } catch (parseError) {
+      const text = await response.text();
+      console.error('Failed to parse JSON response:', text);
+      throw new Error(`Ошибка парсинга ответа сервера: ${text}`);
+    }
+    
+    console.log('Payment API Response (full):', JSON.stringify(result, null, 2));
+    console.log('Response type check:', {
+      isObject: typeof result === 'object',
+      hasSuccess: 'success' in result,
+      successValue: result?.success,
+      hasPayment: 'payment' in result,
+      hasError: 'error' in result
+    });
+    
+    // Проверяем структуру ответа
+    if (!result) {
+      console.error('Empty response from API');
+      throw new Error('Пустой ответ от сервера');
+    }
+    
+    // Если ответ содержит ошибку
+    if (result.error && result.success !== true) {
+      console.error('API returned error:', result);
+      throw new Error(result.details || result.error || 'Ошибка создания платежа');
+    }
+    
+    // Если success явно false
+    if (result.success === false) {
+      console.error('API returned success: false:', result);
+      throw new Error(result.details || result.error || 'Ошибка создания платежа');
+    }
+    
+    // Если success === true, продолжаем обработку
+    if (result.success === true) {
+      console.log('API returned success: true, processing payment data...');
+    }
+    
+    // Проверяем наличие payment в ответе
+    // Если payment нет, но success true - это странно, но попробуем обработать
+    if (!result.payment) {
+      console.warn('⚠️ Payment data missing in response, but success is true');
+      console.warn('Full response structure:', JSON.stringify(result, null, 2));
+      console.warn('Response keys:', Object.keys(result));
+      
+      // Если есть данные напрямую в result (не в result.payment)
+      if (result.id) {
+        console.log('✅ Found payment data directly in result, wrapping it');
+        const wrappedPayment = {
+          id: result.id,
+          status: result.status,
+          amount: result.amount,
+          confirmation: result.confirmation || { confirmation_url: result.confirmation_url },
+          created_at: result.created_at
+        };
+        console.log('Wrapped payment:', JSON.stringify(wrappedPayment, null, 2));
+        return wrappedPayment;
+      }
+      
+      // Если success true, но нет payment - это ошибка
+      console.error('❌ Success is true but no payment data found');
+      throw new Error(result.details || result.error || 'Данные платежа отсутствуют в ответе сервера');
+    }
+    
+    console.log('✅ Payment data found in response.payment');
+    
+    // Проверяем наличие обязательных полей
+    if (!result.payment.id) {
+      console.error('Payment ID missing:', result.payment);
+      throw new Error('ID платежа отсутствует в ответе');
+    }
+    
+    // Проверяем confirmation URL в разных возможных местах
+    const confirmationUrl = result.payment.confirmation?.confirmation_url || 
+                           result.payment.confirmation?.redirect_url ||
+                           result.payment.confirmation_url ||
+                           result.payment.redirect_url ||
+                           result.confirmation?.confirmation_url;
+    
+    console.log('🔍 Looking for confirmation URL:', {
+      'result.payment.confirmation?.confirmation_url': result.payment.confirmation?.confirmation_url,
+      'result.payment.confirmation_url': result.payment.confirmation_url,
+      'result.confirmation?.confirmation_url': result.confirmation?.confirmation_url,
+      'found': confirmationUrl
+    });
+    
+    if (!confirmationUrl) {
+      console.error('❌ Confirmation URL missing. Payment object:', JSON.stringify(result.payment, null, 2));
+      console.error('Payment confirmation object:', result.payment.confirmation);
+      throw new Error('URL для оплаты отсутствует в ответе');
+    }
+    
+    // Убеждаемся, что confirmation объект существует и содержит URL
+    if (!result.payment.confirmation) {
+      console.log('Creating confirmation object');
+      result.payment.confirmation = {
+        type: 'redirect',
+        confirmation_url: confirmationUrl
+      };
+    } else if (!result.payment.confirmation.confirmation_url) {
+      console.log('Adding confirmation_url to existing confirmation object');
+      result.payment.confirmation.confirmation_url = confirmationUrl;
+      if (!result.payment.confirmation.type) {
+        result.payment.confirmation.type = 'redirect';
+      }
+    }
+    
+    console.log('✅ Payment Created successfully:', {
+      id: result.payment.id,
+      status: result.payment.status,
+      confirmationUrl: result.payment.confirmation.confirmation_url,
+      fullConfirmation: result.payment.confirmation
+    });
+    
     return result.payment;
     
   } catch (error) {

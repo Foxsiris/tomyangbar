@@ -24,8 +24,8 @@ export default async function handler(req, res) {
 
     // Конфигурация YooKassa
     const PAYMENT_CONFIG = {
-      shopId: '1158814',
-      secretKey: 'test_oa3ugm0nFNCbbN-fIuWXtY_GiLVkLL5DgCbyZSwNVA8'
+      shopId: '328740',
+      secretKey: 'live_s0PMrd9HNq2B09Qy22PCbkl3w6zDQCENcJuEYF-rYTk'
     };
 
     // Проверка статуса платежа в YooKassa

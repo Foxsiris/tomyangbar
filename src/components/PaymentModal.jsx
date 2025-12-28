@@ -32,23 +32,62 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
       setPaymentStatus('processing');
       setErrorMessage('');
 
+      console.log('Creating payment with orderData:', orderData);
       const payment = await createPayment(orderData);
+      
+      console.log('Payment received in modal (full object):', JSON.stringify(payment, null, 2));
+      
+      // Проверяем, что payment существует
+      if (!payment) {
+        console.error('Payment is null or undefined');
+        throw new Error('Не получен ответ от сервера платежей');
+      }
+      
+      // Проверяем наличие ID
+      if (!payment.id) {
+        console.error('Payment response without ID:', payment);
+        throw new Error('Некорректный ответ от сервера платежей: отсутствует ID платежа');
+      }
+      
       setPaymentId(payment.id);
 
+      // Ищем confirmation URL в разных возможных местах
+      const confirmationUrl = payment.confirmation?.confirmation_url || 
+                             payment.confirmation_url ||
+                             payment.confirmation?.redirect_url ||
+                             payment.redirect_url;
+
+      console.log('Looking for confirmation URL:', {
+        'payment.confirmation?.confirmation_url': payment.confirmation?.confirmation_url,
+        'payment.confirmation_url': payment.confirmation_url,
+        'found': confirmationUrl
+      });
+
       // Проверяем, есть ли URL для редиректа
-      if (payment.confirmation && payment.confirmation.confirmation_url) {
-        // Реальный редирект на страницу оплаты YooKassa
-        window.location.href = payment.confirmation.confirmation_url;
-      } else {
-        // Если нет URL, симулируем процесс (для демонстрации)
+      if (confirmationUrl) {
+        console.log('Redirecting to payment page:', confirmationUrl);
+        
+        // Небольшая задержка для показа статуса "обработка"
         setTimeout(() => {
-          simulatePaymentProcess(payment.id);
-        }, 2000);
+          try {
+            // Реальный редирект на страницу оплаты YooKassa
+            window.location.href = confirmationUrl;
+          } catch (redirectError) {
+            console.error('Redirect error:', redirectError);
+            // Если window.location.href не сработал, пробуем replace
+            window.location.replace(confirmationUrl);
+          }
+        }, 500);
+      } else {
+        console.error('No confirmation URL found. Payment object:', JSON.stringify(payment, null, 2));
+        throw new Error('URL для оплаты не получен от сервера. Пожалуйста, попробуйте еще раз.');
       }
 
     } catch (error) {
+      console.error('Payment creation error in modal:', error);
+      console.error('Error stack:', error.stack);
       setPaymentStatus('error');
-      setErrorMessage(error.message);
+      setErrorMessage(error.message || 'Произошла ошибка при создании платежа');
       onPaymentError?.(error);
     }
   };
@@ -216,11 +255,7 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
             <div className="bg-blue-50 rounded-lg p-4 mb-6">
               <h4 className="font-semibold text-blue-900 mb-2">Умный платеж YooKassa</h4>
               <p className="text-sm text-blue-800">
-                На странице оплаты вы сможете выбрать удобный способ: банковскую карту, ЮMoney.
-                <br />
-                <span className="text-xs text-gray-600">
-                  СБП и другие методы доступны только в продакшене после активации в YooKassa.
-                </span>
+                На странице оплаты вы сможете выбрать удобный способ: банковскую карту, СБП, ЮMoney, SberPay и другие доступные методы оплаты.
               </p>
             </div>
 
