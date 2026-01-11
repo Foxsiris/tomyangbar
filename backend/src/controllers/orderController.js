@@ -1,5 +1,16 @@
 const supabase = require('../config/supabase');
 const iikoService = require('../services/iikoService');
+const { LOYALTY_CONFIG, calculateLoyaltyLevel, getCashbackPercent } = require('./userController');
+
+// Хелпер для получения total_spent пользователя
+const getUserTotalSpent = async (userId) => {
+  const { data } = await supabase
+    .from('users')
+    .select('total_spent')
+    .eq('id', userId)
+    .single();
+  return data?.total_spent || 0;
+};
 
 // Создание заказа
 const createOrder = async (req, res) => {
@@ -14,22 +25,43 @@ const createOrder = async (req, res) => {
       deliveryType,
       deliveryTime,
       paymentMethod,
-      notes
+      notes,
+      bonusesToUse = 0 // Количество бонусов для списания
     } = req.body;
 
     let userId = req.user ? req.user.userId : null;
+    let userBonusBalance = 0;
+    let userLoyaltyLevel = 'bronze';
+    let actualBonusesToUse = 0;
 
     // Проверяем, существует ли пользователь в таблице users (для foreign key)
     if (userId) {
       const { data: existingUser } = await supabase
         .from('users')
-        .select('id')
+        .select('id, bonus_balance, loyalty_level, total_spent')
         .eq('id', userId)
         .single();
       
       if (!existingUser) {
         console.log('User not found in users table, setting userId to null:', userId);
-        userId = null; // Пользователь не найден в таблице users, создаём заказ без привязки
+        userId = null;
+      } else {
+        userBonusBalance = existingUser.bonus_balance || 0;
+        userLoyaltyLevel = existingUser.loyalty_level || 'bronze';
+        
+        // Проверяем, сколько бонусов можно использовать
+        // Максимум - 100% от суммы заказа или весь баланс
+        const maxBonusesToUse = Math.min(userBonusBalance, Math.floor(total));
+        actualBonusesToUse = Math.min(bonusesToUse, maxBonusesToUse);
+        
+        if (actualBonusesToUse < 0) actualBonusesToUse = 0;
+        
+        console.log('💰 Бонусы:', {
+          запрошено: bonusesToUse,
+          доступно: userBonusBalance,
+          максимум: maxBonusesToUse,
+          будетСписано: actualBonusesToUse
+        });
       }
     }
 
@@ -61,6 +93,16 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ error: 'Неполные данные заказа' });
     }
 
+    // Рассчитываем итоговую сумму с учетом бонусов
+    const deliveryFee = deliveryType === 'delivery' ? 200 : 0;
+    const subtotal = total + deliveryFee;
+    const finalTotal = subtotal - actualBonusesToUse;
+    
+    // Рассчитываем бонусы за заказ (только для авторизованных пользователей)
+    // Бонусы начисляются от суммы БЕЗ использованных бонусов
+    const cashbackPercent = getCashbackPercent(userLoyaltyLevel);
+    const bonusesToEarn = userId ? Math.floor((total - actualBonusesToUse) * cashbackPercent / 100) : 0;
+
     // Создаем заказ
     const { data: newOrder, error: orderError } = await supabase
       .from('orders')
@@ -71,8 +113,10 @@ const createOrder = async (req, res) => {
           email,
           address: address,
           total: total,
-          delivery_fee: deliveryType === 'delivery' ? 200 : 0,
-          final_total: total + (deliveryType === 'delivery' ? 200 : 0),
+          delivery_fee: deliveryFee,
+          final_total: finalTotal,
+          bonuses_used: actualBonusesToUse,
+          bonuses_earned: bonusesToEarn,
           status: 'pending',
           delivery_type: deliveryType,
           delivery_time: deliveryTime,
@@ -83,7 +127,7 @@ const createOrder = async (req, res) => {
           created_at: new Date().toISOString()
         }
       ])
-      .select('id, order_number, customer_name, status, final_total, created_at')
+      .select('id, order_number, customer_name, status, final_total, bonuses_used, bonuses_earned, created_at')
       .single();
 
     if (orderError) {
@@ -193,6 +237,72 @@ const createOrder = async (req, res) => {
       return res.status(500).json({ error: 'Ошибка при создании элементов заказа' });
     }
 
+    // === Обработка бонусов ===
+    if (userId) {
+      const newBonusBalance = userBonusBalance - actualBonusesToUse + bonusesToEarn;
+      const newTotalSpent = (parseFloat(await getUserTotalSpent(userId)) || 0) + (total - actualBonusesToUse);
+      const newLoyaltyLevel = calculateLoyaltyLevel(newTotalSpent);
+
+      // Обновляем баланс пользователя
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          bonus_balance: newBonusBalance,
+          total_spent: newTotalSpent,
+          loyalty_level: newLoyaltyLevel,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('Error updating user bonuses:', updateError);
+      } else {
+        // Записываем транзакции бонусов
+        const transactions = [];
+        
+        // Списание бонусов
+        if (actualBonusesToUse > 0) {
+          transactions.push({
+            user_id: userId,
+            order_id: newOrder.id,
+            amount: -actualBonusesToUse,
+            type: 'order_payment',
+            description: `Оплата заказа #${newOrder.order_number}`,
+            balance_after: userBonusBalance - actualBonusesToUse
+          });
+        }
+        
+        // Начисление бонусов
+        if (bonusesToEarn > 0) {
+          transactions.push({
+            user_id: userId,
+            order_id: newOrder.id,
+            amount: bonusesToEarn,
+            type: 'order_cashback',
+            description: `Кэшбэк ${cashbackPercent}% за заказ #${newOrder.order_number}`,
+            balance_after: newBonusBalance
+          });
+        }
+        
+        if (transactions.length > 0) {
+          await supabase.from('bonus_transactions').insert(transactions);
+        }
+
+        console.log('');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('💎 СИСТЕМА ЛОЯЛЬНОСТИ');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('👤 Пользователь:', customerName);
+        console.log('🏆 Уровень:', userLoyaltyLevel, '→', newLoyaltyLevel);
+        console.log('💰 Использовано бонусов:', actualBonusesToUse);
+        console.log('🎁 Начислено бонусов:', bonusesToEarn, `(${cashbackPercent}%)`);
+        console.log('💳 Новый баланс:', newBonusBalance);
+        console.log('📊 Общая сумма покупок:', newTotalSpent, '₽');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('');
+      }
+    }
+
     // === Отправка заказа в iiko ===
     let iikoOrderId = null;
     if (process.env.IIKO_API_LOGIN) {
@@ -256,7 +366,12 @@ const createOrder = async (req, res) => {
     res.status(201).json({
       message: 'Заказ успешно создан',
       order: newOrder,
-      iikoOrderId: iikoOrderId
+      iikoOrderId: iikoOrderId,
+      bonuses: userId ? {
+        used: actualBonusesToUse,
+        earned: bonusesToEarn,
+        newBalance: userBonusBalance - actualBonusesToUse + bonusesToEarn
+      } : null
     });
 
   } catch (error) {

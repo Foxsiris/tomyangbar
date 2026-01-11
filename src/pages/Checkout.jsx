@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Phone, Clock, Truck, Store, CreditCard, ArrowLeft, User } from 'lucide-react';
+import { MapPin, Phone, Clock, Truck, Store, CreditCard, ArrowLeft, User, Gift, Coins } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCartContext } from '../context/CartContext';
 import { useSupabaseUser } from '../context/SupabaseUserContext';
 import { OrderService } from '../services/orderService.js';
+import { UserService } from '../services/userService.js';
 import OrderSuccessModal from '../components/OrderSuccessModal';
 import AuthModal from '../components/AuthModal';
 import PaymentModal from '../components/PaymentModal';
@@ -36,6 +37,10 @@ const Checkout = () => {
   const [currentOrderData, setCurrentOrderData] = useState(null);
   const [deliveryZone, setDeliveryZone] = useState(null);
   const [isAddressValid, setIsAddressValid] = useState(false);
+  
+  // Состояние для бонусов
+  const [bonusesToUse, setBonusesToUse] = useState(0);
+  const [useBonuses, setUseBonuses] = useState(false);
 
   // Заполняем форму данными пользователя, если он авторизован
   useEffect(() => {
@@ -50,7 +55,23 @@ const Checkout = () => {
   }, [user]);
 
   const deliveryFee = formData.deliveryType === 'delivery' ? 200 : 0;
-  const finalTotalPrice = totalPrice + deliveryFee;
+  
+  // Получаем данные о бонусах пользователя
+  const userBonusBalance = user?.bonus_balance || user?.loyaltyInfo?.bonusBalance || 0;
+  const userLoyaltyLevel = user?.loyalty_level || user?.loyaltyInfo?.level || 'bronze';
+  
+  // Максимальное количество бонусов для использования (100% от суммы заказа или весь баланс)
+  const maxBonusesToUse = Math.min(userBonusBalance, Math.floor(totalPrice));
+  
+  // Корректируем bonusesToUse если он превышает максимум
+  const actualBonusesToUse = useBonuses ? Math.min(bonusesToUse, maxBonusesToUse) : 0;
+  
+  // Итоговая сумма с учетом бонусов
+  const finalTotalPrice = totalPrice + deliveryFee - actualBonusesToUse;
+  
+  // Расчет бонусов, которые будут начислены за заказ
+  const cashbackPercent = { bronze: 2, silver: 3, gold: 5 }[userLoyaltyLevel] || 2;
+  const bonusesToEarn = user ? Math.floor((totalPrice - actualBonusesToUse) * cashbackPercent / 100) : 0;
 
   // Обработчики для проверки адреса
   const handleZoneFound = (zone) => {
@@ -120,28 +141,36 @@ const Checkout = () => {
         paymentMethod: formData.paymentMethod,
         notes: formData.notes,
         items: cart,
-        total: totalPrice
+        total: totalPrice,
+        finalTotal: finalTotalPrice,
+        deliveryFee: deliveryFee,
+        bonusesToUse: actualBonusesToUse,
+        userId: user?.id || null
       };
       
-      // Добавляем заказ в систему
-      let newOrder;
-      if (user) {
-        // Если пользователь авторизован, используем addOrder (он сам вызовет addNewOrder)
-        newOrder = await addOrder(orderData);
-      } else {
-        // Если пользователь не авторизован, создаем заказ напрямую
-        newOrder = await OrderService.createOrder(orderData, null);
-      }
-      
-      // Если выбран онлайн-платеж, показываем модальное окно платежа
+      // Если выбран онлайн-платеж - НЕ создаем заказ сразу
+      // Заказ будет создан после успешной оплаты
       if (formData.paymentMethod === 'card') {
+        // Сохраняем данные заказа для создания после оплаты
+        localStorage.setItem('pending_order_data', JSON.stringify(orderData));
+        
         setCurrentOrderData({
           ...orderData,
-          orderId: newOrder.order_number || newOrder.id
+          orderId: `temp_${Date.now()}` // Временный ID для платежа
         });
         setIsPaymentModalOpen(true);
       } else {
-        // Для наличных показываем обычное окно успеха
+        // Для наличных создаем заказ сразу
+        let newOrder;
+        if (user) {
+          newOrder = await addOrder(orderData);
+          if (newOrder.bonuses) {
+            console.log('💰 Бонусы обновлены:', newOrder.bonuses);
+          }
+        } else {
+          newOrder = await OrderService.createOrder(orderData, null);
+        }
+        
         setOrderNumber(newOrder.order_number || newOrder.id);
         setShowSuccessModal(true);
       }
@@ -473,6 +502,84 @@ const Checkout = () => {
                   </div>
                 </div>
 
+                {/* Использование бонусов */}
+                {user && userBonusBalance > 0 && (
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Gift className="w-5 h-5 text-purple-600" />
+                        <span className="font-medium text-purple-900">Оплата бонусами</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={useBonuses}
+                          onChange={(e) => {
+                            setUseBonuses(e.target.checked);
+                            if (e.target.checked) {
+                              setBonusesToUse(maxBonusesToUse);
+                            } else {
+                              setBonusesToUse(0);
+                            }
+                          }}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                      </label>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-sm text-purple-800 mb-3">
+                      <span>Доступно бонусов:</span>
+                      <span className="font-bold">{userBonusBalance.toLocaleString()} ₽</span>
+                    </div>
+                    
+                    {useBonuses && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="range"
+                            min="0"
+                            max={maxBonusesToUse}
+                            value={bonusesToUse}
+                            onChange={(e) => setBonusesToUse(Number(e.target.value))}
+                            className="flex-1 h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                          />
+                          <div className="flex items-center gap-1 bg-white px-3 py-1 rounded-lg border border-purple-200">
+                            <Coins className="w-4 h-4 text-purple-500" />
+                            <input
+                              type="number"
+                              min="0"
+                              max={maxBonusesToUse}
+                              value={bonusesToUse}
+                              onChange={(e) => setBonusesToUse(Math.min(Number(e.target.value), maxBonusesToUse))}
+                              className="w-20 text-center font-bold text-purple-900 bg-transparent focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-between mt-2 text-xs text-purple-600">
+                          <span>0 ₽</span>
+                          <span>Макс: {maxBonusesToUse.toLocaleString()} ₽</span>
+                        </div>
+                        {actualBonusesToUse > 0 && (
+                          <div className="mt-3 p-2 bg-purple-100 rounded-lg text-sm text-purple-800">
+                            💰 Скидка бонусами: <strong>-{actualBonusesToUse.toLocaleString()} ₽</strong>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                    
+                    {bonusesToEarn > 0 && (
+                      <div className="mt-3 pt-3 border-t border-purple-200 text-sm text-purple-700">
+                        🎁 За этот заказ вы получите: <strong className="text-purple-900">+{bonusesToEarn} бонусов</strong> ({cashbackPercent}% кэшбэк)
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Комментарий к заказу */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -550,7 +657,7 @@ const Checkout = () => {
                 >
                   {formData.deliveryType === 'delivery' && deliveryZone && totalPrice < deliveryZone.minOrder
                     ? `Минимум ${deliveryZone.minOrder}₽ для доставки`
-                    : `Оформить заказ за ${totalPrice} ₽`
+                    : `Оформить заказ за ${finalTotalPrice} ₽`
                   }
                 </button>
               </form>
@@ -589,10 +696,25 @@ const Checkout = () => {
                   <span>Доставка:</span>
                   <span>{deliveryFee} ₽</span>
                 </div>
+                {actualBonusesToUse > 0 && (
+                  <div className="flex justify-between text-sm text-purple-600">
+                    <span className="flex items-center gap-1">
+                      <Gift className="w-4 h-4" />
+                      Оплата бонусами:
+                    </span>
+                    <span>-{actualBonusesToUse} ₽</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-lg font-semibold text-gray-900 border-t border-gray-200 pt-2">
                   <span>Итого:</span>
-                  <span>{totalPrice} ₽</span>
+                  <span>{finalTotalPrice} ₽</span>
                 </div>
+                {user && bonusesToEarn > 0 && (
+                  <div className="flex justify-between text-sm text-green-600 pt-1">
+                    <span>Вы получите бонусов:</span>
+                    <span>+{bonusesToEarn} 🎁</span>
+                  </div>
+                )}
               </div>
 
               <div className={`mt-6 p-4 rounded-lg ${

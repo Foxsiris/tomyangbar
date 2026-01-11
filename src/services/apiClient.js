@@ -233,7 +233,11 @@ class ApiClient {
 
   // Методы для работы с пользователями
   async registerUser(userData) {
-    return this.post('/api/users/register', userData);
+    const response = await this.post('/api/users/register', userData);
+    if (response.token) {
+      this.setToken(response.token);
+    }
+    return response;
   }
 
   async loginUser(credentials) {

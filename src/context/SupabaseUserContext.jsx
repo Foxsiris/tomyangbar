@@ -15,42 +15,76 @@ export const useSupabaseUser = () => {
 export const SupabaseUserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Загружаем пользователя из localStorage при инициализации
   useEffect(() => {
+    let isMounted = true;
+    
     const loadUser = async () => {
       try {
         const savedUser = localStorage.getItem('tomyangbar_user');
-        if (savedUser) {
+        const token = localStorage.getItem('tomyangbar_token');
+        
+        if (savedUser && token) {
           const userData = JSON.parse(savedUser);
-          // Проверяем, что пользователь все еще существует в БД
-          const currentUser = await UserService.findById(userData.id);
-          if (currentUser) {
-            setUser(currentUser);
-          } else {
-            // Пользователь не найден в БД, очищаем localStorage
-            localStorage.removeItem('tomyangbar_user');
+          
+          // Сначала показываем кешированные данные для быстрого UI
+          if (isMounted) {
+            setUser(userData);
+          }
+          
+          // Затем асинхронно обновляем данные из БД
+          try {
+            const currentUser = await UserService.findById(userData.id);
+            if (isMounted) {
+              if (currentUser) {
+                // Обновляем пользователя свежими данными (включая бонусы)
+                setUser(currentUser);
+              } else {
+                // Пользователь не найден в БД, очищаем
+                setUser(null);
+                localStorage.removeItem('tomyangbar_user');
+                localStorage.removeItem('tomyangbar_token');
+              }
+            }
+          } catch (fetchError) {
+            console.warn('Could not refresh user data from server:', fetchError);
+            // Оставляем кешированные данные, не очищаем
           }
         }
       } catch (error) {
         console.error('Error loading user:', error);
+        if (isMounted) {
+          setUser(null);
+        }
         localStorage.removeItem('tomyangbar_user');
+        localStorage.removeItem('tomyangbar_token');
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+          setIsInitialized(true);
+        }
       }
     };
 
     loadUser();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Сохраняем пользователя в localStorage при изменении
+  // Сохраняем пользователя в localStorage при изменении (только после инициализации)
   useEffect(() => {
+    if (!isInitialized) return;
+    
     if (user) {
       localStorage.setItem('tomyangbar_user', JSON.stringify(user));
     } else {
       localStorage.removeItem('tomyangbar_user');
     }
-  }, [user]);
+  }, [user, isInitialized]);
 
   const login = async (userData) => {
     try {
@@ -88,10 +122,26 @@ export const SupabaseUserProvider = ({ children }) => {
       const newOrder = await OrderService.createOrder(orderData, user.id);
       
       // Обновляем локальное состояние пользователя
-      setUser(prev => ({
-        ...prev,
-        orders: [newOrder, ...(prev.orders || [])]
-      }));
+      setUser(prev => {
+        const updates = {
+          ...prev,
+          orders: [newOrder, ...(prev.orders || [])]
+        };
+        
+        // Если есть информация о бонусах, обновляем баланс
+        if (newOrder.bonuses) {
+          updates.bonus_balance = newOrder.bonuses.newBalance;
+          // Также обновляем loyaltyInfo если он есть
+          if (prev.loyaltyInfo) {
+            updates.loyaltyInfo = {
+              ...prev.loyaltyInfo,
+              bonusBalance: newOrder.bonuses.newBalance
+            };
+          }
+        }
+        
+        return updates;
+      });
 
       return newOrder;
     } catch (error) {
@@ -123,20 +173,22 @@ export const SupabaseUserProvider = ({ children }) => {
     }
   };
 
+  // Получение заказов пользователя - стабильная ссылка через useCallback
   const getUserOrders = useCallback(async () => {
-    if (!user) return [];
+    if (!user?.id) return [];
 
     try {
-      const orders = await UserService.getUserOrders(user.id);
-      return orders;
+      const orders = await UserService.getUserOrders();
+      return orders || [];
     } catch (error) {
       console.error('Error getting user orders:', error);
       return [];
     }
-  }, [user]);
+  }, [user?.id]);
 
-  const getUserStats = async () => {
-    if (!user) return null;
+  // Получение статистики пользователя
+  const getUserStats = useCallback(async () => {
+    if (!user?.id) return null;
 
     try {
       const stats = await UserService.getUserStats(user.id);
@@ -145,7 +197,50 @@ export const SupabaseUserProvider = ({ children }) => {
       console.error('Error getting user stats:', error);
       return null;
     }
-  };
+  }, [user?.id]);
+
+  // Обновление данных пользователя из БД (включая бонусы)
+  const refreshUserData = useCallback(async () => {
+    if (!user?.id) return null;
+
+    try {
+      const updatedUser = await UserService.findById(user.id);
+      if (updatedUser) {
+        setUser(prev => ({
+          ...prev,
+          ...updatedUser
+        }));
+        return updatedUser;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+      return null;
+    }
+  }, [user?.id]);
+
+  // Получение информации о лояльности
+  const getLoyaltyInfo = useCallback(async () => {
+    if (!user?.id) return null;
+
+    try {
+      const loyaltyInfo = await UserService.getLoyaltyInfo();
+      // Обновляем данные пользователя с новой информацией о лояльности
+      if (loyaltyInfo) {
+        setUser(prev => ({
+          ...prev,
+          loyaltyInfo,
+          bonus_balance: loyaltyInfo.bonusBalance,
+          total_spent: loyaltyInfo.totalSpent,
+          loyalty_level: loyaltyInfo.level
+        }));
+      }
+      return loyaltyInfo;
+    } catch (error) {
+      console.error('Error getting loyalty info:', error);
+      return null;
+    }
+  }, [user?.id]);
 
   const value = {
     user,
@@ -157,6 +252,8 @@ export const SupabaseUserProvider = ({ children }) => {
     updateOrderStatus,
     getUserOrders,
     getUserStats,
+    refreshUserData,
+    getLoyaltyInfo,
     isAuthenticated: !!user
   };
 

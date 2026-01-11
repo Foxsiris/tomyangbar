@@ -298,6 +298,90 @@ router.post('/create', optionalAuth, async (req, res) => {
   }
 });
 
+// Подтверждение оплаты и обновление статуса заказа
+router.post('/confirm', optionalAuth, async (req, res) => {
+  try {
+    const { paymentId, orderId } = req.body;
+    
+    console.log('=== PAYMENT CONFIRM REQUEST ===');
+    console.log('Payment ID:', paymentId);
+    console.log('Order ID:', orderId);
+
+    if (!paymentId) {
+      return res.status(400).json({ error: 'Payment ID is required' });
+    }
+
+    // Конфигурация YooKassa
+    const PAYMENT_CONFIG = {
+      shopId: '328740',
+      secretKey: 'live_s0PMrd9HNq2B09Qy22PCbkl3w6zDQCENcJuEYF-rYTk'
+    };
+
+    // Проверяем статус платежа в YooKassa
+    const response = await fetch(`https://api.yookassa.ru/v3/payments/${paymentId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Basic ${Buffer.from(`${PAYMENT_CONFIG.shopId}:${PAYMENT_CONFIG.secretKey}`).toString('base64')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('YooKassa API Error:', errorData);
+      return res.status(400).json({ 
+        error: 'Payment verification failed',
+        details: errorData.description || 'Unknown error'
+      });
+    }
+
+    const payment = await response.json();
+    console.log('YooKassa Payment Status:', payment.status, 'Paid:', payment.paid);
+
+    // Если платеж успешен, обновляем статус заказа
+    if (payment.status === 'succeeded' && payment.paid) {
+      const supabase = require('../config/supabase');
+      
+      // Получаем orderId из metadata платежа или из запроса
+      const orderNumber = payment.metadata?.orderId || orderId;
+      
+      if (orderNumber) {
+        // Обновляем статус заказа на "pending" (принят)
+        const { error: updateError } = await supabase
+          .from('orders')
+          .update({ 
+            status: 'pending',
+            payment_status: 'paid',
+            payment_id: paymentId,
+            updated_at: new Date().toISOString()
+          })
+          .eq('order_number', parseInt(orderNumber));
+        
+        if (updateError) {
+          console.error('Error updating order status:', updateError);
+        } else {
+          console.log(`✅ Order ${orderNumber} status updated to pending (paid)`);
+        }
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      payment: {
+        id: payment.id,
+        status: payment.status,
+        paid: payment.paid,
+        amount: payment.amount,
+        created_at: payment.created_at
+      }
+    });
+
+  } catch (error) {
+    console.error('Payment confirm error:', error);
+    res.status(500).json({ error: 'Ошибка при подтверждении платежа' });
+  }
+});
+
 // Получение статуса платежа
 router.get('/status/:paymentId', optionalAuth, async (req, res) => {
   try {
@@ -353,15 +437,83 @@ router.get('/status/:paymentId', optionalAuth, async (req, res) => {
   }
 });
 
-// Уведомление о платеже (webhook)
-router.post('/notification', express.raw({ type: 'application/json' }), async (req, res) => {
+// Уведомление о платеже (webhook от YooKassa)
+router.post('/notification', express.json(), async (req, res) => {
   try {
-    // Здесь должна быть обработка webhook от платежной системы
-    console.log('Payment notification received:', req.body);
+    console.log('=== PAYMENT NOTIFICATION RECEIVED ===');
+    console.log('Body:', JSON.stringify(req.body, null, 2));
+    
+    const { event, object: payment } = req.body;
+    
+    if (!payment || !payment.id) {
+      console.log('Invalid notification - no payment object');
+      return res.json({ received: true });
+    }
+    
+    console.log('Payment event:', event);
+    console.log('Payment ID:', payment.id);
+    console.log('Payment status:', payment.status);
+    console.log('Payment metadata:', payment.metadata);
+    
+    const orderId = payment.metadata?.orderId;
+    
+    if (!orderId) {
+      console.log('No orderId in metadata');
+      return res.json({ received: true });
+    }
+    
+    // Импортируем supabase для обновления статуса заказа
+    const supabase = require('../config/supabase');
+    
+    // Обрабатываем разные события
+    if (event === 'payment.succeeded' || payment.status === 'succeeded') {
+      console.log(`✅ Payment succeeded for order ${orderId}`);
+      
+      // Обновляем статус заказа на "pending" (принят, оплачен)
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({ 
+          status: 'pending',
+          payment_status: 'paid',
+          payment_id: payment.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('order_number', parseInt(orderId));
+      
+      if (updateError) {
+        console.error('Error updating order status:', updateError);
+      } else {
+        console.log(`Order ${orderId} status updated to pending (paid)`);
+      }
+    } else if (event === 'payment.canceled' || payment.status === 'canceled') {
+      console.log(`❌ Payment canceled for order ${orderId}`);
+      
+      // Обновляем статус заказа на "cancelled"
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({ 
+          status: 'cancelled',
+          payment_status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
+        .eq('order_number', parseInt(orderId));
+      
+      if (updateError) {
+        console.error('Error updating order status:', updateError);
+      } else {
+        console.log(`Order ${orderId} status updated to cancelled`);
+      }
+    } else if (event === 'payment.waiting_for_capture') {
+      console.log(`⏳ Payment waiting for capture for order ${orderId}`);
+    }
+    
+    console.log('=== NOTIFICATION PROCESSED ===');
     res.json({ received: true });
+    
   } catch (error) {
     console.error('Payment notification error:', error);
-    res.status(500).json({ error: 'Ошибка при обработке уведомления' });
+    // Всегда возвращаем 200, чтобы YooKassa не повторяла запрос
+    res.json({ received: true, error: error.message });
   }
 });
 

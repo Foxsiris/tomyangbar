@@ -14,6 +14,7 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const iikoRoutes = require('./routes/iikoRoutes');
 const vacancyRoutes = require('./routes/vacancyRoutes');
 const newsRoutes = require('./routes/newsRoutes');
+const smsAuthRoutes = require('./routes/smsAuthRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -116,6 +117,7 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/iiko', iikoRoutes);
 app.use('/api/vacancies', vacancyRoutes);
 app.use('/api/news', newsRoutes);
+app.use('/api/auth/sms', smsAuthRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

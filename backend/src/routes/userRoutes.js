@@ -9,7 +9,9 @@ const {
   findById, 
   updateUser, 
   updateLastLogin,
-  getUserStats 
+  getUserStats,
+  getBonusHistory,
+  getLoyaltyInfo
 } = require('../controllers/userController');
 const { authenticateToken } = require('../middleware/auth');
 
@@ -26,6 +28,16 @@ router.post('/admin/login', adminLogin);
 
 // Получение профиля (требует аутентификации)
 router.get('/profile', authenticateToken, getProfile);
+
+// === Система лояльности ===
+
+// Получение информации о лояльности (бонусы, уровень)
+router.get('/loyalty', authenticateToken, getLoyaltyInfo);
+
+// Получение истории бонусных транзакций
+router.get('/bonuses/history', authenticateToken, getBonusHistory);
+
+// === Поиск пользователей ===
 
 // Поиск пользователя по email
 router.get('/email/:email', findByEmail);

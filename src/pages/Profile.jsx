@@ -17,77 +17,119 @@ import {
 } from 'lucide-react';
 import { useSupabaseUser } from '../context/SupabaseUserContext';
 import OrderStatusProgress from '../components/OrderStatusProgress';
+import LoyaltyCard from '../components/LoyaltyCard';
+import BonusHistoryModal from '../components/BonusHistoryModal';
 
 const Profile = () => {
-  const { user, logout, updateUser, getUserOrders } = useSupabaseUser();
+  const { user, logout, updateUser, getUserOrders, refreshUserData } = useSupabaseUser();
   const [userOrders, setUserOrders] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [isBonusHistoryOpen, setIsBonusHistoryOpen] = useState(false);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [isLoadingUser, setIsLoadingUser] = useState(false);
   const [editData, setEditData] = useState({
     name: '',
     email: '',
     phone: ''
   });
 
-  // Функция для загрузки заказов
-  const loadUserOrders = useCallback(async () => {
-    if (!user) return;
-    
-    try {
-      const userOrdersList = await getUserOrders();
-      setUserOrders(userOrdersList || []);
-    } catch (error) {
-      console.error('Error loading user orders:', error);
-      setUserOrders([]);
-    }
-  }, [user, getUserOrders]);
-
+  // Загрузка всех данных при монтировании или изменении пользователя
   useEffect(() => {
-    if (user) {
+    let isMounted = true;
+    
+    const loadAllData = async () => {
+      if (!user?.id) {
+        setIsLoadingOrders(false);
+        return;
+      }
+      
+      // Устанавливаем данные формы редактирования
       setEditData({
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || ''
       });
       
-      loadUserOrders();
-    }
-  }, [user, loadUserOrders]);
-
-  // Обновляем заказы при изменении localStorage
-  useEffect(() => {
-    const handleStorageChange = () => {
-      if (user) {
-        loadUserOrders();
+      // Загружаем заказы
+      setIsLoadingOrders(true);
+      try {
+        const orders = await getUserOrders();
+        if (isMounted) {
+          setUserOrders(orders || []);
+        }
+      } catch (error) {
+        console.error('Error loading orders:', error);
+        if (isMounted) {
+          setUserOrders([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingOrders(false);
+        }
       }
     };
-
-    // Слушаем изменения localStorage из других вкладок
-    window.addEventListener('storage', handleStorageChange);
     
-    // Слушаем изменения localStorage из той же вкладки
+    loadAllData();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]); // Зависимость только от ID пользователя
+
+  // Функция для обновления заказов (для переиспользования)
+  const reloadOrders = useCallback(async () => {
+    if (!user?.id) return;
+    
+    try {
+      const orders = await getUserOrders();
+      setUserOrders(orders || []);
+    } catch (error) {
+      console.error('Error reloading orders:', error);
+    }
+  }, [user?.id, getUserOrders]);
+
+  // Функция для полного обновления данных пользователя и заказов
+  const refreshAllData = useCallback(async () => {
+    if (!user?.id) return;
+    
+    setIsLoadingUser(true);
+    try {
+      // Сначала обновляем данные пользователя (включая бонусы)
+      await refreshUserData();
+      // Затем загружаем заказы
+      await reloadOrders();
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setIsLoadingUser(false);
+    }
+  }, [user?.id, refreshUserData, reloadOrders]);
+
+  // Обновляем заказы при изменении localStorage и фокусе
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const handleStorageChange = () => {
+      reloadOrders();
+    };
+
     const handleCustomStorageChange = (event) => {
       if (event.detail && event.detail.type === 'orderStatusUpdated') {
-        handleStorageChange();
+        reloadOrders();
       }
     };
     
-    window.addEventListener('customStorageChange', handleCustomStorageChange);
-    
-    // Обновляем заказы при фокусе на вкладку
     const handleFocus = () => {
-      if (user) {
-        loadUserOrders();
-      }
+      // При фокусе обновляем и пользователя и заказы
+      refreshAllData();
     };
 
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('customStorageChange', handleCustomStorageChange);
     window.addEventListener('focus', handleFocus);
 
-    // Периодическое обновление заказов каждые 30 секунд
-    const interval = setInterval(() => {
-      if (user) {
-        loadUserOrders();
-      }
-    }, 30000);
+    // Периодическое обновление каждые 30 секунд
+    const interval = setInterval(reloadOrders, 30000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -95,7 +137,7 @@ const Profile = () => {
       window.removeEventListener('focus', handleFocus);
       clearInterval(interval);
     };
-  }, [user, loadUserOrders]);
+  }, [user?.id, reloadOrders, refreshAllData]);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -147,7 +189,7 @@ const Profile = () => {
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'pending': return 'Ожидает';
+      case 'pending': return 'Новый';
       case 'preparing': return 'Готовится';
       case 'delivering': return 'Доставляется';
       case 'completed': return 'Завершен';
@@ -339,6 +381,19 @@ const Profile = () => {
                 Выйти из аккаунта
               </motion.button>
             </motion.div>
+
+            {/* Карточка лояльности */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mt-8"
+            >
+              <LoyaltyCard 
+                user={user} 
+                onViewHistory={() => setIsBonusHistoryOpen(true)}
+              />
+            </motion.div>
           </div>
 
           {/* Orders */}
@@ -360,7 +415,18 @@ const Profile = () => {
                 </div>
               </div>
 
-              {userOrders.length === 0 ? (
+              {isLoadingOrders ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-12 text-center"
+                >
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
+                    <p className="text-gray-600">Загрузка заказов...</p>
+                  </div>
+                </motion.div>
+              ) : userOrders.length === 0 ? (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -488,6 +554,7 @@ const Profile = () => {
                               </div>
                             </motion.div>
                           </div>
+
                         </div>
 
                         {/* Order Status Progress */}
@@ -508,6 +575,13 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      {/* Модальное окно истории бонусов */}
+      <BonusHistoryModal
+        isOpen={isBonusHistoryOpen}
+        onClose={() => setIsBonusHistoryOpen(false)}
+        userId={user?.id}
+      />
     </div>
   );
 };

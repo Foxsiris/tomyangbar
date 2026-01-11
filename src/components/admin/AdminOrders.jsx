@@ -11,7 +11,9 @@ import {
   Phone,
   MapPin,
   Bell,
-  BellRing
+  BellRing,
+  Gift,
+  Coins
 } from 'lucide-react';
 import { OrderService } from '../../services/orderService';
 import OrderDetailsModal from './OrderDetailsModal';
@@ -70,7 +72,7 @@ const AdminOrders = () => {
 
   const statusOptions = [
     { value: 'all', label: 'Все заказы', color: 'gray' },
-    { value: 'pending', label: 'Ожидает', color: 'yellow' },
+    { value: 'pending', label: 'Новый', color: 'yellow' },
     { value: 'preparing', label: 'Готовится', color: 'blue' },
     { value: 'delivering', label: 'Доставляется', color: 'purple' },
     { value: 'completed', label: 'Завершен', color: 'green' },
@@ -128,7 +130,7 @@ const AdminOrders = () => {
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'pending': return 'Ожидает';
+      case 'pending': return 'Новый';
       case 'preparing': return 'Готовится';
       case 'delivering': return 'Доставляется';
       case 'completed': return 'Завершен';
@@ -260,6 +262,23 @@ const AdminOrders = () => {
               <div className="text-right">
                 <div className="text-2xl font-bold text-primary-600">{order.final_total} ₽</div>
                 <div className="text-sm text-gray-500">{order.order_items?.length || 0} позиций</div>
+                {/* Информация о бонусах */}
+                {(order.bonuses_used > 0 || order.bonuses_earned > 0) && (
+                  <div className="flex items-center justify-end gap-2 mt-1">
+                    {order.bonuses_used > 0 && (
+                      <span className="inline-flex items-center text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                        <Coins className="w-3 h-3 mr-1" />
+                        -{order.bonuses_used}
+                      </span>
+                    )}
+                    {order.bonuses_earned > 0 && (
+                      <span className="inline-flex items-center text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                        <Gift className="w-3 h-3 mr-1" />
+                        +{order.bonuses_earned}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -290,6 +309,27 @@ const AdminOrders = () => {
                   {order.payment_method === 'cash' ? 'Наличные' : 'Карта'}
                 </span>
               </div>
+              {/* Бонусы */}
+              {(order.bonuses_used > 0 || order.bonuses_earned > 0) && (
+                <div className="md:col-span-2 bg-purple-50 rounded-lg p-3 border border-purple-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Gift className="w-4 h-4 text-purple-600" />
+                    <span className="font-medium text-purple-800">Бонусы:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-4 text-sm">
+                    {order.bonuses_used > 0 && (
+                      <span className="text-red-600">
+                        Использовано: <strong>-{order.bonuses_used} ₽</strong>
+                      </span>
+                    )}
+                    {order.bonuses_earned > 0 && (
+                      <span className="text-green-600">
+                        Начислено: <strong>+{order.bonuses_earned} бонусов</strong>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
               {order.notes && (
                 <div className="md:col-span-2">
                   <span className="text-gray-500">Комментарий:</span>

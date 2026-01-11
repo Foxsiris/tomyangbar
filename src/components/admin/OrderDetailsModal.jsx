@@ -15,7 +15,10 @@ import {
   MessageSquare,
   Package,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Gift,
+  Coins,
+  TrendingUp
 } from 'lucide-react';
 
 const OrderDetailsModal = ({ order, isOpen, onClose }) => {
@@ -325,6 +328,66 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
               </motion.div>
             )}
 
+            {/* Бонусы (если есть) */}
+            {(order.bonuses_used > 0 || order.bonuses_earned > 0) && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.85 }}
+                className="mt-6 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6"
+              >
+                <h3 className="text-lg font-semibold text-purple-900 mb-4 flex items-center">
+                  <Gift className="w-5 h-5 mr-2 text-purple-600" />
+                  Система лояльности
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {order.bonuses_used > 0 && (
+                    <div className="bg-white rounded-lg p-4 border border-purple-100">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-red-100 rounded-full">
+                          <Coins className="w-5 h-5 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Использовано бонусов</p>
+                          <p className="text-xl font-bold text-red-600">-{order.bonuses_used} ₽</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {order.bonuses_earned > 0 && (
+                    <div className="bg-white rounded-lg p-4 border border-purple-100">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-100 rounded-full">
+                          <TrendingUp className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Начислено бонусов</p>
+                          <p className="text-xl font-bold text-green-600">+{order.bonuses_earned} ₽</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Расчет бонусов */}
+                <div className="mt-4 pt-4 border-t border-purple-200">
+                  <p className="text-sm text-purple-700 font-medium mb-2">Расчет:</p>
+                  <div className="text-sm text-purple-600 space-y-1">
+                    <p>• Стоимость блюд: {subtotal.toFixed(0)} ₽</p>
+                    {order.bonuses_used > 0 && (
+                      <p>• Скидка бонусами: -{order.bonuses_used} ₽</p>
+                    )}
+                    {order.bonuses_earned > 0 && (
+                      <p>• Кэшбэк ({order.bonuses_earned > 0 ? Math.round(order.bonuses_earned / (subtotal - (order.bonuses_used || 0)) * 100) : 0}%): +{order.bonuses_earned} бонусов</p>
+                    )}
+                    <p className="font-semibold text-purple-800">• Сумма оплаты: {order.final_total} ₽</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {/* Total */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -345,6 +408,12 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                 <div className="text-right">
                   <p className="text-primary-100">Стоимость блюд</p>
                   <p className="text-lg font-semibold">{subtotal.toFixed(2)} ₽</p>
+                  {order.bonuses_used > 0 && (
+                    <>
+                      <p className="text-purple-200 mt-1">Бонусы</p>
+                      <p className="text-lg font-semibold">-{order.bonuses_used} ₽</p>
+                    </>
+                  )}
                   {order.delivery_fee > 0 && (
                     <>
                       <p className="text-primary-100 mt-1">Доставка</p>

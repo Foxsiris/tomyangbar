@@ -4,6 +4,68 @@ const supabase = require('../config/supabase');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
+// Константы системы лояльности
+const LOYALTY_CONFIG = {
+  REGISTRATION_BONUS: 200, // Бонусы за регистрацию
+  LEVELS: {
+    bronze: { minSpent: 0, cashbackPercent: 2 },
+    silver: { minSpent: 80000, cashbackPercent: 3 },
+    gold: { minSpent: 100000, cashbackPercent: 5 }
+  }
+};
+
+// Функция для расчета уровня лояльности
+const calculateLoyaltyLevel = (totalSpent) => {
+  if (totalSpent >= LOYALTY_CONFIG.LEVELS.gold.minSpent) return 'gold';
+  if (totalSpent >= LOYALTY_CONFIG.LEVELS.silver.minSpent) return 'silver';
+  return 'bronze';
+};
+
+// Функция для получения процента кэшбэка
+const getCashbackPercent = (level) => {
+  return LOYALTY_CONFIG.LEVELS[level]?.cashbackPercent || 2;
+};
+
+// Получение названия уровня на русском
+const getLoyaltyLevelName = (level) => {
+  const names = {
+    bronze: '🥉 Бронзовый',
+    silver: '🥈 Серебряный',
+    gold: '🥇 Золотой'
+  };
+  return names[level] || '🥉 Бронзовый';
+};
+
+// Получение информации о следующем уровне
+const getNextLevelInfo = (currentLevel, totalSpent) => {
+  const spent = parseFloat(totalSpent) || 0;
+  
+  if (currentLevel === 'gold') {
+    return { hasNext: false, message: 'Вы достигли максимального уровня!' };
+  }
+  
+  if (currentLevel === 'silver') {
+    const remaining = LOYALTY_CONFIG.LEVELS.gold.minSpent - spent;
+    return {
+      hasNext: true,
+      nextLevel: 'gold',
+      nextLevelName: '🥇 Золотой',
+      remaining: remaining,
+      progress: (spent / LOYALTY_CONFIG.LEVELS.gold.minSpent) * 100
+    };
+  }
+  
+  // bronze
+  const remaining = LOYALTY_CONFIG.LEVELS.silver.minSpent - spent;
+  return {
+    hasNext: true,
+    nextLevel: 'silver',
+    nextLevelName: '🥈 Серебряный',
+    remaining: remaining,
+    progress: (spent / LOYALTY_CONFIG.LEVELS.silver.minSpent) * 100
+  };
+};
+
 // Регистрация пользователя
 const register = async (req, res) => {
   try {
@@ -25,7 +87,7 @@ const register = async (req, res) => {
       return res.status(400).json({ error: 'Пользователь с таким email уже существует' });
     }
 
-    // Создаем пользователя
+    // Создаем пользователя с начальными бонусами
     const { data: newUser, error } = await supabase
       .from('users')
       .insert([
@@ -33,18 +95,30 @@ const register = async (req, res) => {
           name,
           email,
           phone,
-          // Храним пароль как есть для упрощённой проверки (без хеша)
           password_hash: password,
+          bonus_balance: LOYALTY_CONFIG.REGISTRATION_BONUS,
+          total_spent: 0,
+          loyalty_level: 'bronze',
+          registration_bonus_given: true,
           created_at: new Date().toISOString()
         }
       ])
-      .select('id, name, email, phone, created_at')
+      .select('id, name, email, phone, bonus_balance, total_spent, loyalty_level, created_at')
       .single();
 
     if (error) {
       console.error('Supabase error:', error);
       return res.status(500).json({ error: 'Ошибка при создании пользователя' });
     }
+
+    // Записываем транзакцию бонусов за регистрацию
+    await supabase.from('bonus_transactions').insert([{
+      user_id: newUser.id,
+      amount: LOYALTY_CONFIG.REGISTRATION_BONUS,
+      type: 'registration',
+      description: 'Приветственные бонусы за регистрацию',
+      balance_after: LOYALTY_CONFIG.REGISTRATION_BONUS
+    }]);
 
     // Создаем JWT токен
     const token = jwt.sign(
@@ -53,10 +127,23 @@ const register = async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    console.log(`🎁 Новый пользователь ${name} получил ${LOYALTY_CONFIG.REGISTRATION_BONUS} бонусов за регистрацию`);
+
+    // Добавляем информацию о системе лояльности для нового пользователя
+    const loyaltyInfo = {
+      level: 'bronze',
+      levelName: getLoyaltyLevelName('bronze'),
+      cashbackPercent: getCashbackPercent('bronze'),
+      bonusBalance: LOYALTY_CONFIG.REGISTRATION_BONUS,
+      totalSpent: 0,
+      nextLevel: getNextLevelInfo('bronze', 0)
+    };
+
     res.status(201).json({
       message: 'Пользователь успешно зарегистрирован',
-      user: newUser,
-      token
+      user: { ...newUser, loyaltyInfo },
+      token,
+      bonusMessage: `Вам начислено ${LOYALTY_CONFIG.REGISTRATION_BONUS} приветственных бонусов!`
     });
 
   } catch (error) {
@@ -78,7 +165,7 @@ const login = async (req, res) => {
 
     let query = supabase
       .from('users')
-      .select('id, name, email, phone, password_hash');
+      .select('id, name, email, phone, password_hash, bonus_balance, total_spent, loyalty_level, created_at');
 
     // Определяем, это email или телефон
     if (loginField.includes('@')) {
@@ -108,9 +195,19 @@ const login = async (req, res) => {
     // Убираем пароль из ответа
     const { password_hash, ...userWithoutPassword } = user;
 
+    // Добавляем информацию о системе лояльности
+    const loyaltyInfo = {
+      level: user.loyalty_level || 'bronze',
+      levelName: getLoyaltyLevelName(user.loyalty_level),
+      cashbackPercent: getCashbackPercent(user.loyalty_level || 'bronze'),
+      bonusBalance: user.bonus_balance || 0,
+      totalSpent: parseFloat(user.total_spent) || 0,
+      nextLevel: getNextLevelInfo(user.loyalty_level, user.total_spent)
+    };
+
     res.json({
       message: 'Успешная авторизация',
-      user: userWithoutPassword,
+      user: { ...userWithoutPassword, loyaltyInfo },
       token
     });
 
@@ -171,7 +268,7 @@ const getProfile = async (req, res) => {
 
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, name, email, phone, created_at')
+      .select('id, name, email, phone, bonus_balance, total_spent, loyalty_level, created_at')
       .eq('id', userId)
       .single();
 
@@ -179,7 +276,17 @@ const getProfile = async (req, res) => {
       return res.status(404).json({ error: 'Пользователь не найден' });
     }
 
-    res.json({ user });
+    // Добавляем информацию о системе лояльности
+    const loyaltyInfo = {
+      level: user.loyalty_level || 'bronze',
+      levelName: getLoyaltyLevelName(user.loyalty_level),
+      cashbackPercent: getCashbackPercent(user.loyalty_level || 'bronze'),
+      bonusBalance: user.bonus_balance || 0,
+      totalSpent: parseFloat(user.total_spent) || 0,
+      nextLevel: getNextLevelInfo(user.loyalty_level, user.total_spent)
+    };
+
+    res.json({ user: { ...user, loyaltyInfo } });
 
   } catch (error) {
     console.error('Get profile error:', error);
@@ -248,7 +355,7 @@ const findById = async (req, res) => {
 
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, name, email, phone, created_at')
+      .select('id, name, email, phone, bonus_balance, total_spent, loyalty_level, created_at')
       .eq('id', id)
       .single();
 
@@ -260,7 +367,17 @@ const findById = async (req, res) => {
       return res.status(404).json({ error: 'Пользователь не найден' });
     }
 
-    res.json({ user });
+    // Добавляем информацию о системе лояльности
+    const loyaltyInfo = {
+      level: user.loyalty_level || 'bronze',
+      levelName: getLoyaltyLevelName(user.loyalty_level),
+      cashbackPercent: getCashbackPercent(user.loyalty_level || 'bronze'),
+      bonusBalance: user.bonus_balance || 0,
+      totalSpent: parseFloat(user.total_spent) || 0,
+      nextLevel: getNextLevelInfo(user.loyalty_level, user.total_spent)
+    };
+
+    res.json({ user: { ...user, loyaltyInfo } });
 
   } catch (error) {
     console.error('Find by ID error:', error);
@@ -388,6 +505,63 @@ const getUserStats = async (req, res) => {
   }
 };
 
+// Получение истории бонусных транзакций
+const getBonusHistory = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { limit = 20, offset = 0 } = req.query;
+
+    const { data: transactions, error } = await supabase
+      .from('bonus_transactions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      console.error('Get bonus history error:', error);
+      return res.status(500).json({ error: 'Ошибка при получении истории бонусов' });
+    }
+
+    res.json({ transactions });
+  } catch (error) {
+    console.error('Get bonus history error:', error);
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+  }
+};
+
+// Получение информации о системе лояльности
+const getLoyaltyInfo = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('bonus_balance, total_spent, loyalty_level')
+      .eq('id', userId)
+      .single();
+
+    if (error || !user) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+
+    const loyaltyInfo = {
+      level: user.loyalty_level || 'bronze',
+      levelName: getLoyaltyLevelName(user.loyalty_level),
+      cashbackPercent: getCashbackPercent(user.loyalty_level || 'bronze'),
+      bonusBalance: user.bonus_balance || 0,
+      totalSpent: parseFloat(user.total_spent) || 0,
+      nextLevel: getNextLevelInfo(user.loyalty_level, user.total_spent),
+      levelThresholds: LOYALTY_CONFIG.LEVELS
+    };
+
+    res.json({ loyaltyInfo });
+  } catch (error) {
+    console.error('Get loyalty info error:', error);
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -398,5 +572,12 @@ module.exports = {
   findById,
   updateUser,
   updateLastLogin,
-  getUserStats
+  getUserStats,
+  getBonusHistory,
+  getLoyaltyInfo,
+  // Экспортируем константы и хелперы для использования в других модулях
+  LOYALTY_CONFIG,
+  calculateLoyaltyLevel,
+  getCashbackPercent,
+  getLoyaltyLevelName
 };

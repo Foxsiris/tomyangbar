@@ -9,7 +9,11 @@ export class OrderService {
         ...orderData,
         userId
       });
-      return response.order;
+      // Возвращаем заказ с информацией о бонусах
+      return {
+        ...response.order,
+        bonuses: response.bonuses || null
+      };
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;

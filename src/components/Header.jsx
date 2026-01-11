@@ -19,7 +19,7 @@ const Header = () => {
   const navItems = [
     { path: '/', label: 'Главная' },
     { path: '/menu', label: 'Доставка' },
-    { path: '/menu-pdf', label: 'Меню', isPdf: true },
+    { path: '/menu-pdf', label: 'Меню' },
     { path: '/about', label: 'О нас' },
     { path: '/contact', label: 'Контакты' }
   ];
@@ -74,29 +74,17 @@ const Header = () => {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
             {navItems.map((item) => (
-              item.isPdf ? (
-                <a
-                  key={item.path}
-                  href="/menu_pdf.pdf"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-2 rounded-md text-sm font-medium transition-colors text-gray-700 hover:text-primary-600 hover:bg-gray-50"
-                >
-                  {item.label}
-                </a>
-              ) : (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname === item.path
-                      ? 'text-primary-600 bg-primary-50'
-                      : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              )
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  location.pathname === item.path
+                    ? 'text-primary-600 bg-primary-50'
+                    : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                }`}
+              >
+                {item.label}
+              </Link>
             ))}
           </nav>
 
@@ -249,31 +237,18 @@ const Header = () => {
           >
             <div className="px-2 pt-2 pb-3 space-y-1">
               {navItems.map((item) => (
-                item.isPdf ? (
-                  <a
-                    key={item.path}
-                    href="/menu_pdf.pdf"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block px-3 py-2 rounded-md text-base font-medium transition-colors text-gray-700 hover:text-primary-600 hover:bg-gray-50"
-                  >
-                    {item.label}
-                  </a>
-                ) : (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                      location.pathname === item.path
-                        ? 'text-primary-600 bg-primary-50'
-                        : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                )
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    location.pathname === item.path
+                      ? 'text-primary-600 bg-primary-50'
+                      : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {item.label}
+                </Link>
               ))}
               <a
                 href="tel:+79271126500"
