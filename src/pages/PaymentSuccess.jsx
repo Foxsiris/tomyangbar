@@ -15,7 +15,10 @@ const PaymentSuccess = () => {
   const { clearCart } = useCartContext();
   const processedRef = useRef(false);
   
-  const paymentId = searchParams.get('payment_id');
+  // Пробуем получить payment_id из URL или из localStorage
+  const urlPaymentId = searchParams.get('payment_id');
+  const storedPaymentId = localStorage.getItem('pending_payment_id');
+  const paymentId = urlPaymentId || storedPaymentId;
 
   useEffect(() => {
     // Предотвращаем повторную обработку
@@ -31,12 +34,13 @@ const PaymentSuccess = () => {
         if (!savedOrderData) {
           console.log('No pending order data found');
           setPaymentStatus('error');
-          setErrorMessage('Данные заказа не найдены');
+          setErrorMessage('Данные заказа не найдены. Возможно, заказ уже был создан ранее.');
           return;
         }
         
         const orderData = JSON.parse(savedOrderData);
         console.log('Found pending order data:', orderData);
+        console.log('Payment ID sources - URL:', urlPaymentId, 'LocalStorage:', storedPaymentId);
         
         // Проверяем статус платежа
         if (paymentId) {
@@ -65,6 +69,7 @@ const PaymentSuccess = () => {
               
               // Очищаем данные
               localStorage.removeItem('pending_order_data');
+              localStorage.removeItem('pending_payment_id');
               clearCart();
               
             } catch (orderError) {
@@ -76,13 +81,15 @@ const PaymentSuccess = () => {
             // Платёж не успешен
             console.log('Payment not successful:', response.payment?.status);
             setPaymentStatus('failed');
+            localStorage.removeItem('pending_payment_id');
           }
         } else {
           // Нет payment_id - возможно редирект без параметров
           // Проверяем, был ли это просто возврат без оплаты
-          console.log('No payment_id in URL');
+          console.log('No payment_id found (URL or localStorage)');
           setPaymentStatus('failed');
-          setErrorMessage('Платёж не был завершён');
+          setErrorMessage('Платёж не был завершён. Payment ID не найден.');
+          localStorage.removeItem('pending_payment_id');
         }
       } catch (error) {
         console.error('Error processing payment:', error);

@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Phone, User, MessageSquare, ArrowLeft, Gift, Loader2 } from 'lucide-react';
+import { X, Phone, User, MessageSquare, ArrowLeft, Gift, Loader2, Mail } from 'lucide-react';
 import { apiClient } from '../services/apiClient.js';
 import { applyPhoneMask, validateRussianPhone } from '../utils/phoneMask';
 
@@ -24,6 +24,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState(['', '', '', '']);
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -47,6 +48,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
       setPhone('');
       setCode(['', '', '', '']);
       setName('');
+      setEmail('');
       setError('');
       setIsNewUser(false);
       setDevCode(null);
@@ -141,12 +143,12 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
     try {
       const response = await apiClient.post('/api/auth/sms/verify', {
         phone,
-        code: fullCode,
-        name: name || undefined
+        code: fullCode
+        // НЕ передаём имя при первой проверке - оно передаётся на шаге name
       });
 
-      if (response.isNewUser && !name) {
-        // Новый пользователь - просим ввести имя
+      if (response.needsName) {
+        // Новый пользователь - просим ввести имя (код сохранён на сервере)
         setIsNewUser(true);
         setStep('name');
         setIsLoading(false);
@@ -179,15 +181,28 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
       return;
     }
 
+    if (!email.trim()) {
+      setError('Введите ваш email');
+      return;
+    }
+
+    // Простая валидация email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError('Введите корректный email');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 
     try {
-      // Повторно верифицируем с именем
+      // Повторно верифицируем с именем и email
       const response = await apiClient.post('/api/auth/sms/verify', {
         phone,
         code: code.join(''),
-        name: name.trim()
+        name: name.trim(),
+        email: email.trim()
       });
 
       // Сохраняем токен
@@ -475,7 +490,8 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                 >
-                  <div className="mb-6">
+                  {/* Поле имени */}
+                  <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Ваше имя
                     </label>
@@ -494,11 +510,30 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
                     </div>
                   </div>
 
+                  {/* Поле email */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email
+                    </label>
+                    <div className="relative">
+                      <div className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-primary-100 rounded-full p-1">
+                        <Mail className="text-primary-600 w-4 h-4" />
+                      </div>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                        className="w-full pl-12 pr-4 py-4 border-2 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 border-gray-200 hover:border-gray-300 text-lg"
+                        placeholder="example@mail.ru"
+                      />
+                    </div>
+                  </div>
+
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleNameSubmit}
-                    disabled={isLoading || !name.trim()}
+                    disabled={isLoading || !name.trim() || !email.trim()}
                     className="w-full bg-gradient-to-r from-primary-600 to-primary-700 text-white py-4 rounded-xl font-medium hover:from-primary-700 hover:to-primary-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                   >
                     {isLoading ? (

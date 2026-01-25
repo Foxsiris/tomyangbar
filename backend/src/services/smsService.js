@@ -124,8 +124,11 @@ const sendVerificationCode = async (phone) => {
 
 /**
  * Проверка кода верификации
+ * @param {string} phone - номер телефона
+ * @param {string} code - код верификации
+ * @param {boolean} keepCode - не удалять код после успешной проверки (для двухэтапной верификации)
  */
-const verifyCode = (phone, code) => {
+const verifyCode = (phone, code, keepCode = false) => {
   const normalizedPhone = normalizePhone(phone);
   const stored = verificationCodes.get(normalizedPhone);
 
@@ -153,9 +156,19 @@ const verifyCode = (phone, code) => {
     return { valid: false, error: 'Неверный код' };
   }
 
-  // Код верный - удаляем его
-  verificationCodes.delete(normalizedPhone);
+  // Код верный - удаляем только если не нужно сохранять
+  if (!keepCode) {
+    verificationCodes.delete(normalizedPhone);
+  }
   return { valid: true };
+};
+
+/**
+ * Удаление кода вручную (после успешной регистрации с именем)
+ */
+const deleteCode = (phone) => {
+  const normalizedPhone = normalizePhone(phone);
+  verificationCodes.delete(normalizedPhone);
 };
 
 /**
@@ -177,5 +190,6 @@ module.exports = {
   sendSms,
   sendVerificationCode,
   verifyCode,
+  deleteCode,
   normalizePhone
 };

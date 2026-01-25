@@ -31,9 +31,9 @@ const AdminSettings = () => {
     },
     delivery: {
       enabled: true,
-      minOrder: 1000,
+      minOrder: 2,
       deliveryFee: 200,
-      freeDeliveryThreshold: 1000,
+      freeDeliveryThreshold: 2,
       deliveryTime: 45,
       maxDistance: 10
     },

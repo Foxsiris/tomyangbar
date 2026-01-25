@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const supabase = require('../config/supabase');
-const { sendVerificationCode, verifyCode, normalizePhone } = require('../services/smsService');
+const { sendVerificationCode, verifyCode, deleteCode, normalizePhone } = require('../services/smsService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
@@ -77,42 +77,55 @@ const sendCode = async (req, res) => {
  */
 const verify = async (req, res) => {
   try {
-    const { phone, code, name } = req.body;
+    const { phone, code, name, email } = req.body;
 
     if (!phone || !code) {
       return res.status(400).json({ error: 'Телефон и код обязательны' });
     }
 
-    // Проверяем код
-    const verification = verifyCode(phone, code);
-    if (!verification.valid) {
-      return res.status(400).json({ error: verification.error });
-    }
-
     const normalizedPhone = normalizePhone(phone);
 
-    // Ищем пользователя по телефону
+    // Сначала проверяем, существует ли пользователь
     const { data: existingUser, error: findError } = await supabase
       .from('users')
       .select('id, name, email, phone, bonus_balance, total_spent, loyalty_level, created_at')
       .eq('phone', normalizedPhone)
       .single();
 
+    // Определяем, нужно ли сохранять код после проверки
+    // Если пользователь новый и имя/email не переданы - сохраняем код для следующего шага
+    const isNewUser = !existingUser;
+    const needsRegistrationData = isNewUser && (!name || !email);
+    
+    // Проверяем код (сохраняем если нужны данные для регистрации)
+    const verification = verifyCode(phone, code, needsRegistrationData);
+    if (!verification.valid) {
+      return res.status(400).json({ error: verification.error });
+    }
+
     let user;
-    let isNewUser = false;
 
     if (existingUser) {
       // Пользователь существует - авторизуем
       user = existingUser;
+    } else if (needsRegistrationData) {
+      // Новый пользователь, но имя/email не переданы - просим ввести данные
+      return res.json({
+        success: true,
+        needsName: true,
+        message: 'Введите ваши данные для завершения регистрации'
+      });
     } else {
-      // Новый пользователь - регистрируем
-      isNewUser = true;
+      // Новый пользователь с именем и email - регистрируем
+      
+      // Для SMS-авторизации пароль не нужен, но база требует NOT NULL - ставим заглушку
+      const tempPasswordHash = `SMS_AUTH_${normalizedPhone}_${Date.now()}`;
       
       const newUserData = {
-        name: name || `Пользователь ${normalizedPhone.slice(-4)}`,
+        name: name.trim(),
         phone: normalizedPhone,
-        email: null,
-        password_hash: null, // Для SMS-авторизации пароль не нужен
+        email: email.trim().toLowerCase(),
+        password_hash: tempPasswordHash,
         bonus_balance: LOYALTY_CONFIG.REGISTRATION_BONUS,
         total_spent: 0,
         loyalty_level: 'bronze'
@@ -126,10 +139,17 @@ const verify = async (req, res) => {
 
       if (createError) {
         console.error('Create user error:', createError);
-        return res.status(500).json({ error: 'Ошибка создания пользователя' });
+        console.error('Create user data was:', newUserData);
+        return res.status(500).json({ 
+          error: 'Ошибка создания пользователя',
+          details: createError.message || createError.hint || 'Unknown error'
+        });
       }
 
       user = newUser;
+      
+      // Удаляем код после успешной регистрации
+      deleteCode(phone);
 
       // Записываем бонусы за регистрацию
       await supabase.from('bonus_transactions').insert([{

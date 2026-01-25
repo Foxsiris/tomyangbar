@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { AlertCircle, ShoppingBag } from 'lucide-react';
 
-const MinimumOrderAlert = ({ currentTotal, minimumOrder = 1000 }) => {
+const MinimumOrderAlert = ({ currentTotal, minimumOrder = 2 }) => {
   const remaining = minimumOrder - currentTotal;
   const progress = Math.min((currentTotal / minimumOrder) * 100, 100);
 

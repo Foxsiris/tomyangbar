@@ -67,6 +67,10 @@ const PaymentModal = ({ isOpen, onClose, orderData, onPaymentSuccess, onPaymentE
       if (confirmationUrl) {
         console.log('Redirecting to payment page:', confirmationUrl);
         
+        // Сохраняем payment_id в localStorage для использования после возврата
+        localStorage.setItem('pending_payment_id', payment.id);
+        console.log('Saved pending_payment_id:', payment.id);
+        
         // Небольшая задержка для показа статуса "обработка"
         setTimeout(() => {
           try {

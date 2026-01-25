@@ -9,8 +9,8 @@ const Cart = () => {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const handleCheckout = () => {
-    if (totalPrice < 1000) {
-      alert('Минимальная сумма заказа 1000 рублей');
+    if (totalPrice < 2) {
+      alert('Минимальная сумма заказа 2 рубля');
       return;
     }
     setIsCheckingOut(true);
@@ -144,22 +144,22 @@ const Cart = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Доставка</span>
                   <span className="font-medium text-green-600">
-                    {totalPrice >= 1000 ? 'Бесплатно' : '200 ₽'}
+                    {totalPrice >= 2 ? 'Бесплатно' : '200 ₽'}
                   </span>
                 </div>
                 <hr className="border-gray-200" />
                 <div className="flex justify-between text-lg font-bold">
                   <span>Итого</span>
                   <span className="text-primary-600">
-                    {totalPrice >= 1000 ? totalPrice : totalPrice + 200} ₽
+                    {totalPrice >= 2 ? totalPrice : totalPrice + 200} ₽
                   </span>
                 </div>
               </div>
 
-              {totalPrice < 1000 && (
+              {totalPrice < 2 && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                   <p className="text-sm text-yellow-800">
-                    До бесплатной доставки осталось {1000 - totalPrice} ₽
+                    До бесплатной доставки осталось {2 - totalPrice} ₽
                   </p>
                 </div>
               )}
@@ -183,9 +183,9 @@ const Cart = () => {
               </div>
 
               <div className="mt-6 text-xs text-gray-500">
-                <p>• Минимальная сумма заказа: 1000 ₽</p>
+                <p>• Минимальная сумма заказа: 2 ₽</p>
                 <p>• Время доставки: от 45 минут</p>
-                <p>• Бесплатная доставка от 1000 ₽</p>
+                <p>• Бесплатная доставка от 2 ₽</p>
               </div>
             </div>
           </div>

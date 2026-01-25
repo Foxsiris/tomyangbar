@@ -153,14 +153,14 @@ const Home = () => {
               О нас
               <ArrowRight className="ml-2 w-5 h-5" />
             </Link>
-            <Link to="/menu" className="btn-primary inline-flex items-center">
-              Смотреть меню
+            <Link to="/menu-pdf" className="btn-primary inline-flex items-center">
+              Меню ресторана
               <ArrowRight className="ml-2 w-5 h-5" />
             </Link>
-            <a href="tel:+79271126500" className="btn-secondary inline-flex items-center">
-              Заказать по телефону
+            <Link to="/menu" className="btn-secondary inline-flex items-center">
+              Заказать доставку
               <ArrowRight className="ml-2 w-5 h-5" />
-            </a>
+            </Link>
           </motion.div>
         </div>
       </section>

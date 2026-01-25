@@ -8,7 +8,7 @@ const Map = () => {
     {
       name: 'Зелёная зона',
       color: '#56db40',
-      minOrder: 1000,
+      minOrder: 2,
       deliveryTime: '45-60 мин'
     },
     {

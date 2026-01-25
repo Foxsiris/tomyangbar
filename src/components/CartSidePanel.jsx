@@ -31,8 +31,8 @@ const CartSidePanel = () => {
   }, [isOpen]);
 
   const handleCheckout = () => {
-    if (totalPrice < 1000) {
-      alert('Минимальная сумма заказа 1000 рублей');
+    if (totalPrice < 2) {
+      alert('Минимальная сумма заказа 2 рубля');
       return;
     }
     closeCart();

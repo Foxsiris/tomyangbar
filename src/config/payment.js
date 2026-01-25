@@ -111,9 +111,9 @@ export const isPaymentMethodAvailable = (methodKey) => {
 // Функция для создания платежа
 export const createPayment = async (orderData) => {
   try {
-    // Формируем returnUrl с параметрами заказа
-    const returnUrl = `${window.location.origin}/payment/success?order_id=${orderData.orderId}`;
-    const cancelUrl = `${window.location.origin}/payment/cancel?order_id=${orderData.orderId}`;
+    // Формируем returnUrl БЕЗ параметров - YooKassa сама добавит payment_id
+    const returnUrl = `${window.location.origin}/payment/success`;
+    const cancelUrl = `${window.location.origin}/payment/cancel`;
 
     // Запрос к нашему API endpoint
     const response = await fetch('/api/payment/create', {
