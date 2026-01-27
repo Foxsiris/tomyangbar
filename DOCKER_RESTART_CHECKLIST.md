@@ -1,5 +1,18 @@
 # Чеклист: запуск сайта после пересоздания контейнеров
 
+## ⚠️ HTTPS: после git pull всегда поднимайте через https-конфиг
+
+Команда **`docker-compose up -d`** поднимает только HTTP (порт 80).  
+Для **https://** (как tomyangbarnew.ru) нужна другая команда:
+
+```bash
+docker-compose -f docker-compose.https.yml up -d --build
+```
+
+Или скрипт: `./restart-https.sh` (см. раздел 3 ниже).
+
+---
+
 ## Почему сайт не поднялся на домене
 
 После `docker-compose down` / удаления контейнеров и `docker-compose build & docker-compose up -d` часто ломается одно из следующего.
@@ -69,13 +82,56 @@ docker-compose up -d --build
 
 ---
 
-## 3. HTTP или HTTPS на домене
+## 3. HTTP или HTTPS — важно не перепутать
 
-Есть два сценария.
+**Если сайт должен открываться по https:// (как tomyangbarnew.ru):**
+
+- Команда **`docker-compose up -d`** поднимает только HTTP (порт 80).  
+  После неё https:// не будет работать.
+
+- Для HTTPS всегда нужно использовать **отдельный файл** и явно указывать его:
+
+```bash
+docker-compose -f docker-compose.https.yml up -d --build
+```
+
+Либо готовый скрипт (в корне проекта):
+
+```bash
+chmod +x restart-https.sh
+./restart-https.sh
+```
+
+### Что нужно для HTTPS
+
+1. Папка `ssl/` в корне проекта с файлами:
+   - `ssl/fullchain.pem`
+   - `ssl/privkey.pem`
+
+2. Сертификаты **не хранятся в git** (ssl/ обычно в .gitignore).  
+   После `git pull` они должны уже лежать на сервере (скопированы с certbot или с бэкапа).
+
+3. Если папки `ssl/` или файлов в ней нет — скопировать с certbot:
+
+```bash
+mkdir -p ~/tomyangbar/ssl
+sudo cp /etc/letsencrypt/live/tomyangbarnew.ru/fullchain.pem ~/tomyangbar/ssl/
+sudo cp /etc/letsencrypt/live/tomyangbarnew.ru/privkey.pem ~/tomyangbar/ssl/
+sudo chown $(whoami): ~/tomyangbar/ssl/*.pem
+```
+
+После этого снова запустить:
+
+```bash
+cd ~/tomyangbar
+./restart-https.sh
+# или
+docker-compose -f docker-compose.https.yml up -d --build
+```
 
 ### Вариант A: только HTTP (порт 80)
 
-Используется обычный `docker-compose.yml`:
+Если HTTPS не нужен, достаточно:
 
 ```bash
 docker-compose up -d --build
@@ -83,30 +139,15 @@ docker-compose up -d --build
 
 Сайт: `http://ваш-домен.ru`
 
-### Вариант B: HTTPS на домене
+### Вариант B: HTTPS на домене (рекомендуется для продакшена)
 
-Нужны:
-
-1. Папка `ssl/` с сертификатами:
-   - `ssl/fullchain.pem`
-   - `ssl/privkey.pem`
-
-2. Запуск через `docker-compose.https.yml`:
+Используйте **только** такой порядок после `git pull`:
 
 ```bash
+cd ~/tomyangbar
+# Проверить наличие ssl/fullchain.pem и ssl/privkey.pem
 docker-compose -f docker-compose.https.yml up -d --build
 ```
-
-Если `ssl/` пустая или сертификатов нет — контейнер с nginx может не стартовать или падать.
-
-**Проверка:**
-
-```bash
-ls -la ssl/
-# Должны быть fullchain.pem и privkey.pem
-```
-
-Если раньше стоял HTTPS и вы пересоздавали сервер — сертификаты нужно заново получить (например, certbot) и положить в `ssl/`.
 
 ---
 
