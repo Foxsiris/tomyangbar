@@ -44,6 +44,36 @@ router.get('/menu', async (req, res) => {
   }
 });
 
+// Получение меню через API v1 (номенклатура)
+router.get('/menu/v1', async (req, res) => {
+  try {
+    const menu = await iikoService.getMenuV1();
+    res.json(menu);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Получение меню через API v2
+router.get('/menu/v2', async (req, res) => {
+  try {
+    const menu = await iikoService.getMenuV2();
+    res.json(menu);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Получение списка внешних меню (для настройки IIKO_EXTERNAL_MENU_ID)
+router.get('/external-menus', async (req, res) => {
+  try {
+    const menus = await iikoService.getExternalMenus();
+    res.json(menus);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Получение типов оплаты - временно публичный для настройки
 router.get('/payment-types', async (req, res) => {
   try {

@@ -1,83 +1,186 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Download, ExternalLink, Smartphone } from 'lucide-react';
+import { FileText, Download, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
+
+// PDF.js будет загружен динамически
+let pdfjsLib = null;
 
 const PDF_URL = '/menu_pdf.pdf';
+const PDFJS_VERSION = '3.11.174';
 
 const MenuPdf = () => {
+  const [pdfDoc, setPdfDoc] = useState(null);
+  const [totalPages, setTotalPages] = useState(0);
+  const [scale, setScale] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const [pdfCheckDone, setPdfCheckDone] = useState(false);
-  const [pdfAvailable, setPdfAvailable] = useState(false);
+  const [pdfjsReady, setPdfjsReady] = useState(false);
+  const [renderedPages, setRenderedPages] = useState([]);
+  
+  const containerRef = useRef(null);
+  const canvasRefs = useRef([]);
 
   const pdfHref = typeof window !== 'undefined' ? `${window.location.origin}${PDF_URL}` : PDF_URL;
 
+  // Загрузка PDF.js из CDN
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+    if (pdfjsLib) {
+      setPdfjsReady(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.min.js`;
+    script.async = true;
+    script.onload = () => {
+      pdfjsLib = window.pdfjsLib;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.js`;
+      setPdfjsReady(true);
     };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    script.onerror = () => {
+      console.error('Failed to load PDF.js');
+      setLoadError(true);
+      setIsLoading(false);
+    };
+    document.head.appendChild(script);
   }, []);
 
+  // Загрузка PDF документа
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const controller = new AbortController();
-    fetch(pdfHref, { method: 'HEAD', signal: controller.signal })
-      .then((r) => {
-        setPdfAvailable(r.ok);
-        if (!r.ok) setLoadError(true);
-      })
-      .catch(() => {
-        setLoadError(true);
-        setPdfAvailable(false);
-      })
-      .finally(() => setPdfCheckDone(true));
-    return () => controller.abort();
-  }, [pdfHref]);
+    if (!pdfjsReady || !pdfjsLib) return;
 
-  const openPdfInNewTab = () => {
-    window.open(pdfHref, '_blank', 'noopener,noreferrer');
-  };
+    const loadPdf = async () => {
+      try {
+        setIsLoading(true);
+        setLoadError(false);
+        
+        const loadingTask = pdfjsLib.getDocument(pdfHref);
+        const pdf = await loadingTask.promise;
+        
+        setPdfDoc(pdf);
+        setTotalPages(pdf.numPages);
+        setRenderedPages(new Array(pdf.numPages).fill(false));
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error loading PDF:', error);
+        setLoadError(true);
+        setIsLoading(false);
+      }
+    };
+
+    loadPdf();
+  }, [pdfHref, pdfjsReady]);
+
+  // Рендер всех страниц
+  useEffect(() => {
+    if (!pdfDoc || totalPages === 0) return;
+
+    const renderAllPages = async () => {
+      const containerWidth = containerRef.current?.clientWidth || window.innerWidth - 32;
+      
+      for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+        const canvas = canvasRefs.current[pageNum - 1];
+        if (!canvas) continue;
+
+        try {
+          const page = await pdfDoc.getPage(pageNum);
+          const context = canvas.getContext('2d');
+          
+          const viewport = page.getViewport({ scale: 1 });
+          const optimalScale = (containerWidth / viewport.width) * scale * 0.95;
+          const scaledViewport = page.getViewport({ scale: optimalScale });
+          
+          canvas.height = scaledViewport.height;
+          canvas.width = scaledViewport.width;
+          
+          await page.render({
+            canvasContext: context,
+            viewport: scaledViewport
+          }).promise;
+
+          setRenderedPages(prev => {
+            const newState = [...prev];
+            newState[pageNum - 1] = true;
+            return newState;
+          });
+        } catch (error) {
+          console.error(`Error rendering page ${pageNum}:`, error);
+        }
+      }
+    };
+
+    renderAllPages();
+  }, [pdfDoc, totalPages, scale]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const zoomIn = () => setScale(prev => Math.min(prev + 0.25, 3));
+  const zoomOut = () => setScale(prev => Math.max(prev - 0.25, 0.5));
+  const resetZoom = () => setScale(1);
+  const openFullscreen = () => window.open(pdfHref, '_blank');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-pink-50">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl">
-                <FileText className="w-6 h-6 text-white" />
+                <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                   Меню Tom Yang Bar
                 </h1>
-                <p className="text-gray-500 text-xs sm:text-sm">Полное меню ресторана</p>
+                <p className="text-gray-500 text-xs hidden sm:block">Полное меню ресторана</p>
               </div>
             </div>
 
             {/* Controls */}
-            <div className="flex items-center gap-2">
-              {/* Open in new tab */}
+            <div className="flex items-center gap-1 sm:gap-2">
+              {/* Zoom controls */}
+              <div className="flex items-center gap-1 mr-2">
+                <button
+                  onClick={zoomOut}
+                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  title="Уменьшить"
+                  disabled={scale <= 0.5}
+                >
+                  <ZoomOut className="w-4 h-4 text-gray-600" />
+                </button>
+                <span className="text-sm text-gray-600 min-w-[3rem] text-center hidden sm:block">
+                  {Math.round(scale * 100)}%
+                </span>
+                <button
+                  onClick={zoomIn}
+                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  title="Увеличить"
+                  disabled={scale >= 3}
+                >
+                  <ZoomIn className="w-4 h-4 text-gray-600" />
+                </button>
+                <button
+                  onClick={resetZoom}
+                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors hidden sm:block"
+                  title="Сбросить масштаб"
+                >
+                  <Maximize className="w-4 h-4 text-gray-600" />
+                </button>
+              </div>
+
+              {/* Open fullscreen */}
               <button
-                onClick={openPdfInNewTab}
+                onClick={openFullscreen}
                 className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                 title="Открыть в новой вкладке"
               >
-                <ExternalLink className="w-5 h-5 text-gray-600" />
+                <Maximize className="w-5 h-5 text-gray-600" />
               </button>
 
               {/* Download */}
               <a
                 href={pdfHref}
                 download="Tom_Yang_Bar_Menu.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all shadow-lg hover:shadow-xl"
+                className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all shadow-lg"
               >
                 <Download className="w-5 h-5" />
                 <span className="hidden sm:inline">Скачать</span>
@@ -88,32 +191,38 @@ const MenuPdf = () => {
       </div>
 
       {/* PDF Viewer */}
-      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-6">
-        {(!pdfCheckDone || loadError || !pdfAvailable) && pdfCheckDone ? (
-          /* Ошибка загрузки — показываем кнопки вместо пустого блока */
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4">
+        {isLoading ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-white rounded-2xl shadow-xl p-12 text-center"
+          >
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Загрузка меню...</p>
+          </motion.div>
+        ) : loadError ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white rounded-2xl shadow-xl p-8 sm:p-12 text-center"
           >
             <FileText className="w-16 h-16 text-orange-500 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">Меню не загрузилось</h3>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Не удалось загрузить меню</h3>
             <p className="text-gray-600 mb-6">
-              Откройте меню в новой вкладке или скачайте файл
+              Попробуйте скачать файл или открыть в новой вкладке
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
-                onClick={openPdfInNewTab}
+                onClick={openFullscreen}
                 className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all shadow-lg"
               >
-                <ExternalLink className="w-5 h-5" />
-                Открыть меню в новой вкладке
+                <Maximize className="w-5 h-5" />
+                Открыть в новой вкладке
               </button>
               <a
                 href={pdfHref}
                 download="Tom_Yang_Bar_Menu.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all"
               >
                 <Download className="w-5 h-5" />
@@ -121,91 +230,35 @@ const MenuPdf = () => {
               </a>
             </div>
           </motion.div>
-        ) : !pdfCheckDone ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="bg-white rounded-2xl shadow-xl p-12 text-center"
-          >
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Проверка доступности меню...</p>
-          </motion.div>
-        ) : isMobile ? (
-          /* Mobile View */
+        ) : (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white rounded-2xl shadow-xl overflow-hidden"
           >
-            <div className="relative" style={{ height: 'calc(100vh - 160px)' }}>
-              {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Загрузка меню...</p>
+            {/* Scrollable Container with all pages */}
+            <div 
+              ref={containerRef}
+              className="overflow-auto bg-gray-100"
+              style={{ maxHeight: 'calc(100vh - 120px)' }}
+            >
+              <div className="flex flex-col items-center gap-4 p-4">
+                {Array.from({ length: totalPages }, (_, index) => (
+                  <div key={index} className="relative">
+                    {!renderedPages[index] && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-200 rounded-lg">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                      </div>
+                    )}
+                    <canvas
+                      ref={el => canvasRefs.current[index] = el}
+                      className="shadow-lg rounded-lg bg-white"
+                      style={{ maxWidth: '100%', height: 'auto' }}
+                    />
                   </div>
-                </div>
-              )}
-              <object
-                data={`${pdfHref}#view=FitH&toolbar=0&navpanes=0&scrollbar=1`}
-                type="application/pdf"
-                className="w-full h-full"
-                onLoad={() => { setIsLoading(false); setLoadError(false); }}
-                onError={() => setLoadError(true)}
-              >
-                <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                  <Smartphone className="w-16 h-16 text-orange-500 mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">Просмотр PDF</h3>
-                  <p className="text-gray-600 mb-6">
-                    Для просмотра меню на вашем устройстве нажмите кнопку ниже
-                  </p>
-                  <div className="flex flex-col gap-3 w-full max-w-xs mx-auto">
-                    <button
-                      onClick={openPdfInNewTab}
-                      type="button"
-                      className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all shadow-lg"
-                    >
-                      <ExternalLink className="w-5 h-5" />
-                      Открыть меню
-                    </button>
-                    <a
-                      href={pdfHref}
-                      download="Tom_Yang_Bar_Menu.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all"
-                    >
-                      <Download className="w-5 h-5" />
-                      Скачать PDF
-                    </a>
-                  </div>
-                </div>
-              </object>
-            </div>
-          </motion.div>
-        ) : (
-          /* Desktop View - iframe */
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl shadow-xl overflow-hidden relative"
-            style={{ height: 'calc(100vh - 180px)' }}
-          >
-            {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-                  <p className="text-gray-600">Загрузка меню...</p>
-                </div>
+                ))}
               </div>
-            )}
-            <iframe
-              id="pdf-viewer"
-              src={`${pdfHref}#view=FitH&toolbar=1&navpanes=0`}
-              className="w-full h-full border-0"
-              title="Меню Tom Yang Bar"
-              onLoad={() => setIsLoading(false)}
-            />
+            </div>
           </motion.div>
         )}
       </div>

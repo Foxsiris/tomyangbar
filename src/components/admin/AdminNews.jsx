@@ -158,7 +158,8 @@ const AdminNews = () => {
     }
 
     const data = await response.json();
-    return `${baseURL}${data.imageUrl}`;
+    // Бэкенд теперь возвращает полный URL из Supabase Storage
+    return data.imageUrl;
   };
 
   const handleDelete = async (id) => {

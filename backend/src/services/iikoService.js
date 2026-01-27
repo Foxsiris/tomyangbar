@@ -6,15 +6,18 @@
  * - IIKO_API_LOGIN: API-ключ из iiko.biz
  * - IIKO_ORGANIZATION_ID: ID организации (можно получить через API)
  * - IIKO_TERMINAL_GROUP_ID: ID терминальной группы (опционально)
+ * - IIKO_EXTERNAL_MENU_ID: ID внешнего меню для API v2 (опционально)
  */
 
-const IIKO_API_URL = 'https://api-ru.iiko.services/api/1';
+const IIKO_API_V1_URL = 'https://api-ru.iiko.services/api/1';
+const IIKO_API_V2_URL = 'https://api-ru.iiko.services/api/2';
 
 class IikoService {
   constructor() {
     this.apiLogin = process.env.IIKO_API_LOGIN;
     this.organizationId = process.env.IIKO_ORGANIZATION_ID;
     this.terminalGroupId = process.env.IIKO_TERMINAL_GROUP_ID;
+    this.externalMenuId = process.env.IIKO_EXTERNAL_MENU_ID;
     this.token = null;
     this.tokenExpires = null;
   }
@@ -34,7 +37,7 @@ class IikoService {
     }
 
     try {
-      const response = await fetch(`${IIKO_API_URL}/access_token`, {
+      const response = await fetch(`${IIKO_API_V1_URL}/access_token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -69,7 +72,7 @@ class IikoService {
   async getOrganizations() {
     const token = await this.getAccessToken();
     
-    const response = await fetch(`${IIKO_API_URL}/organizations`, {
+    const response = await fetch(`${IIKO_API_V1_URL}/organizations`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -91,7 +94,7 @@ class IikoService {
   async getTerminalGroups() {
     const token = await this.getAccessToken();
     
-    const response = await fetch(`${IIKO_API_URL}/terminal_groups`, {
+    const response = await fetch(`${IIKO_API_V1_URL}/terminal_groups`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -110,12 +113,59 @@ class IikoService {
   }
 
   /**
-   * Получение меню из iiko
+   * Получение меню из iiko API v2
+   * Возвращает полное меню с категориями, товарами и модификаторами
    */
   async getMenu() {
+    // Если есть externalMenuId - используем API v2
+    if (this.externalMenuId) {
+      return await this.getMenuV2();
+    }
+    // Иначе - API v1 (номенклатура)
+    return await this.getMenuV1();
+  }
+
+  /**
+   * Получение меню через API v2 (рекомендуется)
+   * Требует настройки внешнего меню в iiko
+   */
+  async getMenuV2() {
     const token = await this.getAccessToken();
     
-    const response = await fetch(`${IIKO_API_URL}/nomenclature`, {
+    const requestBody = {
+      externalMenuId: this.externalMenuId,
+      organizationIds: [this.organizationId]
+    };
+
+    console.log('📤 iiko v2: Запрос меню:', JSON.stringify(requestBody, null, 2));
+    
+    const response = await fetch(`${IIKO_API_V2_URL}/menu/by_id`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ iiko v2: Ошибка получения меню:', errorText);
+      throw new Error(`Ошибка получения меню v2: ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ iiko v2: Меню получено, категорий:', data.itemCategories?.length || 0);
+    return data;
+  }
+
+  /**
+   * Получение номенклатуры через API v1 (старый способ)
+   */
+  async getMenuV1() {
+    const token = await this.getAccessToken();
+    
+    const response = await fetch(`${IIKO_API_V1_URL}/nomenclature`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -127,10 +177,36 @@ class IikoService {
     });
 
     if (!response.ok) {
-      throw new Error(`Ошибка получения меню: ${await response.text()}`);
+      throw new Error(`Ошибка получения меню v1: ${await response.text()}`);
     }
 
     return await response.json();
+  }
+
+  /**
+   * Получение списка внешних меню (для настройки IIKO_EXTERNAL_MENU_ID)
+   */
+  async getExternalMenus() {
+    const token = await this.getAccessToken();
+    
+    const response = await fetch(`${IIKO_API_V2_URL}/menu`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        organizationIds: [this.organizationId]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Ошибка получения списка меню: ${await response.text()}`);
+    }
+
+    const data = await response.json();
+    console.log('📋 iiko v2: Доступные внешние меню:', JSON.stringify(data, null, 2));
+    return data;
   }
 
   /**
@@ -139,7 +215,7 @@ class IikoService {
   async getPaymentTypes() {
     const token = await this.getAccessToken();
     
-    const response = await fetch(`${IIKO_API_URL}/payment_types`, {
+    const response = await fetch(`${IIKO_API_V1_URL}/payment_types`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -228,7 +304,7 @@ class IikoService {
     console.log('📤 iiko: Отправка заказа:', JSON.stringify(iikoOrder, null, 2));
 
     try {
-      const response = await fetch(`${IIKO_API_URL}/deliveries/create`, {
+      const response = await fetch(`${IIKO_API_V1_URL}/deliveries/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -313,7 +389,7 @@ class IikoService {
   async getOrderStatus(iikoOrderId) {
     const token = await this.getAccessToken();
     
-    const response = await fetch(`${IIKO_API_URL}/deliveries/by_id`, {
+    const response = await fetch(`${IIKO_API_V1_URL}/deliveries/by_id`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

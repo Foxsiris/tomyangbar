@@ -424,9 +424,7 @@ const AdminMenu = () => {
       const formData = new FormData();
       formData.append('image', file);
       
-      // Используем apiClient для определения правильного baseURL
-      // В продакшене baseURL будет пустой строкой (относительные пути)
-      // В разработке будет 'http://localhost:3001'
+      // Определяем базовый URL для API
       const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development' || !import.meta.env.PROD;
       const baseURL = isDevelopment ? 'http://localhost:3001' : '';
       
@@ -449,18 +447,15 @@ const AdminMenu = () => {
       const data = await response.json();
       console.log('Upload response:', data);
       
-      // Бэкенд возвращает относительный путь /uploads/filename.jpg
-      // В продакшене это будет работать через nginx proxy
-      // В разработке нужно добавить baseURL
+      // Бэкенд теперь возвращает полный URL из Supabase Storage
       const imageUrl = data.imageUrl || data.image_url;
       
       if (!imageUrl) {
         throw new Error('Сервер не вернул URL изображения');
       }
       
-      // В продакшене возвращаем относительный путь как есть
-      // В разработке добавляем baseURL
-      return isDevelopment ? `${baseURL}${imageUrl}` : imageUrl;
+      // Возвращаем URL как есть (полный URL от Supabase)
+      return imageUrl;
     } catch (error) {
       console.error('Error uploading image:', error);
       console.error('Error details:', {

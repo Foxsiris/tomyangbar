@@ -7,6 +7,11 @@ const SMS_API_URL = 'https://lcab.sms-uslugi.ru/api/v1/send';
 const SMS_API_TOKEN = process.env.SMS_API_TOKEN;
 const SMS_SENDER_NAME = process.env.SMS_SENDER_NAME || 'TomYangBar';
 
+// Тестовый режим - ВСЕГДА АКТИВЕН (код 1234)
+// TODO: Отключить когда настроишь реальный SMS сервис
+const SMS_TEST_MODE = true;
+const TEST_CODE = '1234';
+
 // Хранилище кодов верификации (в продакшене лучше использовать Redis)
 const verificationCodes = new Map();
 
@@ -33,17 +38,25 @@ const normalizePhone = (phone) => {
 };
 
 /**
+ * Проверка, включен ли тестовый режим
+ */
+const isTestMode = () => {
+  return SMS_TEST_MODE; // Всегда true пока не настроен реальный SMS сервис
+};
+
+/**
  * Отправка SMS через API SMS-Uslugi.ru
  */
 const sendSms = async (phone, message) => {
+  // Тестовый режим - не отправляем реальные SMS
+  if (isTestMode()) {
+    console.log(`📱 [TEST MODE] SMS to ${phone}: ${message}`);
+    return { success: true, testMode: true };
+  }
+
   if (!SMS_API_TOKEN) {
     console.error('SMS_API_TOKEN not configured!');
-    // В режиме разработки возвращаем успех без реальной отправки
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`📱 [DEV MODE] SMS to ${phone}: ${message}`);
-      return { success: true, dev: true };
-    }
-    throw new Error('SMS сервис не настроен');
+    throw new Error('SMS сервис не настроен. Включите SMS_TEST_MODE=true для тестирования.');
   }
 
   try {
@@ -89,15 +102,15 @@ const sendVerificationCode = async (phone) => {
     throw new Error(`Подождите ${secondsLeft} сек. перед повторной отправкой`);
   }
 
-  const code = generateCode();
+  // В тестовом режиме используем фиксированный код 1234
+  const code = isTestMode() ? TEST_CODE : generateCode();
   const message = `Tom Yang Bar: Ваш код подтверждения: ${code}. Не сообщайте его никому.`;
 
-  // В режиме разработки без API токена просто логируем код
-  if (!SMS_API_TOKEN && process.env.NODE_ENV !== 'production') {
-    console.log(`\n📱 ===== DEV MODE: SMS CODE =====`);
+  if (isTestMode()) {
+    console.log(`\n📱 ===== TEST MODE: SMS CODE =====`);
     console.log(`📱 Phone: ${normalizedPhone}`);
-    console.log(`📱 Code: ${code}`);
-    console.log(`📱 ================================\n`);
+    console.log(`📱 Code: ${code} (используйте этот код для входа)`);
+    console.log(`📱 ==================================\n`);
   } else {
     await sendSms(phone, message);
   }
@@ -116,9 +129,9 @@ const sendVerificationCode = async (phone) => {
 
   return { 
     success: true, 
-    message: 'Код отправлен',
-    // В dev режиме возвращаем код для тестирования
-    ...(process.env.NODE_ENV !== 'production' && !SMS_API_TOKEN ? { devCode: code } : {})
+    message: isTestMode() ? 'Тестовый режим: используйте код 1234' : 'Код отправлен',
+    // В тестовом режиме возвращаем код для удобства
+    ...(isTestMode() ? { testCode: code } : {})
   };
 };
 
