@@ -6,6 +6,9 @@ import { useCartContext } from '../context/CartContext';
 import { useSupabaseUser } from '../context/SupabaseUserContext';
 import AuthModal from './AuthModal';
 
+// Флаг для отображения входа в личный кабинет (временно скрыто)
+const SHOW_AUTH = false;
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -100,7 +103,7 @@ const Header = () => {
             </a>
 
             {/* Auth Button */}
-            {user ? (
+            {SHOW_AUTH && (user ? (
               <div 
                 className="relative" 
                 ref={dropdownRef}
@@ -198,7 +201,7 @@ const Header = () => {
                 <LogIn size={20} />
                 <span className="hidden sm:block text-sm font-medium">Войти</span>
               </motion.button>
-            )}
+            ))}
 
             {/* Cart Button - показываем только в разделе доставки */}
             {location.pathname === '/menu' && (
@@ -258,7 +261,7 @@ const Header = () => {
               </a>
               
               {/* Mobile Auth */}
-              {user ? (
+              {SHOW_AUTH && (user ? (
                 <div className="space-y-1">
                   <div className="px-3 py-2 border-b border-gray-200">
                     <div className="flex items-center space-x-3">
@@ -315,7 +318,7 @@ const Header = () => {
                 >
                   Войти
                 </button>
-              )}
+              ))}
             </div>
           </motion.div>
         )}

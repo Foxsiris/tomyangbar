@@ -250,8 +250,8 @@ const Checkout = () => {
               className="bg-white rounded-lg shadow-lg p-6"
             >
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Auth Section */}
-                {!user && (
+                {/* Auth Section - Hidden */}
+                {/* {!user && (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
@@ -274,7 +274,7 @@ const Checkout = () => {
                       </button>
                     </div>
                   </div>
-                )}
+                )} */}
 
                 {/* Контактная информация */}
                 <div>
@@ -492,12 +492,6 @@ const Checkout = () => {
                         className="mr-3"
                       />
                       <span>Онлайн-платеж</span>
-                      <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                        Карта, ЮMoney
-                      </span>
-                      <span className="ml-1 text-xs text-gray-500">
-                        (СБП в продакшене)
-                      </span>
                     </label>
                   </div>
                 </div>

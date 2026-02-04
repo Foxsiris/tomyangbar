@@ -9,7 +9,8 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import QuickActions from '../components/QuickActions';
 import SpecialOffers from '../components/SpecialOffers';
 import RestaurantStats from '../components/RestaurantStats';
-import DishGallery from '../components/DishGallery';
+// import DishGallery from '../components/DishGallery'; // Hidden
+import TeamSection from '../components/TeamSection';
 import NewsBlock from '../components/NewsBlock';
 
 const Home = () => {
@@ -250,6 +251,9 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Team Section */}
+      <TeamSection />
+
       {/* Quick Actions Section */}
       <section className="section-padding bg-gray-50">
         <div className="max-w-7xl mx-auto">
@@ -294,8 +298,8 @@ const Home = () => {
       {/* Restaurant Stats Section */}
       <RestaurantStats />
 
-      {/* Dish Gallery Section */}
-      <DishGallery />
+      {/* Dish Gallery Section - Hidden */}
+      {/* <DishGallery /> */}
 
       {/* About Section */}
       <section className="section-padding bg-white">
