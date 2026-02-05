@@ -19,6 +19,10 @@ const smsAuthRoutes = require('./routes/smsAuthRoutes');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// ВАЖНО: Доверяем прокси (nginx), чтобы получать реальный IP пользователя
+// Без этого все пользователи видятся как один IP (IP nginx контейнера)
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -59,28 +63,47 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Мягкий лимитер для публичных endpoints (menu, cart)
+// Статическая раздача загруженных файлов — ДО rate limiter, чтобы картинки не лимитировались
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+}, express.static(path.join(__dirname, '../uploads')));
+
+// Функция для получения реального IP пользователя (за nginx/proxy)
+const getClientIp = (req) => {
+  return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+         req.headers['x-real-ip'] || 
+         req.connection?.remoteAddress || 
+         req.ip;
+};
+
+// Мягкий лимитер для публичных endpoints (menu, cart) — без лимита для GET запросов
 const publicLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5000, // Очень мягкий лимит для публичных endpoints
+  windowMs: 1 * 60 * 1000, // 1 минута
+  max: 300, // 300 запросов в минуту на пользователя
   message: {
     error: 'Too many requests',
     message: 'Превышен лимит запросов. Попробуйте позже.'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  keyGenerator: getClientIp, // Используем реальный IP пользователя
+  skip: (req) => req.method === 'GET' // GET запросы не лимитируем
 });
 
 // Более строгий лимитер для остальных endpoints
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'development' ? 5000 : 1000, // Увеличили лимит для продакшена
+  windowMs: 1 * 60 * 1000, // 1 минута
+  max: 100, // 100 запросов в минуту на пользователя
   message: {
     error: 'Too many requests',
     message: 'Превышен лимит запросов. Попробуйте позже.'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  keyGenerator: getClientIp // Используем реальный IP пользователя
 });
 
 // Применяем мягкий лимитер для публичных endpoints ПЕРЕД основным
@@ -98,14 +121,6 @@ app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
 });
-
-// Статическая раздача загруженных файлов
-app.use('/uploads', (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  next();
-}, express.static(path.join(__dirname, '../uploads')));
 
 // Routes
 app.use('/api/users', userRoutes);
