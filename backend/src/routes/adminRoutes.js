@@ -1,11 +1,18 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { getAllOrders, updateOrderStatus } = require('../controllers/orderController');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const supabase = require('../config/supabase');
 
 const router = express.Router();
+
+// Проверяем/создаём папку для локальных загрузок
+const uploadsDir = path.join(__dirname, '../../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // Настройка multer для загрузки изображений в память (для последующей загрузки в Supabase)
 const storage = multer.memoryStorage();
@@ -76,49 +83,78 @@ router.get('/orders', getAllOrders);
 // Обновление статуса заказа
 router.patch('/orders/:orderId/status', updateOrderStatus);
 
-// Загрузка изображения в Supabase Storage
+// Загрузка изображения — сначала пробуем Supabase, если не работает — локально
 router.post('/upload-image', upload.single('image'), async (req, res) => {
   try {
+    console.log('[Upload] Starting image upload...');
+    
     if (!req.file) {
+      console.log('[Upload] No file provided');
       return res.status(400).json({ error: 'Файл изображения не предоставлен' });
     }
+
+    console.log('[Upload] File received:', {
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.buffer?.length || 0
+    });
 
     // Генерируем уникальное имя файла
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(req.file.originalname) || '.jpg';
     const filename = `dish-${uniqueSuffix}${ext}`;
-    const filePath = `dishes/${filename}`;
 
-    // Загружаем в Supabase Storage
-    const { data, error } = await supabase.storage
-      .from('images')
-      .upload(filePath, req.file.buffer, {
-        contentType: req.file.mimetype,
-        upsert: false
-      });
+    // Пробуем загрузить в Supabase Storage
+    let imageUrl = null;
+    let uploadMethod = 'unknown';
 
-    if (error) {
-      console.error('Supabase upload error:', error);
-      return res.status(500).json({ error: 'Ошибка при загрузке изображения в хранилище' });
+    try {
+      const filePath = `dishes/${filename}`;
+      console.log('[Upload] Trying Supabase Storage:', filePath);
+
+      const { data, error } = await supabase.storage
+        .from('images')
+        .upload(filePath, req.file.buffer, {
+          contentType: req.file.mimetype,
+          upsert: false
+        });
+
+      if (error) {
+        console.error('[Upload] Supabase error:', error.message);
+        throw error;
+      }
+
+      // Получаем публичный URL
+      const { data: urlData } = supabase.storage
+        .from('images')
+        .getPublicUrl(filePath);
+
+      imageUrl = urlData.publicUrl;
+      uploadMethod = 'supabase';
+      console.log('[Upload] Supabase upload success:', imageUrl);
+
+    } catch (supabaseError) {
+      // Fallback: сохраняем локально
+      console.log('[Upload] Supabase failed, falling back to local storage');
+      
+      const localPath = path.join(uploadsDir, filename);
+      fs.writeFileSync(localPath, req.file.buffer);
+      
+      // URL для локального файла (относительный путь)
+      imageUrl = `/uploads/${filename}`;
+      uploadMethod = 'local';
+      console.log('[Upload] Local upload success:', imageUrl);
     }
-
-    // Получаем публичный URL
-    const { data: urlData } = supabase.storage
-      .from('images')
-      .getPublicUrl(filePath);
-
-    const imageUrl = urlData.publicUrl;
-    
-    console.log('Image uploaded to Supabase:', imageUrl);
     
     res.json({
       message: 'Изображение успешно загружено',
-      imageUrl: imageUrl
+      imageUrl: imageUrl,
+      method: uploadMethod
     });
 
   } catch (error) {
-    console.error('Upload image error:', error);
-    res.status(500).json({ error: 'Ошибка при загрузке изображения' });
+    console.error('[Upload] Unexpected error:', error.message, error.stack);
+    res.status(500).json({ error: 'Ошибка при загрузке изображения', details: error.message });
   }
 });
 

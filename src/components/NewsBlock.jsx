@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, Utensils, Tag } from 'lucide-react';
 import { apiClient } from '../services/apiClient';
+import LazyImage from './LazyImage';
 
 const NewsBlock = () => {
   const [news, setNews] = useState([]);
@@ -103,16 +104,13 @@ const NewsBlock = () => {
               {/* Изображение */}
               {item.image_url && (
                 <div className="relative h-48 overflow-hidden">
-                  <img
+                  <LazyImage
                     src={item.image_url.startsWith('http') ? item.image_url : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${item.image_url}`}
                     alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = '/vite.svg';
-                    }}
+                    className="w-full h-full group-hover:scale-110 transition-transform duration-300"
+                    fallbackSrc="/vite.svg"
                   />
-                  <div className="absolute top-4 left-4">
+                  <div className="absolute top-4 left-4 z-10">
                     <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(item.type)}`}>
                       {getTypeIcon(item.type)}
                       <span>{getTypeLabel(item.type)}</span>

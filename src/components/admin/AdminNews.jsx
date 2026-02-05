@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Edit, Trash2, Eye, EyeOff, Sparkles, Utensils, Tag, Image as ImageIcon } from 'lucide-react';
 import { apiClient } from '../../services/apiClient';
+import LazyImage from '../LazyImage';
 
 const AdminNews = () => {
   const [news, setNews] = useState([]);
@@ -255,16 +256,13 @@ const AdminNews = () => {
               {/* Image */}
               {item.image_url && (
                 <div className="relative h-48 overflow-hidden">
-                  <img
+                  <LazyImage
                     src={item.image_url.startsWith('http') ? item.image_url : `${apiClient.baseURL || 'http://localhost:3001'}${item.image_url}`}
                     alt={item.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = '/vite.svg';
-                    }}
+                    className="w-full h-full"
+                    fallbackSrc="/vite.svg"
                   />
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-2 right-2 z-10">
                     <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium bg-white/90 text-gray-800">
                       {getTypeIcon(item.type)}
                       <span>{getTypeLabel(item.type)}</span>

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Eye, Heart } from 'lucide-react';
+import LazyImage from './LazyImage';
 
 const DishGallery = () => {
   const dishes = [
@@ -76,13 +77,11 @@ const DishGallery = () => {
               className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group"
             >
               <div className="relative overflow-hidden">
-                <img
-                  src={dish.image || 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'}
+                <LazyImage
+                  src={dish.image || '/vite.svg'}
                   alt={dish.name}
-                  className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
-                  onError={(e) => {
-                    e.target.src = 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
-                  }}
+                  className="w-full h-48 group-hover:scale-110 transition-transform duration-300"
+                  fallbackSrc="/vite.svg"
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-4">

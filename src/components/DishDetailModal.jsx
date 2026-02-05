@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, Flame, Leaf, Plus, Droplet } from 'lucide-react';
 import { useCartContext } from '../context/CartContext';
+import LazyImage from './LazyImage';
 
 const DishDetailModal = ({ dish, isOpen, onClose }) => {
   const { addToCart } = useCartContext();
@@ -52,14 +53,11 @@ const DishDetailModal = ({ dish, isOpen, onClose }) => {
         >
           {/* Header */}
           <div className="relative h-64 bg-gray-200 overflow-hidden">
-            <img
+            <LazyImage
               src={dish.image || '/vite.svg'}
               alt={dish.name}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = '/vite.svg';
-              }}
+              className="w-full h-full"
+              fallbackSrc="/vite.svg"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
             

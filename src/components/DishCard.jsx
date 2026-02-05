@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Star, Flame, Leaf, Droplet } from 'lucide-react';
 import { useCartContext } from '../context/CartContext';
 import DishDetailModal from './DishDetailModal';
+import LazyImage from './LazyImage';
 
 const DishCard = ({ dish, index = 0 }) => {
   const { addToCart } = useCartContext();
@@ -26,14 +27,11 @@ const DishCard = ({ dish, index = 0 }) => {
         onClick={() => setIsModalOpen(true)}
       >
       <div className="h-48 bg-gray-200 relative overflow-hidden">
-        <img
+        <LazyImage
           src={dish.image || '/vite.svg'}
           alt={dish.name}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = '/vite.svg';
-          }}
+          className="w-full h-full"
+          fallbackSrc="/vite.svg"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
         <div className="absolute top-3 left-3 flex gap-2 flex-wrap">

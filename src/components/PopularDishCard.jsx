@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Star, Droplet } from 'lucide-react';
 import { useCartContext } from '../context/CartContext';
+import LazyImage from './LazyImage';
 
 const PopularDishCard = ({ dish, index = 0 }) => {
   const { addToCart } = useCartContext();
@@ -14,13 +15,11 @@ const PopularDishCard = ({ dish, index = 0 }) => {
       className="card overflow-hidden"
     >
       <div className="h-48 bg-gray-200 relative">
-        <img
-          src={dish.image || 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'}
+        <LazyImage
+          src={dish.image || '/vite.svg'}
           alt={dish.name}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.target.src = 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
-          }}
+          className="w-full h-full"
+          fallbackSrc="/vite.svg"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
         <div className="absolute top-3 left-3 flex gap-2 flex-wrap">

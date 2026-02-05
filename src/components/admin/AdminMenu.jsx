@@ -11,6 +11,7 @@ import {
   Star
 } from 'lucide-react';
 import { MenuService } from '../../services/menuService';
+import LazyImage from '../LazyImage';
 
 const AdminMenu = () => {
   const [dishes, setDishes] = useState([]);
@@ -630,13 +631,11 @@ const AdminMenu = () => {
             className="bg-white rounded-lg shadow-lg overflow-hidden"
           >
             <div className="relative">
-              <img
-                src={dish.image_url || dish.image || 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'}
+              <LazyImage
+                src={dish.image_url || dish.image || '/vite.svg'}
                 alt={dish.name}
-                className="w-full h-48 object-cover"
-                onError={(e) => {
-                  e.target.src = 'https://images.unsplash.com/photo-1553621042-f6e147245754?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
-                }}
+                className="w-full h-48"
+                fallbackSrc="/vite.svg"
               />
               <div className="absolute top-2 right-2 flex space-x-1">
                 {dish.is_popular && (
