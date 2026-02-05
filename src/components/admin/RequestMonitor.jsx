@@ -11,43 +11,115 @@ import {
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
+// Ключ для localStorage кэша
+const CACHE_KEY = 'request_stats_cache';
+const CACHE_DURATION = 20 * 60 * 1000; // 20 минут в миллисекундах
+
 const RequestMonitor = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [nextUpdate, setNextUpdate] = useState(null);
 
-  const fetchStats = useCallback(async () => {
+  // Загрузка из кэша
+  const loadFromCache = useCallback(() => {
     try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        const age = Date.now() - timestamp;
+        if (age < CACHE_DURATION) {
+          setStats(data);
+          setLastUpdated(new Date(timestamp));
+          setNextUpdate(new Date(timestamp + CACHE_DURATION));
+          return true;
+        }
+      }
+    } catch (e) {
+      console.error('Cache load error:', e);
+    }
+    return false;
+  }, []);
+
+  // Сохранение в кэш
+  const saveToCache = useCallback((data) => {
+    try {
+      const timestamp = Date.now();
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp }));
+      setLastUpdated(new Date(timestamp));
+      setNextUpdate(new Date(timestamp + CACHE_DURATION));
+    } catch (e) {
+      console.error('Cache save error:', e);
+    }
+  }, []);
+
+  // Загрузка с сервера
+  const fetchStats = useCallback(async (force = false) => {
+    // Проверяем кэш если не принудительное обновление
+    if (!force && loadFromCache()) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
       const response = await fetch(`${API_BASE}/api/admin/request-stats`);
       if (!response.ok) throw new Error('Failed to fetch stats');
       const data = await response.json();
       setStats(data);
+      saveToCache(data);
       setError(null);
     } catch (err) {
       setError(err.message);
+      // Пробуем загрузить из кэша даже если он устарел
+      loadFromCache();
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loadFromCache, saveToCache]);
 
+  // Сброс статистики
   const resetStats = async () => {
     try {
       await fetch(`${API_BASE}/api/admin/request-stats/reset`, { method: 'POST' });
-      await fetchStats();
+      localStorage.removeItem(CACHE_KEY);
+      await fetchStats(true);
     } catch (err) {
       setError(err.message);
     }
   };
 
+  // Принудительное обновление
+  const forceRefresh = () => {
+    localStorage.removeItem(CACHE_KEY);
+    fetchStats(true);
+  };
+
+  // Первоначальная загрузка
   useEffect(() => {
     fetchStats();
     
-    if (autoRefresh) {
-      const interval = setInterval(fetchStats, 5000); // Обновляем каждые 5 секунд
-      return () => clearInterval(interval);
-    }
-  }, [fetchStats, autoRefresh]);
+    // Автообновление каждые 20 минут
+    const interval = setInterval(() => fetchStats(true), CACHE_DURATION);
+    return () => clearInterval(interval);
+  }, [fetchStats]);
+
+  // Форматирование времени
+  const formatTime = (date) => {
+    if (!date) return '-';
+    return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Время до следующего обновления
+  const getTimeUntilUpdate = () => {
+    if (!nextUpdate) return '-';
+    const diff = nextUpdate.getTime() - Date.now();
+    if (diff <= 0) return 'сейчас';
+    const minutes = Math.floor(diff / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   if (loading && !stats) {
     return (
@@ -71,27 +143,23 @@ const RequestMonitor = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Мониторинг запросов</h2>
-          <p className="text-gray-600">Статистика запросов к серверу в реальном времени</p>
+          <p className="text-gray-600">Статистика запросов к серверу (обновляется раз в 20 мин)</p>
         </div>
-        <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={autoRefresh}
-              onChange={(e) => setAutoRefresh(e.target.checked)}
-              className="rounded"
-            />
-            Автообновление
-          </label>
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="text-sm text-gray-500">
+            <div>Обновлено: {formatTime(lastUpdated)}</div>
+            <div>Следующее: {getTimeUntilUpdate()}</div>
+          </div>
           <button
-            onClick={fetchStats}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            onClick={forceRefresh}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            <RefreshCw className="w-4 h-4" />
-            Обновить
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Обновить сейчас
           </button>
           <button
             onClick={resetStats}
