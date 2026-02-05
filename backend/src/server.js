@@ -79,77 +79,118 @@ const getClientIp = (req) => {
          req.ip;
 };
 
-// Мягкий лимитер для публичных endpoints (menu, cart) — без лимита для GET запросов
-const publicLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 минута
-  max: 300, // 300 запросов в минуту на пользователя
-  message: {
-    error: 'Too many requests',
-    message: 'Превышен лимит запросов. Попробуйте позже.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: getClientIp, // Используем реальный IP пользователя
-  skip: (req) => req.method === 'GET' // GET запросы не лимитируем
-});
-
-// Более строгий лимитер для остальных endpoints
-const limiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 минута
-  max: 100, // 100 запросов в минуту на пользователя
-  message: {
-    error: 'Too many requests',
-    message: 'Превышен лимит запросов. Попробуйте позже.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: getClientIp // Используем реальный IP пользователя
-});
-
-// Лимитер для админки — более мягкий (загрузка изображений и т.д.)
-const adminLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 минута
-  max: 500, // 500 запросов в минуту для админа
-  message: {
-    error: 'Too many requests',
-    message: 'Превышен лимит запросов. Попробуйте позже.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: getClientIp
-});
-
-// Применяем лимитеры к разным endpoints
-app.use('/api/menu', publicLimiter);
-app.use('/api/cart', publicLimiter);
-app.use('/api/admin', adminLimiter); // Админка с высоким лимитом
-
-// Применяем основной лимитер ко всем остальным путям
-app.use(limiter);
+// ============================================================
+// ВРЕМЕННО ОТКЛЮЧАЕМ RATE LIMITER для диагностики
+// ============================================================
+// const publicLimiter = rateLimit({ ... });
+// const limiter = rateLimit({ ... });
+// const adminLimiter = rateLimit({ ... });
+// app.use('/api/menu', publicLimiter);
+// app.use('/api/cart', publicLimiter);
+// app.use('/api/admin', adminLimiter);
+// app.use(limiter);
+// ============================================================
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Debug: Log all incoming requests with IP
-const requestCounts = new Map(); // Счётчик запросов по IP
+// ============================================================
+// СТАТИСТИКА ЗАПРОСОВ ДЛЯ ДИАГНОСТИКИ
+// ============================================================
+const requestStats = {
+  byIp: new Map(),      // IP -> { count, lastSeen, paths: Map<path, count> }
+  byPath: new Map(),    // path -> count
+  total: 0,
+  startTime: Date.now()
+};
+
+// Middleware для сбора статистики
 app.use((req, res, next) => {
   const clientIp = getClientIp(req);
+  const path = req.path;
   const now = Date.now();
   
-  // Считаем запросы по IP за последнюю минуту
-  if (!requestCounts.has(clientIp)) {
-    requestCounts.set(clientIp, []);
+  requestStats.total++;
+  
+  // Статистика по IP
+  if (!requestStats.byIp.has(clientIp)) {
+    requestStats.byIp.set(clientIp, { 
+      count: 0, 
+      firstSeen: now,
+      lastSeen: now, 
+      paths: new Map(),
+      recentRequests: [] // последние 100 запросов
+    });
   }
-  const timestamps = requestCounts.get(clientIp);
-  timestamps.push(now);
-  // Удаляем старые записи (старше 1 минуты)
-  const oneMinuteAgo = now - 60000;
-  while (timestamps.length > 0 && timestamps[0] < oneMinuteAgo) {
-    timestamps.shift();
+  const ipStats = requestStats.byIp.get(clientIp);
+  ipStats.count++;
+  ipStats.lastSeen = now;
+  ipStats.paths.set(path, (ipStats.paths.get(path) || 0) + 1);
+  
+  // Храним последние 100 запросов с этого IP
+  ipStats.recentRequests.push({ path, method: req.method, time: now });
+  if (ipStats.recentRequests.length > 100) {
+    ipStats.recentRequests.shift();
   }
   
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} | IP: ${clientIp} | Requests/min: ${timestamps.length}`);
+  // Статистика по путям
+  requestStats.byPath.set(path, (requestStats.byPath.get(path) || 0) + 1);
+  
+  // Логируем только каждый 10-й запрос чтобы не спамить
+  if (requestStats.total % 10 === 0) {
+    console.log(`[STATS] Total: ${requestStats.total} | IP: ${clientIp} (${ipStats.count} total) | ${req.method} ${path}`);
+  }
+  
   next();
+});
+
+// API endpoint для просмотра статистики (доступен в админке)
+app.get('/api/admin/request-stats', (req, res) => {
+  const now = Date.now();
+  const uptimeMinutes = Math.round((now - requestStats.startTime) / 60000);
+  
+  // Собираем топ IP по количеству запросов
+  const topIps = Array.from(requestStats.byIp.entries())
+    .map(([ip, stats]) => ({
+      ip,
+      totalRequests: stats.count,
+      firstSeen: new Date(stats.firstSeen).toISOString(),
+      lastSeen: new Date(stats.lastSeen).toISOString(),
+      topPaths: Array.from(stats.paths.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([path, count]) => ({ path, count })),
+      recentRequests: stats.recentRequests.slice(-20).map(r => ({
+        ...r,
+        time: new Date(r.time).toISOString()
+      }))
+    }))
+    .sort((a, b) => b.totalRequests - a.totalRequests)
+    .slice(0, 20);
+  
+  // Топ путей
+  const topPaths = Array.from(requestStats.byPath.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 20)
+    .map(([path, count]) => ({ path, count }));
+  
+  res.json({
+    uptimeMinutes,
+    totalRequests: requestStats.total,
+    requestsPerMinute: Math.round(requestStats.total / Math.max(uptimeMinutes, 1)),
+    uniqueIps: requestStats.byIp.size,
+    topIps,
+    topPaths
+  });
+});
+
+// Endpoint для сброса статистики
+app.post('/api/admin/request-stats/reset', (req, res) => {
+  requestStats.byIp.clear();
+  requestStats.byPath.clear();
+  requestStats.total = 0;
+  requestStats.startTime = Date.now();
+  res.json({ message: 'Статистика сброшена' });
 });
 
 // Routes

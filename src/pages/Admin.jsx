@@ -13,7 +13,8 @@ import {
   Lock,
   Eye,
   EyeOff,
-  Sparkles
+  Sparkles,
+  Activity
 } from 'lucide-react';
 import AdminDashboard from '../components/admin/AdminDashboard';
 import AdminMenu from '../components/admin/AdminMenu';
@@ -22,6 +23,7 @@ import AdminStats from '../components/admin/AdminStats';
 import AdminSettings from '../components/admin/AdminSettings';
 import AdminVacancies from '../components/admin/AdminVacancies';
 import AdminNews from '../components/admin/AdminNews';
+import RequestMonitor from '../components/admin/RequestMonitor';
 import { UserService } from '../services/userService';
 import { apiClient } from '../services/apiClient';
 
@@ -43,6 +45,7 @@ const Admin = () => {
     { id: 'vacancies', label: 'Вакансии', icon: Mail, kanji: '求人' },
     { id: 'news', label: 'Новости', icon: Sparkles, kanji: 'ニュース' },
     { id: 'stats', label: 'Статистика', icon: BarChart3, kanji: '統計' },
+    { id: 'monitor', label: 'Мониторинг', icon: Activity, kanji: 'モニタリング' },
     { id: 'settings', label: 'Настройки', icon: Settings, kanji: '設定' }
   ];
 
@@ -104,6 +107,8 @@ const Admin = () => {
         return <AdminNews />;
       case 'stats':
         return <AdminStats />;
+      case 'monitor':
+        return <RequestMonitor />;
       case 'settings':
         return <AdminSettings />;
       default:
