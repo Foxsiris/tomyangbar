@@ -221,6 +221,7 @@ const login = async (req, res) => {
 const adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log('[AdminLogin] Attempt for email:', email);
 
     // Находим админа
     const { data: admin, error } = await supabase
@@ -230,12 +231,21 @@ const adminLogin = async (req, res) => {
       .eq('is_active', true)
       .single();
 
-    if (error || !admin) {
+    if (error) {
+      console.error('[AdminLogin] Supabase error:', error);
+      return res.status(401).json({ error: 'Неверные данные для входа' });
+    }
+    
+    if (!admin) {
+      console.log('[AdminLogin] Admin not found for email:', email);
       return res.status(401).json({ error: 'Неверные данные для входа' });
     }
 
+    console.log('[AdminLogin] Admin found:', admin.email, 'is_active:', admin.is_active);
+
     // Проверяем пароль (временно для совместимости с существующими данными)
     if (password !== admin.password_hash) {
+      console.log('[AdminLogin] Password mismatch for:', email);
       return res.status(401).json({ error: 'Неверные данные для входа' });
     }
 
@@ -249,6 +259,7 @@ const adminLogin = async (req, res) => {
     // Убираем пароль из ответа
     const { password_hash, ...adminWithoutPassword } = admin;
 
+    console.log('[AdminLogin] Success for:', email);
     res.json({
       message: 'Успешная авторизация админа',
       user: { ...adminWithoutPassword, role: 'admin' },
@@ -256,7 +267,7 @@ const adminLogin = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Admin login error:', error);
+    console.error('[AdminLogin] Unexpected error:', error.message, error.stack);
     res.status(500).json({ error: 'Внутренняя ошибка сервера' });
   }
 };

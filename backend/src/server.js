@@ -106,9 +106,23 @@ const limiter = rateLimit({
   keyGenerator: getClientIp // Используем реальный IP пользователя
 });
 
-// Применяем мягкий лимитер для публичных endpoints ПЕРЕД основным
+// Лимитер для админки — более мягкий (загрузка изображений и т.д.)
+const adminLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 минута
+  max: 500, // 500 запросов в минуту для админа
+  message: {
+    error: 'Too many requests',
+    message: 'Превышен лимит запросов. Попробуйте позже.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: getClientIp
+});
+
+// Применяем лимитеры к разным endpoints
 app.use('/api/menu', publicLimiter);
 app.use('/api/cart', publicLimiter);
+app.use('/api/admin', adminLimiter); // Админка с высоким лимитом
 
 // Применяем основной лимитер ко всем остальным путям
 app.use(limiter);
@@ -116,9 +130,25 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Debug: Log all incoming requests
+// Debug: Log all incoming requests with IP
+const requestCounts = new Map(); // Счётчик запросов по IP
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  const clientIp = getClientIp(req);
+  const now = Date.now();
+  
+  // Считаем запросы по IP за последнюю минуту
+  if (!requestCounts.has(clientIp)) {
+    requestCounts.set(clientIp, []);
+  }
+  const timestamps = requestCounts.get(clientIp);
+  timestamps.push(now);
+  // Удаляем старые записи (старше 1 минуты)
+  const oneMinuteAgo = now - 60000;
+  while (timestamps.length > 0 && timestamps[0] < oneMinuteAgo) {
+    timestamps.shift();
+  }
+  
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} | IP: ${clientIp} | Requests/min: ${timestamps.length}`);
   next();
 });
 
