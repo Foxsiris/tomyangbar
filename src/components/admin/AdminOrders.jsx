@@ -306,8 +306,13 @@ const AdminOrders = () => {
               <div>
                 <span className="text-gray-500">Способ оплаты:</span>
                 <span className="ml-2 font-medium">
-                  {order.payment_method === 'cash' ? 'Наличные' : 'Карта'}
+                  {(order.payment_method || order.paymentMethod) === 'cash' ? 'Наличные' : (order.payment_method || order.paymentMethod) === 'card_on_delivery' ? 'Картой при получении' : 'Онлайн-оплата'}
                 </span>
+                {(order.payment_method || order.paymentMethod) === 'cash' && (order.cash_amount > 0 || order.cashAmount > 0) && (
+                  <span className="ml-2 text-sm text-orange-600">
+                    (Сдача с {order.cash_amount || order.cashAmount}₽: {order.change_amount || order.changeAmount}₽)
+                  </span>
+                )}
               </div>
               {/* Бонусы */}
               {(order.bonuses_used > 0 || order.bonuses_earned > 0) && (

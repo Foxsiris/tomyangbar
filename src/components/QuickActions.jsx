@@ -27,7 +27,7 @@ const QuickActions = () => {
     {
       icon: <Truck className="w-5 h-5" />,
       title: 'Доставка',
-      description: 'От 45 минут',
+      description: 'Быстрая доставка',
       action: () => {},
       color: 'bg-orange-500 hover:bg-orange-600'
     }

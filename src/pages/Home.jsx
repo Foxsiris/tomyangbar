@@ -45,7 +45,7 @@ const Home = () => {
     {
       icon: <Clock className="w-6 h-6" />,
       title: 'Быстрая доставка',
-      description: 'Доставка за 45 минут'
+      description: 'Быстрая доставка'
     },
     {
       icon: <Utensils className="w-6 h-6" />,

@@ -338,7 +338,7 @@ const AdminDashboard = () => {
                           {order.final_total} ₽
                         </div>
                         <div className="text-xs text-gray-500">
-                          {order.payment_method === 'cash' ? 'Наличные' : 'Карта'}
+                          {(order.payment_method || order.paymentMethod) === 'cash' ? 'Наличные' : (order.payment_method || order.paymentMethod) === 'card_on_delivery' ? 'Картой' : 'Онлайн'}
                         </div>
                       </div>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity">

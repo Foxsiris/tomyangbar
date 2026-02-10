@@ -22,7 +22,7 @@ const SpecialOffers = () => {
     {
       id: 3,
       title: 'Быстрая доставка',
-      description: 'От 45 минут',
+      description: 'Быстрая доставка',
       icon: <Clock className="w-6 h-6" />,
       color: 'bg-blue-500',
       validUntil: 'Постоянно'

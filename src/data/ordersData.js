@@ -414,6 +414,8 @@ export const addNewOrder = async (orderData, userId = null) => {
     deliveryType: orderData.deliveryType,
     deliveryTime: orderData.deliveryTime,
     paymentMethod: orderData.paymentMethod,
+    cashAmount: orderData.cashAmount || 0,
+    changeAmount: orderData.changeAmount || 0,
     notes: orderData.notes || '',
     userId: userId, // Добавляем ID пользователя
     createdAt: new Date().toISOString(),

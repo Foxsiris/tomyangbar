@@ -20,8 +20,8 @@ ${orderData.email ? `📧 *Email:* ${orderData.email}\n` : ''}
 ${orderData.items.map(item => `• ${item.name} x${item.quantity} - ${item.price * item.quantity} ₽`).join('\n')}
 
 💰 *Сумма:* ${orderData.finalTotal} ₽
-💳 *Оплата:* ${orderData.paymentMethod === 'cash' ? 'Наличные' : 'Карта'}
-${orderData.notes ? `📝 *Комментарий:* ${orderData.notes}\n` : ''}
+💳 *Оплата:* ${orderData.paymentMethod === 'cash' ? 'Наличные' : orderData.paymentMethod === 'card_on_delivery' ? 'Картой при получении' : 'Онлайн-оплата'}
+${orderData.paymentMethod === 'cash' && orderData.cashAmount ? `💵 *Сдача с:* ${orderData.cashAmount} ₽ (сдача: ${orderData.changeAmount} ₽)\n` : ''}${orderData.notes ? `📝 *Комментарий:* ${orderData.notes}\n` : ''}
 
 ⏰ *Время заказа:* ${new Date(orderData.createdAt).toLocaleString('ru-RU')}
 

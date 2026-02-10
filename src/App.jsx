@@ -21,6 +21,7 @@ import PaymentCancel from './pages/PaymentCancel';
 import SBPSuccess from './pages/SBPSuccess';
 import SBPCancel from './pages/SBPCancel';
 import MenuPdf from './pages/MenuPdf';
+import Privacy from './pages/Privacy';
 
 function App() {
   return (
@@ -48,6 +49,7 @@ function App() {
                 <Route path="/payment/sbp/success" element={<SBPSuccess />} />
                 <Route path="/payment/sbp/cancel" element={<SBPCancel />} />
                 <Route path="/menu-pdf" element={<MenuPdf />} />
+                <Route path="/privacy" element={<Privacy />} />
               </Routes>
             </motion.main>
             <Footer />

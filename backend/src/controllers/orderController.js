@@ -25,6 +25,8 @@ const createOrder = async (req, res) => {
       deliveryType,
       deliveryTime,
       paymentMethod,
+      cashAmount = 0,
+      changeAmount = 0,
       notes,
       bonusesToUse = 0 // Количество бонусов для списания
     } = req.body;
@@ -121,6 +123,8 @@ const createOrder = async (req, res) => {
           delivery_type: deliveryType,
           delivery_time: deliveryTime,
           payment_method: paymentMethod,
+          cash_amount: paymentMethod === 'cash' ? cashAmount : 0,
+          change_amount: paymentMethod === 'cash' ? changeAmount : 0,
           notes: notes || '',
           user_id: userId,
           order_number: orderNumber,

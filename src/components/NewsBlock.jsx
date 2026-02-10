@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, Utensils, Tag } from 'lucide-react';
+import { ArrowRight, Sparkles, Utensils, Tag, X } from 'lucide-react';
 import { apiClient } from '../services/apiClient';
 import LazyImage from './LazyImage';
 
 const NewsBlock = () => {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedNews, setSelectedNews] = useState(null);
 
   useEffect(() => {
     loadNews();
@@ -99,7 +100,8 @@ const NewsBlock = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow group"
+              className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow group cursor-pointer"
+              onClick={() => setSelectedNews(item)}
             >
               {/* Изображение */}
               {item.image_url && (
@@ -140,20 +142,92 @@ const NewsBlock = () => {
                   </p>
                 )}
 
-                {item.link_url && (
-                  <Link
-                    to={item.link_url}
-                    className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium group-hover:translate-x-1 transition-transform"
-                  >
-                    Подробнее
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </Link>
-                )}
+                <span className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium group-hover:translate-x-1 transition-transform">
+                  Подробнее
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </span>
               </div>
             </motion.div>
           ))}
         </div>
       </div>
+
+      {/* News Popup Modal */}
+      <AnimatePresence>
+        {selectedNews && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setSelectedNews(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="relative w-full max-w-lg bg-[#fbfbf9] rounded-2xl overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setSelectedNews(null)}
+                className="absolute top-4 right-4 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-black/30 hover:bg-black/50 transition-colors"
+                aria-label="Закрыть"
+              >
+                <X className="w-6 h-6 text-white" />
+              </button>
+
+              {/* Image */}
+              {selectedNews.image_url && (
+                <div className="w-full aspect-[4/3] overflow-hidden">
+                  <img
+                    src={selectedNews.image_url.startsWith('http') ? selectedNews.image_url : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${selectedNews.image_url}`}
+                    alt={selectedNews.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+
+              {/* Content */}
+              <div className="p-8 text-center">
+                {/* Type badge */}
+                <div className="mb-4">
+                  <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(selectedNews.type)}`}>
+                    {getTypeIcon(selectedNews.type)}
+                    <span>{getTypeLabel(selectedNews.type)}</span>
+                  </span>
+                </div>
+
+                {/* Title */}
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4" style={{ fontFamily: 'Georgia, serif' }}>
+                  {selectedNews.title}
+                </h2>
+
+                {/* Description */}
+                {selectedNews.description && (
+                  <div className="text-gray-600 leading-relaxed whitespace-pre-line">
+                    {selectedNews.description}
+                  </div>
+                )}
+
+                {/* Link button */}
+                {selectedNews.link_url && (
+                  <Link
+                    to={selectedNews.link_url}
+                    className="inline-flex items-center justify-center mt-6 px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+                    onClick={() => setSelectedNews(null)}
+                  >
+                    Перейти
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Link>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };

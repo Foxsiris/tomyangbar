@@ -25,7 +25,8 @@ const Checkout = () => {
     deliveryType: 'delivery', // 'delivery' или 'pickup'
     deliveryTime: 'asap', // 'asap', 'specific'
     specificTime: '',
-    paymentMethod: 'cash', // 'cash', 'card', 'sbp'
+    paymentMethod: 'card_on_delivery', // 'card_on_delivery', 'cash', 'card'
+    cashAmount: '',
     notes: ''
   });
 
@@ -139,6 +140,8 @@ const Checkout = () => {
         deliveryType: formData.deliveryType,
         deliveryTime: formData.deliveryTime,
         paymentMethod: formData.paymentMethod,
+        cashAmount: formData.paymentMethod === 'cash' ? Number(formData.cashAmount) || 0 : 0,
+        changeAmount: formData.paymentMethod === 'cash' && formData.cashAmount ? Number(formData.cashAmount) - finalTotalPrice : 0,
         notes: formData.notes,
         items: cart,
         total: totalPrice,
@@ -359,7 +362,6 @@ const Checkout = () => {
                         <Truck className="w-6 h-6 text-primary-600 mr-3" />
                         <div>
                           <div className="font-medium text-gray-900">Доставка</div>
-                          <div className="text-sm text-gray-500">Доставка за 45 минут</div>
                         </div>
                       </div>
                     </label>
@@ -433,7 +435,7 @@ const Checkout = () => {
                         onChange={handleInputChange}
                         className="mr-3"
                       />
-                      <span>Как можно скорее (45-60 минут)</span>
+                      <span>Как можно скорее</span>
                     </label>
                     <label className="flex items-center">
                       <input
@@ -475,6 +477,17 @@ const Checkout = () => {
                       <input
                         type="radio"
                         name="paymentMethod"
+                        value="card_on_delivery"
+                        checked={formData.paymentMethod === 'card_on_delivery'}
+                        onChange={handleInputChange}
+                        className="mr-3"
+                      />
+                      <span>Картой при получении</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
                         value="cash"
                         checked={formData.paymentMethod === 'cash'}
                         onChange={handleInputChange}
@@ -482,6 +495,26 @@ const Checkout = () => {
                       />
                       <span>Наличными при получении</span>
                     </label>
+                    {formData.paymentMethod === 'cash' && (
+                      <div className="ml-6 mt-2">
+                        <label className="block text-sm text-gray-600 mb-1">
+                          С какой суммы подготовить сдачу?
+                        </label>
+                        <input
+                          type="number"
+                          name="cashAmount"
+                          value={formData.cashAmount}
+                          onChange={handleInputChange}
+                          placeholder="Например: 5000"
+                          className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        />
+                        {formData.cashAmount && Number(formData.cashAmount) > 0 && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            Сдача: {Number(formData.cashAmount) - finalTotalPrice} ₽
+                          </p>
+                        )}
+                      </div>
+                    )}
                     <label className="flex items-center">
                       <input
                         type="radio"
@@ -654,6 +687,13 @@ const Checkout = () => {
                     : `Оформить заказ за ${finalTotalPrice} ₽`
                   }
                 </button>
+                
+                <p className="text-xs text-gray-500 mt-4 leading-relaxed">
+                  Нажимая кнопку «Оформить заказ», я даю свое согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на условиях и для целей, определенных в{' '}
+                  <Link to="/privacy" className="text-primary-600 hover:underline">
+                    Согласии на обработку персональных данных
+                  </Link>
+                </p>
               </form>
             </motion.div>
           </div>
@@ -739,7 +779,7 @@ const Checkout = () => {
                       <>
                         <div>• Введите адрес для проверки зоны</div>
                         <div>• Минимальная сумма: от 2 ₽</div>
-                        <div>• Время доставки: 45-120 минут</div>
+                        <div>• Время доставки зависит от загруженности</div>
                       </>
                     )
                   ) : (

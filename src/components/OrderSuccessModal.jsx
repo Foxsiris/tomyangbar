@@ -109,7 +109,7 @@ const OrderSuccessModal = ({ isOpen, orderNumber, onClose }) => {
             >
               <div className="flex items-center justify-center space-x-3 bg-gray-50 rounded-lg p-3">
                 <Clock className="w-5 h-5 text-primary-600" />
-                <span className="text-sm text-gray-700">Время доставки: 45-60 минут</span>
+                <span className="text-sm text-gray-700">Время доставки зависит от загруженности</span>
               </div>
               <div className="flex items-center justify-center space-x-3 bg-gray-50 rounded-lg p-3">
                 <Phone className="w-5 h-5 text-primary-600" />

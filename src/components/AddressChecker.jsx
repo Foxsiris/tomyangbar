@@ -53,7 +53,7 @@ const AddressChecker = ({ address, onZoneFound, onZoneNotFound }) => {
         [51.54311203296284, 45.99766849320613], [51.543073863098925, 45.99761081818322]
       ],
       minOrder: 2,
-      deliveryTime: '45-60 мин',
+      deliveryTime: 'Быстрая доставка',
       description: 'Бесплатная доставка от 2 рублей'
     },
     {

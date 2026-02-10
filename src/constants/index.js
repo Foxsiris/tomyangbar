@@ -9,7 +9,7 @@ export const RESTAURANT_INFO = {
 
 export const DELIVERY_INFO = {
   minOrder: 2, // Для тестирования (было 1000)
-  deliveryTime: '45 минут',
+  deliveryTime: 'Быстрая доставка',
   freeDeliveryThreshold: 2, // Для тестирования (было 1000)
   deliveryCost: 200,
 };

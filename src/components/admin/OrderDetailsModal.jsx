@@ -243,8 +243,13 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                     <div>
                       <p className="text-sm text-gray-500">Способ оплаты</p>
                       <p className="font-medium text-gray-900">
-                        {order.payment_method === 'cash' ? 'Наличные' : 'Банковская карта'}
+                        {(order.payment_method || order.paymentMethod) === 'cash' ? 'Наличные' : (order.payment_method || order.paymentMethod) === 'card_on_delivery' ? 'Картой при получении' : 'Онлайн-оплата'}
                       </p>
+                      {(order.payment_method || order.paymentMethod) === 'cash' && (order.cash_amount > 0 || order.cashAmount > 0) && (
+                        <p className="text-sm text-orange-600 font-medium mt-1">
+                          Сдача с {order.cash_amount || order.cashAmount}₽: {order.change_amount || order.changeAmount}₽
+                        </p>
+                      )}
                     </div>
                   </div>
                   

@@ -9,7 +9,7 @@ const Map = () => {
       name: 'Зелёная зона',
       color: '#56db40',
       minOrder: 2,
-      deliveryTime: '45-60 мин'
+      deliveryTime: 'Быстрая доставка'
     },
     {
       name: 'Синяя зона',
@@ -138,7 +138,7 @@ const Map = () => {
           <div className="bg-white rounded-lg shadow-lg p-6 text-center">
             <div className="text-3xl mb-3">🚚</div>
             <h4 className="font-semibold text-gray-900 mb-2">Доставка</h4>
-            <p className="text-gray-600">Доставляем по всему Саратову от 45 минут</p>
+            <p className="text-gray-600">Доставляем по всему Саратову</p>
           </div>
 
           <div className="bg-white rounded-lg shadow-lg p-6 text-center">
