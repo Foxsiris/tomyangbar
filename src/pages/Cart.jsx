@@ -73,14 +73,29 @@ const Cart = () => {
                       animate={{ opacity: 1, x: 0 }}
                       className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg"
                     >
-                      <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0"></div>
+                      <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
+                        {(item.image_url || item.image) ? (
+                          <img
+                            src={item.image_url || item.image}
+                            alt={item.dish_name || item.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.style.display = 'none';
+                              e.target.parentElement.innerHTML = '<span class="flex items-center justify-center w-full h-full text-2xl">🍽️</span>';
+                            }}
+                          />
+                        ) : (
+                          <span className="flex items-center justify-center w-full h-full text-2xl">🍽️</span>
+                        )}
+                      </div>
                       
                       <div className="flex-1 min-w-0">
                         <h3 className="text-lg font-medium text-gray-900 truncate">
-                          {item.name}
+                          {item.dish_name || item.name}
                         </h3>
                         <p className="text-sm text-gray-500">
-                          {item.weight}
+                          {item.weight || ''}
                         </p>
                         <p className="text-sm text-gray-600 line-clamp-2">
                           {item.description}

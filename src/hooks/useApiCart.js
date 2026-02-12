@@ -82,6 +82,7 @@ export const useApiCart = (userId = null) => {
           );
         } else {
           // Используем данные из ответа API, которые содержат правильный id
+          const dishImage = dish.image || dish.image_url || null;
           return [...prevCart, {
             id: response.item.id,
             dish_id: dish.id,
@@ -89,7 +90,9 @@ export const useApiCart = (userId = null) => {
             name: dish.name,
             price: dish.price,
             quantity: 1,
-            image_url: dish.image_url
+            image_url: dishImage,
+            image: dishImage,
+            weight: dish.weight
           }];
         }
       });

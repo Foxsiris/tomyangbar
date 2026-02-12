@@ -28,6 +28,8 @@ const AdminMenu = () => {
     weight: '',
     category_id: '',
     is_popular: false,
+    is_spicy: false,
+    is_vegetarian: false,
     is_active: true,
     image_url: '',
     calories: '',
@@ -227,6 +229,8 @@ const AdminMenu = () => {
       weight: dish.weight,
       category_id: dish.category_id,
       is_popular: dish.is_popular,
+      is_spicy: dish.is_spicy || false,
+      is_vegetarian: dish.is_vegetarian || false,
       is_active: dish.is_active,
       image_url: dish.image_url || '',
       calories: dish.calories ? dish.calories.toString() : '',
@@ -248,6 +252,8 @@ const AdminMenu = () => {
       weight: '',
       category_id: '',
       is_popular: false,
+      is_spicy: false,
+      is_vegetarian: false,
       is_active: true,
       image_url: '',
       calories: '',
@@ -963,7 +969,7 @@ const AdminMenu = () => {
                   </p>
                 </div>
                 
-                <div className="flex items-center space-x-4">
+                <div className="flex flex-wrap items-center gap-4">
                   <label className="flex items-center">
                     <input
                       type="checkbox"
@@ -972,6 +978,26 @@ const AdminMenu = () => {
                       className="mr-2"
                     />
                     <span className="text-sm text-gray-700">Популярное</span>
+                  </label>
+                  
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                    checked={formData.is_spicy}
+                    onChange={(e) => setFormData({...formData, is_spicy: e.target.checked})}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-orange-600 font-medium">Острое</span>
+                  </label>
+                  
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                    checked={formData.is_vegetarian}
+                    onChange={(e) => setFormData({...formData, is_vegetarian: e.target.checked})}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-green-600 font-medium">Вегетарианское</span>
                   </label>
                   
                   <label className="flex items-center">

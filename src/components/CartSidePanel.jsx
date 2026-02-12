@@ -110,8 +110,21 @@ const CartSidePanel = () => {
                 <div className="space-y-4">
                   {cart.map((item, index) => (
                     <div key={item.dish_id || item.id || index} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg bg-white">
-                      <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 flex items-center justify-center">
-                        <span className="text-2xl">🍽️</span>
+                      <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
+                        {(item.image_url || item.image) ? (
+                          <img
+                            src={item.image_url || item.image}
+                            alt={item.dish_name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.style.display = 'none';
+                              e.target.parentElement.innerHTML = '<span class="flex items-center justify-center w-full h-full text-2xl">🍽️</span>';
+                            }}
+                          />
+                        ) : (
+                          <span className="flex items-center justify-center w-full h-full text-2xl">🍽️</span>
+                        )}
                       </div>
                       
                       <div className="flex-1 min-w-0">

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Phone, MapPin, Clock, Mail, Instagram, Facebook, Twitter } from 'lucide-react';
+import { Phone, MapPin, Clock, Mail, Twitter } from 'lucide-react';
 
 const ContactInfo = () => {
   const contactData = [
@@ -30,8 +30,6 @@ const ContactInfo = () => {
   ];
 
   const socialLinks = [
-    { icon: <Instagram className="w-5 h-5" />, href: '#', label: 'Instagram' },
-    { icon: <Facebook className="w-5 h-5" />, href: '#', label: 'Facebook' },
     { icon: <Twitter className="w-5 h-5" />, href: '#', label: 'Twitter' }
   ];
 

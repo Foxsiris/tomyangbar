@@ -417,7 +417,8 @@ class ApiClient {
       dishName: dish.name,
       price: dish.price,
       quantity: 1,
-      imageUrl: dish.image_url
+      imageUrl: dish.image || dish.image_url,
+      weight: dish.weight
     });
   }
 

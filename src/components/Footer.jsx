@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Phone, Mail, MapPin, Clock, Instagram, Facebook } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -13,14 +13,6 @@ const Footer = () => {
               Аутентичная азиатская кухня в современной атмосфере. 
               Мы предлагаем лучшие блюда японской, китайской и тайской кухни.
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-primary-400 transition-colors">
-                <Instagram size={20} />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-primary-400 transition-colors">
-                <Facebook size={20} />
-              </a>
-            </div>
           </div>
 
           {/* Quick Links */}

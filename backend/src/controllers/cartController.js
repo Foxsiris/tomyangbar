@@ -132,7 +132,7 @@ const getOrCreateCart = async (req, res) => {
 // Добавление товара в корзину
 const addToCart = async (req, res) => {
   try {
-    const { cartId, dishId, dishName, price, quantity = 1, imageUrl } = req.body;
+    const { cartId, dishId, dishName, price, quantity = 1, imageUrl, weight } = req.body;
 
     // Проверяем, есть ли уже такой товар в корзине
     const { data: existingItem, error: checkError } = await supabase
@@ -166,23 +166,49 @@ const addToCart = async (req, res) => {
 
       res.json({ item: updatedItem });
     } else {
-      // Добавляем новый товар
-      const { data: newItem, error: insertError } = await supabase
+      // Добавляем новый товар (пробуем с image_url и weight, если колонки есть)
+      const itemData = {
+        cart_id: cartId,
+        dish_id: dishId,
+        dish_name: dishName,
+        price: price,
+        quantity: quantity,
+        image_url: imageUrl || null,
+        weight: weight || null,
+        created_at: new Date().toISOString()
+      };
+
+      let { data: newItem, error: insertError } = await supabase
         .from('cart_items')
-        .insert([{
+        .insert([itemData])
+        .select()
+        .single();
+
+      // Если ошибка из-за несуществующих колонок, пробуем без image_url и weight
+      if (insertError) {
+        console.warn('Insert with image_url/weight failed, retrying without:', insertError.message);
+        const fallbackData = {
           cart_id: cartId,
           dish_id: dishId,
           dish_name: dishName,
           price: price,
           quantity: quantity,
           created_at: new Date().toISOString()
-        }])
-        .select()
-        .single();
+        };
 
-      if (insertError) {
-        console.error('Insert cart item error:', insertError);
-        return res.status(500).json({ error: 'Ошибка при добавлении в корзину' });
+        const { data: fallbackItem, error: fallbackError } = await supabase
+          .from('cart_items')
+          .insert([fallbackData])
+          .select()
+          .single();
+
+        if (fallbackError) {
+          console.error('Insert cart item error:', fallbackError);
+          return res.status(500).json({ error: 'Ошибка при добавлении в корзину' });
+        }
+        
+        // Добавляем image_url и weight в ответ, даже если не сохранились в БД
+        newItem = { ...fallbackItem, image_url: imageUrl || null, weight: weight || null };
       }
 
       res.json({ item: newItem });
