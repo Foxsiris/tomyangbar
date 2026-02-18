@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CartProvider } from './context/CartContext';
 import { SupabaseUserProvider } from './context/SupabaseUserContext';
+import { MenuProvider } from './context/MenuContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import CartSidePanel from './components/CartSidePanel';
@@ -26,8 +27,9 @@ import Privacy from './pages/Privacy';
 function App() {
   return (
     <SupabaseUserProvider>
-      <CartProvider>
-        <Router>
+      <MenuProvider>
+        <CartProvider>
+          <Router>
           <div className="min-h-screen bg-gray-50">
             <Header />
             <motion.main
@@ -58,8 +60,9 @@ function App() {
             <FloatingCart />
             <TelegramPopup />
           </div>
-        </Router>
-      </CartProvider>
+          </Router>
+        </CartProvider>
+      </MenuProvider>
     </SupabaseUserProvider>
   );
 }

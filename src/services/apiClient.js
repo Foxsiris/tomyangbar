@@ -18,11 +18,11 @@ class ApiClient {
     }
     
     this.token = localStorage.getItem('tomyangbar_token');
+    this.isDev = isDevelopment;
     
-    // Логирование для отладки (включаем и в продакшене для диагностики)
-    console.log('🔧 API Client initialized');
-    console.log('📍 Base URL:', this.baseURL);
-    console.log('📍 Environment:', isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION');
+    if (isDevelopment) {
+      console.log('🔧 API Client initialized, Base URL:', this.baseURL);
+    }
     
     // Request throttling and caching
     this.requestQueue = new Map(); // For deduplicating identical requests
@@ -72,10 +72,18 @@ class ApiClient {
       '/api/menu/dishes',
       '/api/menu/full',
       '/api/menu/popular',
+      '/api/news',
       '/api/orders/stats',
       '/api/admin/stats'
     ];
     return method === 'GET' && cacheableEndpoints.some(ep => endpoint.includes(ep));
+  }
+
+  // Время кеша в зависимости от эндпоинта
+  getCacheDuration(endpoint) {
+    if (endpoint.includes('/api/menu/')) return 300000; // 5 минут для меню
+    if (endpoint.includes('/api/news')) return 120000;  // 2 минуты для новостей
+    return 30000; // 30 секунд по умолчанию
   }
 
   // Задержка для retry
@@ -91,7 +99,8 @@ class ApiClient {
     // Проверяем кеш для GET запросов
     if (this.isCacheable(endpoint, method)) {
       const cached = this.requestCache.get(requestKey);
-      if (cached && Date.now() - cached.timestamp < 30000) { // 30 секунд кеш
+      const cacheDuration = this.getCacheDuration(endpoint);
+      if (cached && Date.now() - cached.timestamp < cacheDuration) {
         return cached.data;
       }
     }
@@ -123,10 +132,9 @@ class ApiClient {
   // Выполнение запроса с обработкой ошибок
   async executeRequest(url, config, endpoint, requestKey, retryCount) {
     try {
-      // Логируем все запросы для диагностики
-      console.log(`🌐 apiClient.executeRequest: Making request to ${url}`);
-      console.log(`📍 apiClient.executeRequest: Endpoint: ${endpoint}`);
-      console.log(`📍 apiClient.executeRequest: Method: ${config.method || 'GET'}`);
+      if (this.isDev) {
+        console.log(`🌐 ${config.method || 'GET'} ${endpoint}`);
+      }
       
       // Добавляем таймаут для запросов (30 секунд)
       const timeoutPromise = new Promise((_, reject) => {
@@ -135,9 +143,6 @@ class ApiClient {
       
       const fetchPromise = fetch(url, config);
       const response = await Promise.race([fetchPromise, timeoutPromise]);
-      
-      console.log(`✅ apiClient.executeRequest: Response status: ${response.status}`);
-      console.log(`✅ apiClient.executeRequest: Response ok: ${response.ok}`);
       
       // Если токен истек, удаляем его
       if (response.status === 401) {
@@ -160,11 +165,8 @@ class ApiClient {
       let data;
       try {
         const text = await response.text();
-        console.log(`📄 apiClient.executeRequest: Response text (first 500 chars):`, text.substring(0, 500));
         data = JSON.parse(text);
-        console.log(`✅ apiClient.executeRequest: Parsed data:`, data);
       } catch (parseError) {
-        console.error(`apiClient.executeRequest: JSON parse error:`, parseError);
         // Если ответ не JSON (например, "Too many requests" текст)
         if (response.status === 429) {
           throw new Error('Превышен лимит запросов. Попробуйте позже.');
@@ -173,7 +175,6 @@ class ApiClient {
       }
       
       if (!response.ok) {
-        console.error(`apiClient.executeRequest: Response not OK. Status: ${response.status}, Data:`, data);
         throw new Error(data.error || data.message || 'Ошибка сервера');
       }
 
@@ -185,12 +186,11 @@ class ApiClient {
         });
       }
 
-      console.log(`✅ apiClient.executeRequest: Successfully returning data`);
       return data;
     } catch (error) {
-      console.error(`apiClient.executeRequest: API Error (${endpoint}):`, error);
-      console.error(`apiClient.executeRequest: Error message:`, error.message);
-      console.error(`apiClient.executeRequest: Error stack:`, error.stack);
+      if (this.isDev) {
+        console.error(`API Error (${endpoint}):`, error.message);
+      }
       
       // Обработка сетевых ошибок
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {

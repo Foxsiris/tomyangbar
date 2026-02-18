@@ -3,6 +3,15 @@ const supabase = require('../config/supabase');
 
 const router = express.Router();
 
+// Серверный кеш для меню (чтобы не обращаться к Supabase на каждый запрос)
+let menuCache = { data: null, timestamp: 0 };
+const MENU_CACHE_DURATION = 60000; // 1 минута
+
+// Функция для сброса кеша (вызывается из adminRoutes при изменении меню)
+const invalidateMenuCache = () => {
+  menuCache = { data: null, timestamp: 0 };
+};
+
 // Получение всех блюд
 router.get('/dishes', async (req, res) => {
   try {
@@ -46,26 +55,22 @@ router.get('/categories', async (req, res) => {
   }
 });
 
-// Получение полного меню (категории + блюда)
+// Получение полного меню (категории + блюда) — с серверным кешем
 router.get('/full', async (req, res) => {
   try {
-    console.log('GET /menu/full: Request received');
-    
+    // Проверяем серверный кеш
+    if (menuCache.data && Date.now() - menuCache.timestamp < MENU_CACHE_DURATION) {
+      res.set('X-Cache', 'HIT');
+      return res.json(menuCache.data);
+    }
+
     // Получаем категории
-    console.log('GET /menu/full: Fetching categories...');
     let { data: categories, error: categoriesError } = await supabase
       .from('categories')
       .select('*')
       .eq('is_active', true);
     
-    console.log('GET /menu/full: Categories result:', {
-      count: categories?.length || 0,
-      error: categoriesError,
-      sample: categories?.[0]
-    });
-    
     if (!categoriesError && categories) {
-      // Сортируем категории: сначала по sort_order, потом по name
       categories.sort((a, b) => {
         const aOrder = a.sort_order ?? 999;
         const bOrder = b.sort_order ?? 999;
@@ -74,51 +79,44 @@ router.get('/full', async (req, res) => {
         }
         return (a.name || '').localeCompare(b.name || '');
       });
-      console.log('GET /menu/full: Categories sorted');
     }
 
     if (categoriesError) {
-      console.error('GET /menu/full: Get categories error:', categoriesError);
+      console.error('GET /menu/full error:', categoriesError.message);
       return res.status(500).json({ error: 'Ошибка при получении категорий', details: categoriesError.message });
     }
 
     // Получаем блюда
-    console.log('GET /menu/full: Fetching dishes...');
     const { data: dishes, error: dishesError } = await supabase
       .from('dishes')
       .select('*')
       .eq('is_active', true)
       .order('name');
 
-    console.log('GET /menu/full: Dishes result:', {
-      count: dishes?.length || 0,
-      error: dishesError,
-      sample: dishes?.[0]
-    });
-
     if (dishesError) {
-      console.error('GET /menu/full: Get dishes error:', dishesError);
+      console.error('GET /menu/full error:', dishesError.message);
       return res.status(500).json({ error: 'Ошибка при получении блюд', details: dishesError.message });
     }
 
-    // Возвращаем плоскую структуру: категории и блюда отдельно
-    const menu = {
-      categories: categories || [],
-      dishes: dishes || []
+    const response = {
+      menu: {
+        categories: categories || [],
+        dishes: dishes || []
+      }
     };
 
-    console.log('GET /menu/full: Sending response:', {
-      categoriesCount: menu.categories.length,
-      dishesCount: menu.dishes.length
-    });
+    // Сохраняем в кеш
+    menuCache = { data: response, timestamp: Date.now() };
 
-    res.json({ menu });
+    res.set('X-Cache', 'MISS');
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json(response);
 
   } catch (error) {
-    console.error('GET /menu/full: Get full menu error:', error);
-    console.error('GET /menu/full: Error stack:', error.stack);
+    console.error('GET /menu/full error:', error.message);
     res.status(500).json({ error: 'Внутренняя ошибка сервера', details: error.message });
   }
 });
 
 module.exports = router;
+module.exports.invalidateMenuCache = invalidateMenuCache;

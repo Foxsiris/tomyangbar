@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Users, Clock, Star, Truck } from 'lucide-react';
+import { Users, Star, Truck } from 'lucide-react';
 
 const RestaurantStats = () => {
   const stats = [
@@ -8,12 +8,6 @@ const RestaurantStats = () => {
       number: '10,000+',
       label: 'Довольных клиентов',
       color: 'text-blue-600'
-    },
-    {
-      icon: <Clock className="w-8 h-8" />,
-      number: '45',
-      label: 'Минут доставка',
-      color: 'text-green-600'
     },
     {
       icon: <Star className="w-8 h-8" />,
@@ -47,7 +41,7 @@ const RestaurantStats = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto">
           {stats.map((stat, index) => (
             <motion.div
               key={index}

@@ -5,6 +5,7 @@ const fs = require('fs');
 const { getAllOrders, updateOrderStatus } = require('../controllers/orderController');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const supabase = require('../config/supabase');
+const { invalidateMenuCache } = require('./menuRoutes');
 
 const router = express.Router();
 
@@ -179,6 +180,7 @@ router.put('/menu/dishes/:dishId', async (req, res) => {
       return res.status(500).json({ error: 'Ошибка при обновлении блюда' });
     }
 
+    invalidateMenuCache();
     res.json({ 
       message: 'Блюдо успешно обновлено',
       dish: updatedDish 
@@ -210,6 +212,7 @@ router.post('/menu/dishes', async (req, res) => {
       return res.status(500).json({ error: 'Ошибка при создании блюда' });
     }
 
+    invalidateMenuCache();
     res.status(201).json({ 
       message: 'Блюдо успешно создано',
       dish: newDish 
@@ -236,6 +239,7 @@ router.delete('/menu/dishes/:dishId', async (req, res) => {
       return res.status(500).json({ error: 'Ошибка при удалении блюда' });
     }
 
+    invalidateMenuCache();
     res.json({ message: 'Блюдо успешно удалено' });
 
   } catch (error) {
@@ -348,6 +352,7 @@ router.post('/menu/categories', async (req, res) => {
       return res.status(500).json({ error: 'Категория создана, но ID не был возвращен' });
     }
 
+    invalidateMenuCache();
     res.status(201).json({ 
       message: 'Категория успешно создана',
       category: newCategory 
@@ -380,6 +385,7 @@ router.put('/menu/categories/:categoryId', async (req, res) => {
       return res.status(500).json({ error: 'Ошибка при обновлении категории' });
     }
 
+    invalidateMenuCache();
     res.json({ 
       message: 'Категория успешно обновлена',
       category: updatedCategory 
@@ -424,6 +430,7 @@ router.delete('/menu/categories/:categoryId', async (req, res) => {
       return res.status(500).json({ error: 'Ошибка при удалении категории' });
     }
 
+    invalidateMenuCache();
     res.json({ message: 'Категория успешно удалена' });
 
   } catch (error) {

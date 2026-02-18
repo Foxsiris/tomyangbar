@@ -140,7 +140,8 @@ const AdminNews = () => {
 
   const uploadImage = async (file) => {
     const token = localStorage.getItem('tomyangbar_token');
-    const baseURL = apiClient.baseURL || 'http://localhost:3001';
+    const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development' || !import.meta.env.PROD;
+    const baseURL = isDevelopment ? 'http://localhost:3001' : '';
 
     const formData = new FormData();
     formData.append('image', file);
@@ -257,7 +258,7 @@ const AdminNews = () => {
               {item.image_url && (
                 <div className="relative h-48 overflow-hidden">
                   <LazyImage
-                    src={item.image_url.startsWith('http') ? item.image_url : `${apiClient.baseURL || 'http://localhost:3001'}${item.image_url}`}
+                    src={item.image_url}
                     alt={item.title}
                     className="w-full h-full"
                     fallbackSrc="/vite.svg"
@@ -381,7 +382,7 @@ const AdminNews = () => {
                   {(imagePreview || formData.image_url) && (
                     <div className="mb-4">
                       <img
-                        src={imagePreview || (formData.image_url.startsWith('http') ? formData.image_url : `${apiClient.baseURL || 'http://localhost:3001'}${formData.image_url}`)}
+                        src={imagePreview || formData.image_url}
                         alt="Preview"
                         className="w-full h-48 object-cover rounded-lg border border-gray-300"
                         onError={(e) => {

@@ -52,13 +52,10 @@ const SpecialOffers = () => {
             {offer.description}
           </p>
           
-          <div className="flex items-center justify-between">
+          <div className="flex items-center">
             <span className="text-sm text-gray-500">
               Действует до: {offer.validUntil}
             </span>
-            <button className="text-primary-600 hover:text-primary-700 font-medium text-sm">
-              Подробнее →
-            </button>
           </div>
         </motion.div>
       ))}

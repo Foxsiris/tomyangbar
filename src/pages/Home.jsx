@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Clock, Truck, Utensils } from 'lucide-react';
-import { useMenu } from '../hooks/useMenu';
+import { useMenuContext } from '../context/MenuContext';
 import PopularDishCard from '../components/PopularDishCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import QuickActions from '../components/QuickActions';
@@ -14,7 +14,7 @@ import TeamSection from '../components/TeamSection';
 import NewsBlock from '../components/NewsBlock';
 
 const Home = () => {
-  const { getPopularDishes, isLoading } = useMenu();
+  const { getPopularDishes, isLoading } = useMenuContext();
   const popularDishes = getPopularDishes().slice(0, 6);
 
   // Массив изображений для слайдера

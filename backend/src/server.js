@@ -68,8 +68,13 @@ app.use('/uploads', (req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Cache-Control', 'public, max-age=86400, immutable'); // Кешируем изображения на 24 часа
   next();
-}, express.static(path.join(__dirname, '../uploads')));
+}, express.static(path.join(__dirname, '../uploads'), {
+  maxAge: '1d',
+  etag: true,
+  lastModified: true
+}));
 
 // Функция для получения реального IP пользователя (за nginx/proxy)
 const getClientIp = (req) => {

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Search } from 'lucide-react';
-import { useMenu } from '../hooks/useMenu';
+import { useMenuContext } from '../context/MenuContext';
 import DishCard from '../components/DishCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -9,7 +9,7 @@ const Menu = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   
-  const { menuData, isLoading, error } = useMenu();
+  const { menuData, isLoading, error } = useMenuContext();
 
   // Получаем изображение категории (если есть) или первое блюдо категории
   const getCategoryImage = (categoryId) => {

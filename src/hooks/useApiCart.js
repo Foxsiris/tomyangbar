@@ -11,8 +11,9 @@ export const useApiCart = (userId = null) => {
     dishName: ''
   });
 
-  // Ref для предотвращения дублирующих запросов
+  // Refs для предотвращения дублирующих запросов
   const loadingRef = useRef(false);
+  const loadedRef = useRef(false);
 
   // Генерируем sessionId для неавторизованных пользователей
   const [sessionId] = useState(() => {
@@ -26,14 +27,9 @@ export const useApiCart = (userId = null) => {
 
   // Загружаем корзину при инициализации (только один раз)
   useEffect(() => {
-    if (!loadingRef.current) {
+    if (!loadingRef.current && !loadedRef.current) {
       loadCart();
     }
-    
-    // Cleanup функция для предотвращения утечек памяти
-    return () => {
-      loadingRef.current = false;
-    };
   }, [userId, sessionId]);
 
   // Загружаем корзину
@@ -51,6 +47,7 @@ export const useApiCart = (userId = null) => {
       
       setCart(response.cart.items || []);
       setCartId(response.cart.id);
+      loadedRef.current = true;
     } catch (error) {
       console.error('Error loading cart:', error);
       setCart([]);

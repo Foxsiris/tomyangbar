@@ -107,7 +107,7 @@ const NewsBlock = () => {
               {item.image_url && (
                 <div className="relative h-48 overflow-hidden">
                   <LazyImage
-                    src={item.image_url.startsWith('http') ? item.image_url : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${item.image_url}`}
+                    src={item.image_url}
                     alt={item.title}
                     className="w-full h-full group-hover:scale-110 transition-transform duration-300"
                     fallbackSrc="/vite.svg"
@@ -183,7 +183,7 @@ const NewsBlock = () => {
               {selectedNews.image_url && (
                 <div className="w-full aspect-[4/3] overflow-hidden">
                   <img
-                    src={selectedNews.image_url.startsWith('http') ? selectedNews.image_url : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${selectedNews.image_url}`}
+                    src={selectedNews.image_url}
                     alt={selectedNews.title}
                     className="w-full h-full object-cover"
                   />
