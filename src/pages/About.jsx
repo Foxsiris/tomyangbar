@@ -234,7 +234,7 @@ const About = () => {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="flex justify-center items-start gap-40 flex-wrap">
             {stats.map((stat, index) => (
               <motion.div
                 key={index}

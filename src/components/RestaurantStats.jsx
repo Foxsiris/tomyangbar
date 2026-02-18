@@ -41,7 +41,7 @@ const RestaurantStats = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto">
+        <div className="flex justify-center items-start gap-40 flex-wrap">
           {stats.map((stat, index) => (
             <motion.div
               key={index}
