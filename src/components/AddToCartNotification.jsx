@@ -1,70 +1,54 @@
-import { CheckCircle, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShoppingBag } from 'lucide-react';
 
-const AddToCartNotification = ({ isVisible, onClose, dishName }) => {
-  if (!isVisible) {
-    return null;
-  }
-  
+const CartNotificationItem = ({ dishName, color }) => (
+  <figure
+    className="relative mx-auto min-h-fit w-full max-w-[320px] cursor-default overflow-hidden rounded-2xl p-4 transition-all duration-200 ease-in-out hover:scale-[102%] bg-white shadow-[0_0_0_1px_rgba(0,0,0,.03),0_2px_4px_rgba(0,0,0,.05),0_12px_24px_rgba(0,0,0,.05)]"
+  >
+    <div className="flex flex-row items-center gap-3">
+      <div
+        className="flex size-10 items-center justify-center rounded-2xl text-white"
+        style={{ backgroundColor: color }}
+      >
+        <ShoppingBag className="w-5 h-5" />
+      </div>
+      <div className="flex flex-col overflow-hidden flex-1">
+        <figcaption className="text-sm font-medium text-gray-900 truncate">
+          {dishName}
+        </figcaption>
+        <p className="text-xs text-gray-500">добавлено в корзину</p>
+      </div>
+    </div>
+  </figure>
+);
+
+const AddToCartNotification = ({ notificationList }) => {
+  if (!notificationList || notificationList.length === 0) return null;
+
+  const color = '#10b981';
+
   return (
-    <div style={{
-      position: 'fixed',
-      top: '24px',
-      right: '24px',
-      background: 'rgba(16, 185, 129, 0.95)',
-      color: '#ffffff',
-      padding: '16px 20px',
-      borderRadius: '8px',
-      zIndex: 99999,
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-      fontSize: '14px',
-      fontWeight: '400',
-      maxWidth: '280px',
-      border: '1px solid rgba(255, 255, 255, 0.2)',
-      backdropFilter: 'blur(10px)'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ 
-          width: '20px', 
-          height: '20px', 
-          borderRadius: '50%', 
-          background: '#10b981', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          fontSize: '12px',
-          color: 'white'
-        }}>
-          ✓
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: '500', marginBottom: '2px', fontSize: '13px' }}>
-            {dishName}
-          </div>
-          <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.8)' }}>
-            добавлено в корзину
-          </div>
-        </div>
-        <button 
-          onClick={onClose}
-          style={{
-            background: 'transparent',
-            color: 'rgba(255, 255, 255, 0.7)',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '4px',
-            fontSize: '16px',
-            borderRadius: '4px',
-            width: '24px',
-            height: '24px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          onMouseOver={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.1)'}
-          onMouseOut={(e) => e.target.style.background = 'transparent'}
-        >
-          ×
-        </button>
+    <div
+      className="fixed top-4 right-8 sm:right-12 md:right-16 z-[99999] max-h-[calc(100vh-2rem)] overflow-x-hidden overflow-y-auto max-w-[min(320px,calc(100vw-2rem))] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+    >
+      <div className="flex flex-col gap-3">
+        <AnimatePresence mode="popLayout">
+          {notificationList.map((item) => (
+            <motion.div
+              key={item.id}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 40 }}
+              layout
+            >
+              <CartNotificationItem
+                dishName={item.dishName}
+                color={color}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </div>
   );

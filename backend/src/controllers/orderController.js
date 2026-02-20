@@ -95,6 +95,11 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ error: 'Неполные данные заказа' });
     }
 
+    // Нормализуем address для самовывоза (NOT NULL в БД)
+    const orderAddress = (deliveryType === 'pickup' && (!address || !address.trim()))
+      ? 'Самовывоз'
+      : (address || '');
+
     // Рассчитываем итоговую сумму с учетом бонусов
     const deliveryFee = deliveryType === 'delivery' ? 200 : 0;
     const subtotal = total + deliveryFee;
@@ -113,7 +118,7 @@ const createOrder = async (req, res) => {
           customer_name: customerName,
           phone,
           email,
-          address: address,
+          address: orderAddress,
           total: total,
           delivery_fee: deliveryFee,
           final_total: finalTotal,

@@ -32,3 +32,8 @@
     @apply py-16 px-4 sm:px-6 lg:px-8;
   }
 }
+
+@keyframes texttype-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}

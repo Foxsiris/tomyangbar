@@ -6,10 +6,7 @@ export const useApiCart = (userId = null) => {
   const [cartId, setCartId] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [notification, setNotification] = useState({
-    isVisible: false,
-    dishName: ''
-  });
+  const [notificationList, setNotificationList] = useState([]);
 
   // Refs для предотвращения дублирующих запросов
   const loadingRef = useRef(false);
@@ -94,16 +91,17 @@ export const useApiCart = (userId = null) => {
         }
       });
 
-      // Показываем уведомление
-      setNotification({
-        isVisible: true,
-        dishName: dish.name
+      // Добавляем уведомление в список
+      const notifId = Date.now();
+      setNotificationList((prev) => {
+        const next = [{ id: notifId, dishName: dish.name }, ...prev].slice(0, 5);
+        return next;
       });
 
-      // Скрываем уведомление через 3 секунды
+      // Удаляем уведомление через 4 секунды
       setTimeout(() => {
-        setNotification(prev => ({ ...prev, isVisible: false }));
-      }, 3000);
+        setNotificationList((prev) => prev.filter((n) => n.id !== notifId));
+      }, 4000);
 
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -184,7 +182,7 @@ export const useApiCart = (userId = null) => {
     cart,
     isOpen,
     isLoading,
-    notification,
+    notificationList,
     totalItems,
     totalPrice,
     addToCart,

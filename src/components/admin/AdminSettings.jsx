@@ -7,12 +7,14 @@ import {
   DollarSign, 
   Truck, 
   Bell, 
-  Shield,
+  Palette,
   Save,
   RotateCcw
 } from 'lucide-react';
+import { useUISettings } from '../../context/UISettingsContext';
 
 const AdminSettings = () => {
+  const { settings: uiSettings, updateSetting } = useUISettings();
   const [settings, setSettings] = useState({
           restaurant: {
         name: 'Tom Yang Bar',
@@ -355,6 +357,39 @@ const AdminSettings = () => {
                 className="mr-2"
               />
               <span className="text-sm font-medium text-gray-700">Онлайн оплата</span>
+            </label>
+          </div>
+        </motion.div>
+
+        {/* UI / Оформление */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="bg-white rounded-lg shadow-lg p-6"
+        >
+          <div className="flex items-center mb-4">
+            <Palette className="w-5 h-5 text-primary-600 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900">Оформление сайта</h3>
+          </div>
+          <div className="space-y-3">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={uiSettings.menuBackgroundAnimation}
+                onChange={(e) => updateSetting('menuBackgroundAnimation', e.target.checked)}
+                className="mr-2"
+              />
+              <span className="text-sm font-medium text-gray-700">Анимация фона в меню (мерцающие точки)</span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={uiSettings.homeBlockAnimations}
+                onChange={(e) => updateSetting('homeBlockAnimations', e.target.checked)}
+                className="mr-2"
+              />
+              <span className="text-sm font-medium text-gray-700">Анимации на белых блоках главной</span>
             </label>
           </div>
         </motion.div>

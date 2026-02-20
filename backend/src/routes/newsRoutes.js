@@ -108,7 +108,8 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
       dish_id,
       link_url,
       is_active = true,
-      sort_order = 0
+      sort_order = 0,
+      open_on_refresh = false
     } = req.body;
 
     if (!title) {
@@ -126,6 +127,7 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
         link_url: link_url || null,
         is_active,
         sort_order: parseInt(sort_order) || 0,
+        open_on_refresh: !!open_on_refresh,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }])

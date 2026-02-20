@@ -15,12 +15,16 @@
   "dependencies": {
     "@google-cloud/local-auth": "^3.0.1",
     "@supabase/supabase-js": "^2.57.4",
+    "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.23.12",
     "googleapis": "^159.0.0",
+    "gsap": "^3.14.2",
     "lucide-react": "^0.542.0",
+    "ogl": "^1.0.11",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^6.30.2",
+    "three": "^0.183.0",
     "yookassa": "^0.1.1"
   },
   "devDependencies": {

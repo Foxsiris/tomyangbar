@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Clock, Truck, Utensils } from 'lucide-react';
 import { useMenuContext } from '../context/MenuContext';
+import { useUISettings } from '../context/UISettingsContext';
 import PopularDishCard from '../components/PopularDishCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import QuickActions from '../components/QuickActions';
@@ -12,9 +13,21 @@ import RestaurantStats from '../components/RestaurantStats';
 // import DishGallery from '../components/DishGallery'; // Hidden
 import TeamSection from '../components/TeamSection';
 import NewsBlock from '../components/NewsBlock';
+import TextType from '../components/ui/TextType';
+import LightRays from '../components/ui/LightRays';
+
+const noAnim = { initial: { opacity: 1, y: 0 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0 } };
+const inViewAnim = (delay = 0) => ({
+  initial: { opacity: 0, y: 30 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true },
+  transition: { duration: 0.6, delay }
+});
 
 const Home = () => {
   const { getPopularDishes, isLoading } = useMenuContext();
+  const { settings: uiSettings } = useUISettings();
+  const anim = uiSettings.homeBlockAnimations ? inViewAnim : () => noAnim;
   const popularDishes = getPopularDishes().slice(0, 6);
 
   // Массив изображений для слайдера
@@ -140,9 +153,15 @@ const Home = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-xl md:text-2xl mb-8 text-gray-200"
+            className="text-xl md:text-2xl mb-8 text-gray-200 min-h-[1.5em]"
           >
-            Ресторан паназиатской кухни со своей атмосферой
+            <TextType
+              text="Ресторан паназиатской кухни со своей атмосферой"
+              speed={60}
+              delay={800}
+              cursor={true}
+              className="inline"
+            />
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -170,13 +189,11 @@ const Home = () => {
       <NewsBlock />
 
       {/* Features Section */}
-      <section className="section-padding bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="section-padding bg-white relative">
+        {uiSettings.homeBlockAnimations && <LightRays raysOrigin="right" />}
+        <div className="max-w-7xl mx-auto relative">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
+            {...anim()}
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -191,10 +208,7 @@ const Home = () => {
             {features.map((feature, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
+                {...anim(index * 0.1)}
                 className="text-center p-6 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
               >
                 <div className="inline-flex items-center justify-center w-12 h-12 bg-primary-600 text-white rounded-lg mb-4">
@@ -216,10 +230,7 @@ const Home = () => {
       <section className="section-padding bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
+            {...anim()}
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -237,10 +248,7 @@ const Home = () => {
            </div>
 
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            viewport={{ once: true }}
+            {...anim(0.4)}
             className="text-center mt-12"
           >
             <Link to="/menu" className="btn-primary inline-flex items-center">
@@ -258,10 +266,7 @@ const Home = () => {
       <section className="section-padding bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
+            {...anim()}
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -277,13 +282,11 @@ const Home = () => {
       </section>
 
       {/* Special Offers Section */}
-      <section className="section-padding bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="section-padding bg-white relative">
+        {uiSettings.homeBlockAnimations && <LightRays raysOrigin="left" />}
+        <div className="max-w-7xl mx-auto relative">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
+            {...anim()}
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -302,14 +305,14 @@ const Home = () => {
       {/* <DishGallery /> */}
 
       {/* About Section */}
-      <section className="section-padding bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="section-padding bg-white relative">
+        {uiSettings.homeBlockAnimations && <LightRays raysOrigin="right" />}
+        <div className="max-w-7xl mx-auto relative">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
+              {...(uiSettings.homeBlockAnimations
+                ? { initial: { opacity: 0, x: -30 }, whileInView: { opacity: 1, x: 0 }, transition: { duration: 0.6 }, viewport: { once: true } }
+                : noAnim)}
             >
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
                 О нашем ресторане
@@ -329,10 +332,9 @@ const Home = () => {
             </motion.div>
             
             <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
+              {...(uiSettings.homeBlockAnimations
+                ? { initial: { opacity: 0, x: 30 }, whileInView: { opacity: 1, x: 0 }, transition: { duration: 0.6, delay: 0.2 }, viewport: { once: true } }
+                : noAnim)}
               className="relative"
             >
               <div className="h-96 bg-gray-200 rounded-lg overflow-hidden">

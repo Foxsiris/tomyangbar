@@ -66,6 +66,8 @@ class ApiClient {
 
   // Проверка, можно ли кешировать ответ
   isCacheable(endpoint, method) {
+    // Не кешируем админские эндпоинты — данные должны быть актуальными
+    if (endpoint.includes('/admin/')) return false;
     // Кешируем только GET запросы для определенных эндпоинтов
     const cacheableEndpoints = [
       '/api/menu/categories',
@@ -394,15 +396,21 @@ class ApiClient {
   }
 
   async createNews(newsData) {
-    return this.post('/api/news', newsData);
+    const result = await this.post('/api/news', newsData);
+    this.clearCacheForEndpoint('/api/news');
+    return result;
   }
 
   async updateNews(newsId, updates) {
-    return this.put(`/api/news/${newsId}`, updates);
+    const result = await this.put(`/api/news/${newsId}`, updates);
+    this.clearCacheForEndpoint('/api/news');
+    return result;
   }
 
   async deleteNews(newsId) {
-    return this.delete(`/api/news/${newsId}`);
+    const result = await this.delete(`/api/news/${newsId}`);
+    this.clearCacheForEndpoint('/api/news');
+    return result;
   }
 
   // Методы для работы с корзиной

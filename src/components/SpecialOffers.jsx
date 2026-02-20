@@ -1,7 +1,12 @@
 import { motion } from 'framer-motion';
 import { Star, Clock, Percent } from 'lucide-react';
+import { useUISettings } from '../context/UISettingsContext';
 
 const SpecialOffers = () => {
+  const { settings: uiSettings } = useUISettings();
+  const anim = (delay) => uiSettings.homeBlockAnimations
+    ? { initial: { opacity: 0, y: 30 }, whileInView: { opacity: 1, y: 0 }, transition: { duration: 0.6, delay }, viewport: { once: true } }
+    : { initial: { opacity: 1, y: 0 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0 } };
   const offers = [
     {
       id: 1,
@@ -34,10 +39,7 @@ const SpecialOffers = () => {
       {offers.map((offer, index) => (
         <motion.div
           key={offer.id}
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: index * 0.1 }}
-          viewport={{ once: true }}
+          {...anim(index * 0.1)}
           className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300"
         >
           <div className={`${offer.color} text-white rounded-lg p-3 w-fit mb-4`}>

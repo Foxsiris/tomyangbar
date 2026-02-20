@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, ShoppingBag, Clock, Phone } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { getDisplayOrderNumber } from '../utils/orderUtils';
 
 const OrderSuccessModal = ({ isOpen, orderNumber, onClose }) => {
@@ -15,6 +16,39 @@ const OrderSuccessModal = ({ isOpen, orderNumber, onClose }) => {
     return () => {
       document.body.style.overflow = '';
     };
+  }, [isOpen]);
+
+  // Confetti Side Cannons при успешном оформлении заказа
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const colors = ['#a786ff', '#fd8bbc', '#eca184', '#f8deb1', '#88ff5a', '#26ccff', '#ff5e7e', '#fcff42'];
+    const end = Date.now() + 3 * 1000;
+
+    const frame = () => {
+      if (Date.now() > end) return;
+
+      confetti({
+        particleCount: 2,
+        angle: 60,
+        spread: 55,
+        startVelocity: 60,
+        origin: { x: 0, y: 0.5 },
+        colors,
+      });
+      confetti({
+        particleCount: 2,
+        angle: 120,
+        spread: 55,
+        startVelocity: 60,
+        origin: { x: 1, y: 0.5 },
+        colors,
+      });
+
+      requestAnimationFrame(frame);
+    };
+
+    frame();
   }, [isOpen]);
 
   if (!isOpen) return null;

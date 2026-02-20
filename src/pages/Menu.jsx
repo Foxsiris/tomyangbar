@@ -2,14 +2,17 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Search } from 'lucide-react';
 import { useMenuContext } from '../context/MenuContext';
+import { useUISettings } from '../context/UISettingsContext';
 import DishCard from '../components/DishCard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { FlickeringGrid } from '../components/ui/FlickeringGrid';
 
 const Menu = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   
   const { menuData, isLoading, error } = useMenuContext();
+  const { settings: uiSettings } = useUISettings();
 
   // Получаем изображение категории (если есть) или первое блюдо категории
   const getCategoryImage = (categoryId) => {
@@ -100,9 +103,21 @@ const Menu = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 relative overflow-hidden">
+      {uiSettings.menuBackgroundAnimation && (
+      <FlickeringGrid
+        className="absolute inset-0 z-0"
+        squareSize={3}
+        gridGap={8}
+        colors={["#fca5a5", "#dc2626", "#b91c1c", "#991b1b"]}
+        maxOpacity={0.5}
+        flickerChance={0.15}
+      />
+      )}
+
+      <div className="relative z-10">
       {/* Header */}
-      <section className="bg-white shadow-sm">
+      <section className="bg-transparent backdrop-blur-sm shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -127,7 +142,7 @@ const Menu = () => {
                 placeholder="Поиск блюд..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 bg-transparent border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -238,6 +253,7 @@ const Menu = () => {
           </AnimatePresence>
         </div>
       </section>
+      </div>
     </div>
   );
 };

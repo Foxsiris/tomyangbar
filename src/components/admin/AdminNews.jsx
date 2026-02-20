@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Edit, Trash2, Eye, EyeOff, Sparkles, Utensils, Tag, Image as ImageIcon } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, EyeOff, Sparkles, Utensils, Tag } from 'lucide-react';
 import { apiClient } from '../../services/apiClient';
 import LazyImage from '../LazyImage';
 
@@ -17,7 +17,8 @@ const AdminNews = () => {
     dish_id: '',
     link_url: '',
     is_active: true,
-    sort_order: 0
+    sort_order: 0,
+    open_on_refresh: false
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -50,7 +51,8 @@ const AdminNews = () => {
         dish_id: newsItem.dish_id || '',
         link_url: newsItem.link_url || '',
         is_active: newsItem.is_active !== undefined ? newsItem.is_active : true,
-        sort_order: newsItem.sort_order || 0
+        sort_order: newsItem.sort_order || 0,
+        open_on_refresh: newsItem.open_on_refresh || false
       });
       setImagePreview(newsItem.image_url || null);
     } else {
@@ -63,7 +65,8 @@ const AdminNews = () => {
         dish_id: '',
         link_url: '',
         is_active: true,
-        sort_order: 0
+        sort_order: 0,
+        open_on_refresh: false
       });
       setImagePreview(null);
     }
@@ -84,7 +87,8 @@ const AdminNews = () => {
       dish_id: '',
       link_url: '',
       is_active: true,
-      sort_order: 0
+      sort_order: 0,
+      open_on_refresh: false
     });
   };
 
@@ -293,11 +297,16 @@ const AdminNews = () => {
                   </p>
                 )}
 
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 mb-3">
                   <span>Порядок: {item.sort_order}</span>
                   <span className={`px-2 py-1 rounded ${item.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                     {item.is_active ? 'Активна' : 'Неактивна'}
                   </span>
+                  {item.open_on_refresh && (
+                    <span className="px-2 py-1 rounded bg-blue-100 text-blue-800" title="Открывается при загрузке страницы">
+                      При загрузке
+                    </span>
+                  )}
                 </div>
 
                 {/* Actions */}
@@ -415,27 +424,10 @@ const AdminNews = () => {
                       onChange={handleImageChange}
                       className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
                     />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Загрузите изображение с устройства
+                    </p>
                   </div>
-
-                  {/* Или URL */}
-                  <div className="flex items-center space-x-2">
-                    <ImageIcon className="w-5 h-5 text-gray-400" />
-                    <input
-                      type="url"
-                      value={formData.image_url}
-                      onChange={(e) => {
-                        setFormData({ ...formData, image_url: e.target.value });
-                        if (!imageFile) {
-                          setImagePreview(e.target.value);
-                        }
-                      }}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      placeholder="Или введите URL изображения"
-                    />
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Вы можете загрузить файл или указать URL изображения
-                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -505,6 +497,19 @@ const AdminNews = () => {
                   />
                   <label htmlFor="is_active" className="ml-2 text-sm text-gray-700">
                     Активна (отображается на сайте)
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="open_on_refresh"
+                    checked={formData.open_on_refresh}
+                    onChange={(e) => setFormData({ ...formData, open_on_refresh: e.target.checked })}
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  />
+                  <label htmlFor="open_on_refresh" className="ml-2 text-sm text-gray-700">
+                    Открывать при загрузке страницы
                   </label>
                 </div>
 

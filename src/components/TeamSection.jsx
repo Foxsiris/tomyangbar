@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useUISettings } from '../context/UISettingsContext';
 
 const chefs = [
   {
@@ -11,14 +12,19 @@ const chefs = [
 ];
 
 const TeamSection = () => {
+  const { settings: uiSettings } = useUISettings();
+  const anim = uiSettings.homeBlockAnimations
+    ? { initial: { opacity: 0, y: 30 }, whileInView: { opacity: 1, y: 0 }, transition: { duration: 0.6 }, viewport: { once: true } }
+    : { initial: { opacity: 1, y: 0 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0 } };
+  const cardAnim = (delay) => uiSettings.homeBlockAnimations
+    ? { initial: { opacity: 0, y: 30 }, whileInView: { opacity: 1, y: 0 }, transition: { duration: 0.6, delay }, viewport: { once: true } }
+    : { initial: { opacity: 1, y: 0 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0 } };
+
   return (
     <section className="section-padding bg-primary-600">
       <div className="max-w-7xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
+          {...anim}
           className="text-center mb-12"
         >
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
@@ -33,10 +39,7 @@ const TeamSection = () => {
           {chefs.map((chef, index) => (
             <motion.div
               key={chef.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.2 }}
-              viewport={{ once: true }}
+              {...cardAnim(index * 0.2)}
               className="bg-white rounded-2xl overflow-hidden shadow-lg max-w-sm"
             >
               <div className="aspect-square overflow-hidden">

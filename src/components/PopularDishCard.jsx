@@ -1,17 +1,19 @@
 import { motion } from 'framer-motion';
 import { Star, Droplet } from 'lucide-react';
 import { useCartContext } from '../context/CartContext';
+import { useUISettings } from '../context/UISettingsContext';
 import LazyImage from './LazyImage';
 
 const PopularDishCard = ({ dish, index = 0 }) => {
   const { addToCart } = useCartContext();
+  const { settings: uiSettings } = useUISettings();
+  const anim = uiSettings.homeBlockAnimations
+    ? { initial: { opacity: 0, y: 30 }, whileInView: { opacity: 1, y: 0 }, transition: { duration: 0.6, delay: index * 0.1 }, viewport: { once: true } }
+    : { initial: { opacity: 1, y: 0 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0 } };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
-      viewport={{ once: true }}
+      {...anim}
       className="card overflow-hidden"
     >
       <div className="h-48 bg-gray-200 relative">

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { CartProvider } from './context/CartContext';
 import { SupabaseUserProvider } from './context/SupabaseUserContext';
 import { MenuProvider } from './context/MenuContext';
+import { UISettingsProvider } from './context/UISettingsContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import CartSidePanel from './components/CartSidePanel';
@@ -27,6 +28,7 @@ import Privacy from './pages/Privacy';
 function App() {
   return (
     <SupabaseUserProvider>
+      <UISettingsProvider>
       <MenuProvider>
         <CartProvider>
           <Router>
@@ -63,6 +65,7 @@ function App() {
           </Router>
         </CartProvider>
       </MenuProvider>
+      </UISettingsProvider>
     </SupabaseUserProvider>
   );
 }

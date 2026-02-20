@@ -4,8 +4,11 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, Utensils, Tag, X } from 'lucide-react';
 import { apiClient } from '../services/apiClient';
 import LazyImage from './LazyImage';
+import LightRays from './ui/LightRays';
+import { useUISettings } from '../context/UISettingsContext';
 
 const NewsBlock = () => {
+  const { settings: uiSettings } = useUISettings();
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedNews, setSelectedNews] = useState(null);
@@ -17,7 +20,14 @@ const NewsBlock = () => {
   const loadNews = async () => {
     try {
       const response = await apiClient.get('/api/news?limit=6');
-      setNews(response.news || []);
+      const items = response.news || [];
+      setNews(items);
+      // Открывать новость только после обновления страницы (F5), не при переходе по ссылкам
+      const wasPageRefreshed = performance.getEntriesByType?.('navigation')?.[0]?.type === 'reload';
+      const toOpen = wasPageRefreshed && items.find((n) => n.open_on_refresh);
+      if (toOpen) {
+        setSelectedNews(toOpen);
+      }
     } catch (error) {
       console.error('Error loading news:', error);
     } finally {
@@ -60,8 +70,9 @@ const NewsBlock = () => {
 
   if (loading) {
     return (
-      <section className="section-padding bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="section-padding bg-white relative">
+        {uiSettings.homeBlockAnimations && <LightRays raysOrigin="left" />}
+        <div className="max-w-7xl mx-auto relative">
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
           </div>
@@ -74,14 +85,19 @@ const NewsBlock = () => {
     return null;
   }
 
+  const blockAnim = uiSettings.homeBlockAnimations
+    ? { initial: { opacity: 0, y: 30 }, whileInView: { opacity: 1, y: 0 }, transition: { duration: 0.6 }, viewport: { once: true } }
+    : { initial: { opacity: 1, y: 0 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0 } };
+  const cardAnim = (delay) => uiSettings.homeBlockAnimations
+    ? { initial: { opacity: 0, y: 30 }, whileInView: { opacity: 1, y: 0 }, transition: { duration: 0.6, delay }, viewport: { once: true } }
+    : { initial: { opacity: 1, y: 0 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0 } };
+
   return (
-    <section className="section-padding bg-white">
-      <div className="max-w-7xl mx-auto">
+    <section className="section-padding bg-white relative">
+      {uiSettings.homeBlockAnimations && <LightRays raysOrigin="left" />}
+      <div className="max-w-7xl mx-auto relative">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
+          {...blockAnim}
           className="text-center mb-12"
         >
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -96,10 +112,7 @@ const NewsBlock = () => {
           {news.map((item, index) => (
             <motion.div
               key={item.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true }}
+              {...cardAnim(index * 0.1)}
               className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow group cursor-pointer"
               onClick={() => setSelectedNews(item)}
             >
